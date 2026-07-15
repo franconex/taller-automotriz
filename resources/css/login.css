@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.login-wrapper {
+    @apply min-h-screen flex flex-col lg:flex-row;
+}
+
+.login-left {
+    @apply hidden lg:flex relative w-full lg:w-[56%] min-h-screen bg-cover bg-center;
+}
+
+.login-left-decoration {
+    @apply absolute right-0 top-0 h-full w-20;
+    background: #E31E24;
+    opacity: 0.85;
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+
+.login-right {
+    @apply w-full lg:w-[44%] min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%);
+}
+
+.login-card {
+    @apply w-full max-w-[480px] xl:max-w-[520px] bg-white rounded-3xl p-8 sm:p-10 xl:p-12;
+    box-shadow: 0 8px 40px -8px rgba(0, 0, 0, 0.12);
+}
+
+.login-card-header {
+    @apply text-center mb-6;
+}
+
+.login-card-logo {
+    @apply h-20 w-auto mx-auto mb-5;
+}
+
+.login-card-title {
+    @apply font-montserrat text-2xl font-extrabold text-gray-900;
+}
+
+.login-card-subtitle {
+    @apply text-gray-500 mt-2 text-sm leading-relaxed;
+}
+
+.login-session-status {
+    @apply mb-6 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl;
+}
+
+.login-field-group {
+    @apply mb-5;
+}
+
+.login-label {
+    @apply block text-sm font-semibold text-gray-700 mb-1.5;
+}
+
+.login-input-wrapper {
+    @apply relative;
+}
+
+.login-icon-left {
+    @apply absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 pointer-events-none;
+}
+
+.login-icon-left svg {
+    @apply w-5 h-5;
+}
+
+.login-input {
+    @apply w-full border border-gray-300 rounded-xl pl-11 pr-4 py-3 text-sm outline-none transition placeholder:text-gray-400;
+}
+
+.login-input:focus {
+    @apply ring-2 ring-brand-red border-transparent;
+}
+
+.login-input--has-toggle {
+    @apply pr-12;
+}
+
+.login-input--error {
+    @apply border-red-500 ring-1 ring-red-500;
+}
+
+.login-input--error:focus {
+    @apply ring-2 ring-red-500;
+}
+
+.login-toggle {
+    @apply absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 transition;
+}
+
+.login-toggle:hover {
+    @apply text-gray-600;
+}
+
+.login-toggle svg {
+    @apply w-5 h-5;
+}
+
+.login-error {
+    @apply text-red-500 text-xs mt-1.5 flex items-center gap-1;
+}
+
+.login-error svg {
+    @apply w-3.5 h-3.5 flex-shrink-0;
+}
+
+.login-options {
+    @apply flex items-center justify-between mb-6;
+}
+
+.login-checkbox-wrapper {
+    @apply flex items-center cursor-pointer;
+}
+
+.login-checkbox {
+    @apply rounded border-gray-300 text-brand-red;
+}
+
+.login-checkbox:focus {
+    @apply ring-2 ring-brand-red ring-offset-1;
+}
+
+.login-checkbox-label {
+    @apply ml-2.5 text-sm text-gray-600 transition;
+}
+
+.login-checkbox-wrapper:hover .login-checkbox-label {
+    @apply text-gray-800;
+}
+
+.login-forgot {
+    @apply text-sm text-brand-red font-medium transition;
+}
+
+.login-forgot:hover {
+    @apply text-brand-red-dark;
+}
+
+.login-submit {
+    @apply w-full bg-brand-red text-white font-bold py-3.5 rounded-xl text-base transition duration-200 flex items-center justify-center gap-2.5;
+    box-shadow: 0 4px 14px -2px rgba(227, 30, 36, 0.25);
+}
+
+.login-submit:hover {
+    @apply bg-brand-red-dark;
+    box-shadow: 0 4px 14px -2px rgba(185, 28, 28, 0.3);
+}
+
+.login-submit svg {
+    @apply w-5 h-5;
+}
+
+.login-footer {
+    @apply mt-8;
+}
+
+.login-footer-divider {
+    @apply flex items-center gap-3 mb-4;
+}
+
+.login-footer-line {
+    @apply flex-1 h-px bg-gray-200;
+}
+
+.login-footer-shield {
+    @apply w-5 h-5 text-gray-300 flex-shrink-0;
+}
+
+.login-footer-text {
+    @apply text-center text-xs text-gray-400;
+}
