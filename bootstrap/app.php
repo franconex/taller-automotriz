@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'rol' => RolMiddleware::class,
             'permiso' => PermisoMiddleware::class,
         ]);
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

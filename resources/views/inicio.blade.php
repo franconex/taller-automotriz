@@ -10,15 +10,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="{{ asset('css/inicio.css') }}">
+    <x-admin.vite-assets :entry="['resources/css/app.css', 'resources/js/app.js']" />
+    <link rel="stylesheet" href="/css/inicio.css">
 </head>
 <body class="font-manrope text-[#101114] bg-white antialiased">
 <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:bg-brand-red focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:outline-none">Saltar al contenido principal</a>
 <header class="fixed top-0 left-0 w-full h-[70px] bg-white shadow-md z-50 transition-shadow duration-300" id="navbar">
     <nav class="max-w-[1160px] mx-auto px-5 h-full flex items-center justify-between" aria-label="Navegación principal">
         <a href="#inicio" class="flex items-center gap-3 text-[#101114] no-underline" aria-label="Taller Pro, inicio">
-            <img src="{{ asset('img/logo.png') }}" alt="Logo Taller Pro" class="w-12 h-12 object-contain">
+            <img src="/img/logo.png" alt="Logo Taller Pro" class="w-12 h-12 object-contain">
             <strong class="text-lg tracking-wide font-extrabold">TALLER <span class="text-brand-red">PRO</span></strong>
         </a>
         <button class="menu-toggle lg:hidden flex-col items-center justify-center bg-none border-0 w-[42px] h-[42px] p-2 cursor-pointer focus-visible:outline-2 focus-visible:outline-brand-red focus-visible:outline-offset-2 rounded" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav-menu">
@@ -43,7 +43,7 @@
 
 <main id="main-content">
     <section class="hero relative min-h-[560px] lg:h-[75vh] max-h-[700px] flex items-center text-white overflow-hidden bg-black pt-[70px]" id="inicio">
-        <div class="hero-bg absolute inset-0 bg-cover bg-center" style="background-image:url('{{ asset('img/portada-talle.png') }}')"></div>
+        <div class="hero-bg absolute inset-0 bg-cover bg-center" style="background-image:url('/img/portada-talle.png')"></div>
         <div class="max-w-[1160px] mx-auto px-5 relative z-10 w-full">
             <div class="max-w-[640px] reveal">
                 <span class="inline-flex items-center gap-2 text-gray-300 text-xs font-bold uppercase tracking-widest mb-4"><i class="fa-solid fa-circle-check text-brand-red"></i> Servicio automotriz de confianza</span>
@@ -108,7 +108,7 @@
                 @foreach ($servicios as $servicio)
                 <article class="service-card bg-white border border-gray-200 rounded-[18px] overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:border-transparent reveal">
                     <div class="service-image h-48 relative overflow-hidden">
-                        <img src="{{ asset('img/'.$servicio[2]) }}" alt="{{ $servicio[0] }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+                        <img src="/img/{{ $servicio[2] }}" alt="{{ $servicio[0] }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
                         <span class="service-icon"><i class="fa-solid {{ $servicio[3] }}"></i></span>
                     </div>
                     <div class="p-5 sm:p-6">
@@ -125,7 +125,7 @@
     <section class="section py-16" id="nosotros">
         <div class="max-w-[1160px] mx-auto px-5 grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] items-center gap-12 lg:gap-16">
             <div class="relative reveal">
-                <img src="{{ asset('img/taller-equipo.png') }}" alt="Mecánicos de Taller Pro trabajando" loading="lazy" class="w-full h-[520px] object-cover rounded-[18px] transition-transform duration-300 hover:scale-[1.02]">
+                <img src="/img/taller-equipo.png" alt="Mecánicos de Taller Pro trabajando" loading="lazy" class="w-full h-[520px] object-cover rounded-[18px] transition-transform duration-300 hover:scale-[1.02]">
                 <div class="absolute left-0 top-6 w-[6px] h-[130px] bg-brand-red rounded-r-lg"></div>
                 <div class="absolute -right-5 bottom-7 bg-gray-900 text-white border-l-4 border-brand-red p-4 pl-5.5 shadow-lg flex items-center gap-2.5">
                     <strong class="text-[1.8rem] font-extrabold">+500</strong>
@@ -240,7 +240,7 @@
 <footer class="footer bg-gray-950 text-gray-400 py-14 pb-6">
     <div class="max-w-[1160px] mx-auto px-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr] gap-12 lg:gap-16">
         <div class="footer-brand">
-            <a href="#inicio" class="flex items-center gap-3 text-white no-underline"><img src="{{ asset('img/logo.png') }}" alt="Logo Taller Pro" class="w-12 h-12 object-contain"><strong class="text-lg tracking-wide font-extrabold">TALLER <span class="text-brand-red">PRO</span></strong></a>
+            <a href="#inicio" class="flex items-center gap-3 text-white no-underline"><img src="/img/logo.png" alt="Logo Taller Pro" class="w-12 h-12 object-contain"><strong class="text-lg tracking-wide font-extrabold">TALLER <span class="text-brand-red">PRO</span></strong></a>
             <p class="text-xs mt-4 max-w-[400px]">Servicio automotriz profesional, claro y confiable para cuidar lo que te mueve.</p>
         </div>
         <div class="flex flex-col gap-2 text-xs">
@@ -264,6 +264,6 @@
     </div>
 </footer>
 
-<script src="{{ asset('js/inicio.js') }}"></script>
+<script src="/js/inicio.js"></script>
 </body>
 </html>

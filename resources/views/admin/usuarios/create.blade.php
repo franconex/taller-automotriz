@@ -1,27 +1,22 @@
 @extends('layouts.admin')
 
 @section('title', 'Crear Usuario')
-
 @section('page-title', 'Crear Usuario')
 
 @section('content')
-    <div class="max-w-2xl">
-        <form method="POST" action="{{ route('admin.usuarios.store') }}" class="space-y-6">
+    <div class="max-w-xl">
+        <form method="POST" action="{{ route('admin.usuarios.store') }}" class="space-y-5">
             @csrf
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Datos del usuario</h3>
-
-                <div class="grid gap-5 sm:grid-cols-2">
+            <div class="card p-5">
+                <h3 class="text-sm font-semibold mb-4" style="color: var(--color-text);">Datos del usuario</h3>
+                <div class="grid gap-4 sm:grid-cols-2">
                     <x-admin.form-input name="nombre" label="Nombre completo" :required="true" placeholder="Ej. Juan Pérez" />
                     <x-admin.form-input name="username" label="Nombre de usuario" :required="true" placeholder="Ej. jperez" />
                 </div>
-
-                <div class="mt-5">
+                <div class="mt-4">
                     <x-admin.form-input name="email" type="email" label="Correo electrónico" :required="true" placeholder="ejemplo@correo.com" />
                 </div>
-
-                <div class="mt-5">
+                <div class="mt-4">
                     <x-admin.form-input name="rol_id" type="select" label="Rol" :required="true">
                         <option value="">Selecciona un rol</option>
                         @foreach ($roles as $rol)
@@ -29,27 +24,20 @@
                         @endforeach
                     </x-admin.form-input>
                 </div>
-
-                <div class="mt-5 grid gap-5 sm:grid-cols-2">
+                <div class="mt-4 grid gap-4 sm:grid-cols-2">
                     <x-admin.form-input name="password" type="password" label="Contraseña" :required="true" placeholder="Mín. 8 caracteres" />
                     <x-admin.form-input name="password_confirmation" type="password" label="Confirmar contraseña" :required="true" placeholder="Repite la contraseña" />
                 </div>
-
-                <div class="mt-5">
-                    <label class="inline-flex items-center gap-2">
+                <div class="mt-4">
+                    <label class="inline-flex items-center gap-2 text-sm">
                         <input type="checkbox" name="estado" value="1" checked class="rounded border-gray-300 text-brand-red focus:ring-brand-red">
-                        <span class="text-sm text-gray-700">Usuario activo</span>
+                        <span style="color: var(--color-text);">Usuario activo</span>
                     </label>
                 </div>
             </div>
-
             <div class="flex items-center gap-3">
-                <button type="submit" class="rounded-xl bg-brand-red px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-red/25 transition hover:bg-brand-red-dark">
-                    Guardar usuario
-                </button>
-                <a href="{{ route('admin.usuarios.index') }}" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
-                    Cancelar
-                </a>
+                <x-admin.button type="primary" tag="button">Guardar usuario</x-admin.button>
+                <a href="{{ route('admin.usuarios.index') }}"><x-admin.button type="secondary" tag="button">Cancelar</x-admin.button></a>
             </div>
         </form>
     </div>

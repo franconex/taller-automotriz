@@ -6,37 +6,37 @@
 
 @section('content')
     <div class="max-w-2xl space-y-6">
-        <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="card p-6">
             <div class="flex items-start justify-between">
                 <div>
-                    <h3 class="text-xl font-bold text-gray-900">{{ $cliente->nombre }} {{ $cliente->apellido }}</h3>
-                    <p class="text-sm text-gray-500 mt-1">{{ $cliente->ci }}</p>
+                    <h3 class="text-xl font-bold" style="color: var(--color-text);">{{ $cliente->nombre }} {{ $cliente->apellido }}</h3>
+                    <p class="text-sm mt-1" style="color: var(--color-muted);">{{ $cliente->ci }}</p>
                 </div>
                 <x-admin.badge :type="$cliente->estado ? 'active' : 'inactive'">{{ $cliente->estado ? 'Activo' : 'Inactivo' }}</x-admin.badge>
             </div>
         </div>
 
-        <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Información de contacto</h3>
+        <div class="card p-6">
+            <h3 class="text-lg font-bold mb-4" style="color: var(--color-text);">Información de contacto</h3>
             <dl class="grid gap-4 sm:grid-cols-2">
-                <div><dt class="text-xs font-semibold uppercase tracking-wider text-gray-500">Teléfono</dt><dd class="mt-1 text-sm text-gray-900">{{ $cliente->telefono ?? '—' }}</dd></div>
-                <div><dt class="text-xs font-semibold uppercase tracking-wider text-gray-500">Email</dt><dd class="mt-1 text-sm text-gray-900">{{ $cliente->email ?? '—' }}</dd></div>
-                <div><dt class="text-xs font-semibold uppercase tracking-wider text-gray-500">Dirección</dt><dd class="mt-1 text-sm text-gray-900">{{ $cliente->direccion ?? '—' }}</dd></div>
+                <div><dt class="text-xs font-semibold uppercase tracking-wider" style="color: var(--color-muted);">Teléfono</dt><dd class="mt-1 text-sm" style="color: var(--color-text);">{{ $cliente->telefono ?? '—' }}</dd></div>
+                <div><dt class="text-xs font-semibold uppercase tracking-wider" style="color: var(--color-muted);">Email</dt><dd class="mt-1 text-sm" style="color: var(--color-text);">{{ $cliente->email ?? '—' }}</dd></div>
+                <div><dt class="text-xs font-semibold uppercase tracking-wider" style="color: var(--color-muted);">Dirección</dt><dd class="mt-1 text-sm" style="color: var(--color-text);">{{ $cliente->direccion ?? '—' }}</dd></div>
             </dl>
         </div>
 
-        <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Información fiscal</h3>
+        <div class="card p-6">
+            <h3 class="text-lg font-bold mb-4" style="color: var(--color-text);">Información fiscal</h3>
             <dl class="grid gap-4 sm:grid-cols-2">
-                <div><dt class="text-xs font-semibold uppercase tracking-wider text-gray-500">NIT</dt><dd class="mt-1 text-sm text-gray-900">{{ $cliente->nit ?? '—' }}</dd></div>
-                <div><dt class="text-xs font-semibold uppercase tracking-wider text-gray-500">Razón social</dt><dd class="mt-1 text-sm text-gray-900">{{ $cliente->razon_social ?? '—' }}</dd></div>
+                <div><dt class="text-xs font-semibold uppercase tracking-wider" style="color: var(--color-muted);">NIT</dt><dd class="mt-1 text-sm" style="color: var(--color-text);">{{ $cliente->nit ?? '—' }}</dd></div>
+                <div><dt class="text-xs font-semibold uppercase tracking-wider" style="color: var(--color-muted);">Razón social</dt><dd class="mt-1 text-sm" style="color: var(--color-text);">{{ $cliente->razon_social ?? '—' }}</dd></div>
             </dl>
         </div>
 
         @if ($cliente->observaciones)
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-gray-900 mb-2">Observaciones</h3>
-                <p class="text-sm text-gray-600">{{ $cliente->observaciones }}</p>
+            <div class="card p-6">
+                <h3 class="text-lg font-bold mb-2" style="color: var(--color-text);">Observaciones</h3>
+                <p class="text-sm" style="color: var(--color-muted);">{{ $cliente->observaciones }}</p>
             </div>
         @endif
 
@@ -45,11 +45,11 @@
             <form method="POST" action="{{ route('admin.clientes.estado', $cliente) }}" class="inline">
                 @csrf
                 @method('PATCH')
-                <button type="submit" onclick="return confirm('¿{{ $cliente->estado ? 'Desactivar' : 'Activar' }} a {{ $cliente->nombre }} {{ $cliente->apellido }}?')" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                <button type="submit" onclick="return confirm('¿{{ $cliente->estado ? 'Desactivar' : 'Activar' }} a {{ $cliente->nombre }} {{ $cliente->apellido }}?')" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold transition hover-surface" style="color: var(--color-text);">
                     {{ $cliente->estado ? 'Desactivar' : 'Activar' }}
                 </button>
             </form>
-            <a href="{{ route('admin.clientes.index') }}" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">Volver</a>
+            <a href="{{ route('admin.clientes.index') }}" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold transition hover-surface" style="color: var(--color-text);">Volver</a>
         </div>
     </div>
 @endsection

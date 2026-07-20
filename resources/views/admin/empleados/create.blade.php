@@ -9,8 +9,8 @@
         <form method="POST" action="{{ route('admin.empleados.store') }}" class="space-y-6">
             @csrf
 
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Datos personales</h3>
+            <div class="card p-6">
+                <h3 class="text-lg font-bold mb-4" style="color: var(--color-text);">Datos personales</h3>
                 <div class="grid gap-5 sm:grid-cols-2">
                     <x-admin.form-input name="nombre" label="Nombre" :required="true" placeholder="Ej. Juan" />
                     <x-admin.form-input name="apellido" label="Apellido" :required="true" placeholder="Ej. Pérez" />
@@ -24,8 +24,8 @@
                 </div>
             </div>
 
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Información laboral</h3>
+            <div class="card p-6">
+                <h3 class="text-lg font-bold mb-4" style="color: var(--color-text);">Información laboral</h3>
                 <div class="grid gap-5 sm:grid-cols-2">
                     <x-admin.form-input name="cargo" label="Cargo" placeholder="Ej. Recepcionista" />
                     <x-admin.form-input name="sucursal_id" type="select" label="Sucursal">
@@ -42,12 +42,12 @@
                 </div>
             </div>
 
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Cuenta de acceso</h3>
-                <p class="text-sm text-gray-500 mb-4">Opcional: crea una cuenta de usuario para que el empleado acceda al sistema.</p>
+            <div class="card p-6">
+                <h3 class="text-lg font-bold mb-4" style="color: var(--color-text);">Cuenta de acceso</h3>
+                <p class="text-sm mb-4" style="color: var(--color-muted);">Opcional: crea una cuenta de usuario para que el empleado acceda al sistema.</p>
                 <label class="inline-flex items-center gap-2 mb-5">
                     <input type="checkbox" name="crear_usuario" value="1" id="crear_usuario" @checked(old('crear_usuario')) class="rounded border-gray-300 text-brand-red focus:ring-brand-red">
-                    <span class="text-sm font-medium text-gray-700">Crear cuenta de acceso</span>
+                    <span class="text-sm font-medium" style="color: var(--color-text);">Crear cuenta de acceso</span>
                 </label>
                 <div id="user-fields" class="space-y-5 {{ old('crear_usuario') ? '' : 'hidden' }}">
                     <div class="grid gap-5 sm:grid-cols-2">
@@ -71,7 +71,7 @@
                 <button type="submit" class="rounded-xl bg-brand-red px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-red/25 transition hover:bg-brand-red-dark">
                     Guardar empleado
                 </button>
-                <a href="{{ route('admin.empleados.index') }}" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                <a href="{{ route('admin.empleados.index') }}" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold transition hover-surface" style="color: var(--color-text);">
                     Cancelar
                 </a>
             </div>

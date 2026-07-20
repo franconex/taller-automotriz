@@ -1,149 +1,176 @@
 @extends('layouts.admin')
 
 @section('title', 'Dashboard')
-
-@section('page-title', 'Dashboard administrativo')
+@section('page-title', 'Dashboard')
 
 @section('content')
-    <section>
-        <div class="rounded-2xl bg-gradient-to-r from-[#111827] to-[#1F2937] p-6 text-white shadow-lg sm:p-8">
-            <p class="text-sm font-medium text-red-300">Panel de control</p>
-            <h2 class="mt-2 text-2xl font-bold sm:text-3xl">Bienvenido, {{ auth()->user()->nombre }}</h2>
-            <p class="mt-3 max-w-2xl text-sm leading-6 text-gray-300 sm:text-base">
-                Desde este panel podrás administrar usuarios, empleados, roles, permisos, sucursales y consultar la actividad del sistema.
-            </p>
-        </div>
+    <div class="mb-6">
+        <p class="text-sm" style="color: var(--color-muted);">Bienvenido, <span class="font-semibold" style="color: var(--color-text);">{{ auth()->user()->nombre }}</span></p>
+    </div>
 
-        @if ($alertas->isNotEmpty())
-            @foreach ($alertas as $alerta)
-                <x-admin.alert type="warning">{{ $alerta }}</x-admin.alert>
-            @endforeach
-        @endif
-
-        <div class="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Usuarios activos</p>
-                        <p class="mt-3 text-3xl font-bold text-gray-900">{{ $usuariosActivos }}</p>
-                        <p class="mt-2 text-xs text-gray-400">{{ $usuariosInactivos }} inactivo(s)</p>
-                    </div>
-                    <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-brand-red">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7-1 2 2 4-4"/></svg>
-                    </span>
-                </div>
-            </article>
-            <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Empleados</p>
-                        <p class="mt-3 text-3xl font-bold text-gray-900">{{ $totalEmpleados }}</p>
-                        <p class="mt-2 text-xs text-gray-400">Personal registrado</p>
-                    </div>
-                    <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-brand-red">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-7 7a7 7 0 0 1 14 0"/></svg>
-                    </span>
-                </div>
-            </article>
-            <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Sucursales</p>
-                        <p class="mt-3 text-3xl font-bold text-gray-900">{{ $sucursalesActivas }}</p>
-                        <p class="mt-2 text-xs text-gray-400">Sucursales activas</p>
-                    </div>
-                    <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-brand-red">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21V5l8-2v18M4 9h8M4 13h8M4 17h8m4 4V9h4v12"/></svg>
-                    </span>
-                </div>
-            </article>
-            <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Roles</p>
-                        <p class="mt-3 text-3xl font-bold text-gray-900">{{ $totalRoles }}</p>
-                        <p class="mt-2 text-xs text-gray-400">Roles configurados</p>
-                    </div>
-                    <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-brand-red">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3 4 6v5c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V6l-8-3Z"/></svg>
-                    </span>
-                </div>
-            </article>
-        </div>
-
-        <div class="mt-6 grid gap-6 xl:grid-cols-3">
-            <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm xl:col-span-2">
-                <h3 class="text-lg font-bold text-gray-900">Actividad reciente</h3>
-                @if ($actividadReciente->isNotEmpty())
-                    <div class="mt-4 space-y-3">
-                        @foreach ($actividadReciente as $log)
-                            <div class="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3">
-                                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-red/10 text-brand-red text-xs font-bold">
-                                    {{ strtoupper(substr($log->usuario?->nombre ?? 'S', 0, 1)) }}
-                                </span>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900">
-                                        {{ $log->usuario?->nombre ?? 'Sistema' }}
-                                        <span class="font-normal text-gray-500">— {{ $log->accion }}</span>
-                                    </p>
-                                    <p class="text-xs text-gray-400 mt-0.5">
-                                        {{ $log->entidad_afectada }}
-                                        @if ($log->detalle)
-                                            · {{ $log->detalle }}
-                                        @endif
-                                    </p>
-                                </div>
-                                <time class="text-xs text-gray-400 whitespace-nowrap">{{ $log->created_at->diffForHumans() }}</time>
-                            </div>
+    {{-- Alertas --}}
+    @if ($alertas->isNotEmpty())
+        <div class="mb-6 rounded-lg border px-4 py-3" style="background-color: #FFFBEB; border-color: #FDE68A; color: #92400E;">
+            <div class="flex items-start gap-2">
+                <svg class="mt-0.5 h-4 w-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <div>
+                    <p class="text-sm font-medium">Alertas del sistema</p>
+                    <ul class="mt-1 list-inside list-disc space-y-0.5 text-sm">
+                        @foreach ($alertas as $alerta)
+                            <li>{{ $alerta }}</li>
                         @endforeach
-                    </div>
-                @else
-                    <div class="mt-6 rounded-xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center">
-                        <p class="font-medium text-gray-600">Todavía no hay actividad registrada.</p>
-                        <p class="mt-1 text-sm text-gray-400">Los cambios en el sistema aparecerán aquí.</p>
-                    </div>
-                @endif
-            </section>
-
-            <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-gray-900">Últimos accesos</h3>
-                @if ($ultimosAccesos->isNotEmpty())
-                    <div class="mt-4 space-y-3">
-                        @foreach ($ultimosAccesos as $acceso)
-                            <div class="flex items-center gap-3 py-2">
-                                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 text-sm font-bold">
-                                    {{ strtoupper(substr($acceso->nombre, 0, 1)) }}
-                                </span>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 truncate">{{ $acceso->nombre }}</p>
-                                    <p class="text-xs text-gray-400">{{ $acceso->rol->nombre }}</p>
-                                </div>
-                                <span class="text-xs text-gray-400">{{ $acceso->ultimo_acceso?->diffForHumans() ?? 'Nunca' }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="mt-6 rounded-xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center">
-                        <p class="font-medium text-gray-600">Sin accesos registrados.</p>
-                    </div>
-                @endif
-
-                <h3 class="mt-8 text-lg font-bold text-gray-900">Acciones rápidas</h3>
-                <div class="mt-4 space-y-3">
-                    <a href="{{ route('admin.usuarios.create') }}" class="flex w-full items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
-                        Crear usuario <span>→</span>
-                    </a>
-                    <a href="{{ route('admin.empleados.create') }}" class="flex w-full items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
-                        Registrar empleado <span>→</span>
-                    </a>
-                    <a href="{{ route('admin.roles.index') }}" class="flex w-full items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
-                        Gestionar roles <span>→</span>
-                    </a>
-                    <a href="{{ route('admin.sucursales.create') }}" class="flex w-full items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
-                        Nueva sucursal <span>→</span>
-                    </a>
+                    </ul>
                 </div>
-            </section>
+            </div>
         </div>
-    </section>
+    @endif
+
+    {{-- SECCIÓN 1: Indicadores --}}
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div class="card px-4 py-3.5">
+            <p class="text-xs font-medium" style="color: var(--color-muted);">Usuarios activos</p>
+            <p class="mt-0.5 text-xl font-bold" style="color: var(--color-text);">{{ $usuariosActivos }}</p>
+            @if ($usuariosInactivos > 0)
+                <p class="text-xs" style="color: var(--color-muted);">{{ $usuariosInactivos }} inactivo(s)</p>
+            @endif
+        </div>
+        <div class="card px-4 py-3.5">
+            <p class="text-xs font-medium" style="color: var(--color-muted);">Empleados</p>
+            <p class="mt-0.5 text-xl font-bold" style="color: var(--color-text);">{{ $totalEmpleados }}</p>
+        </div>
+        <div class="card px-4 py-3.5">
+            <p class="text-xs font-medium" style="color: var(--color-muted);">Clientes</p>
+            <p class="mt-0.5 text-xl font-bold" style="color: var(--color-text);">{{ $totalClientes }}</p>
+        </div>
+        <div class="card px-4 py-3.5">
+            <p class="text-xs font-medium" style="color: var(--color-muted);">Sucursales</p>
+            <p class="mt-0.5 text-xl font-bold" style="color: var(--color-text);">{{ $sucursalesActivas }}</p>
+        </div>
+        <div class="card px-4 py-3.5">
+            <p class="text-xs font-medium" style="color: var(--color-muted);">Roles</p>
+            <p class="mt-0.5 text-xl font-bold" style="color: var(--color-text);">{{ $totalRoles }}</p>
+        </div>
+        <div class="card px-4 py-3.5">
+            <p class="text-xs font-medium" style="color: var(--color-muted);">Órdenes</p>
+            <p class="mt-0.5 text-xl font-bold" style="color: var(--color-text);">—</p>
+        </div>
+    </div>
+
+    {{-- SECCIÓN 2: Gráficos + Actividad --}}
+    <div class="mt-5 grid gap-5 xl:grid-cols-3">
+        {{-- Gráfico --}}
+        <div class="card xl:col-span-2">
+            <div class="card-header">Órdenes por estado</div>
+            <div class="p-5">
+                <canvas id="ordenesChart" height="180"></canvas>
+            </div>
+        </div>
+
+        {{-- Actividad reciente --}}
+        <div class="card">
+            <div class="card-header">Actividad reciente</div>
+            <div class="divide-y" style="border-color: var(--color-border);">
+                @forelse ($actividadReciente as $log)
+                    <div class="flex items-center gap-3 px-4 py-2.5 text-sm">
+                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold" style="color: var(--color-muted); background-color: var(--color-border);">
+                            {{ strtoupper(substr($log->usuario?->nombre ?? 'S', 0, 1)) }}
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <span class="font-medium" style="color: var(--color-text);">{{ $log->usuario?->nombre ?? 'Sistema' }}</span>
+                            <span style="color: var(--color-muted);">— {{ $log->accion }}</span>
+                        </div>
+                        <span class="shrink-0 text-xs" style="color: var(--color-muted);">{{ $log->created_at->diffForHumans() }}</span>
+                    </div>
+                @empty
+                    <div class="px-4 py-8 text-center text-sm" style="color: var(--color-muted);">Sin actividad registrada.</div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
+    {{-- SECCIÓN 3: Últimos accesos + Acciones rápidas --}}
+    <div class="mt-5 grid gap-5 xl:grid-cols-2">
+        <div class="card">
+            <div class="card-header">Últimos accesos</div>
+            @if ($ultimosAccesos->isNotEmpty())
+                <div class="divide-y px-4" style="border-color: var(--color-border);">
+                    @foreach ($ultimosAccesos as $acceso)
+                        <div class="flex items-center gap-3 py-2.5 text-sm">
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold" style="color: var(--color-muted); background-color: var(--color-border);">{{ strtoupper(substr($acceso->nombre, 0, 1)) }}</span>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate font-medium" style="color: var(--color-text);">{{ $acceso->nombre }}</p>
+                                <p class="text-xs" style="color: var(--color-muted);">{{ $acceso->rol->nombre }}</p>
+                            </div>
+                            <span class="shrink-0 text-xs" style="color: var(--color-muted);">{{ $acceso->ultimo_acceso?->diffForHumans() ?? 'Nunca' }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="px-4 py-8 text-center text-sm" style="color: var(--color-muted);">Sin accesos registrados.</div>
+            @endif
+        </div>
+
+        <div class="card">
+            <div class="card-header">Acciones rápidas</div>
+            <div class="p-3 space-y-1">
+                <a href="{{ route('admin.clientes.create') }}" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition" style="color: var(--color-text);" hover="background-color: var(--color-border)">
+                    <svg class="h-4 w-4" style="color: var(--color-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    Registrar cliente
+                </a>
+                <a href="{{ route('admin.empleados.create') }}" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition" style="color: var(--color-text);">
+                    <svg class="h-4 w-4" style="color: var(--color-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Registrar empleado
+                </a>
+                <a href="#" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition" style="color: var(--color-text);">
+                    <svg class="h-4 w-4" style="color: var(--color-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    Nueva orden
+                </a>
+                <a href="#" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition" style="color: var(--color-text);">
+                    <svg class="h-4 w-4" style="color: var(--color-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Nueva cita
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {{-- SECCIÓN 4: Últimos registros --}}
+    <div class="mt-5 grid gap-5 xl:grid-cols-2">
+        <div class="card">
+            <div class="card-header">Últimos clientes</div>
+            @if ($ultimosRegistros['clientes']->isNotEmpty())
+                <div class="divide-y px-4">
+                    @foreach ($ultimosRegistros['clientes'] as $c)
+                        <div class="flex items-center gap-3 py-2.5 text-sm">
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold" style="color: var(--color-muted); background-color: var(--color-border);">{{ strtoupper(substr($c->nombre, 0, 1)) }}</span>
+                            <span class="font-medium" style="color: var(--color-text);">{{ $c->nombre }} {{ $c->apellido }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="px-4 py-6 text-center text-sm" style="color: var(--color-muted);">Sin clientes registrados.</div>
+            @endif
+        </div>
+
+        <div class="card">
+            <div class="card-header">Últimos usuarios</div>
+            @if ($ultimosRegistros['usuarios']->isNotEmpty())
+                <div class="divide-y px-4">
+                    @foreach ($ultimosRegistros['usuarios'] as $u)
+                        <div class="flex items-center gap-3 py-2.5 text-sm">
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold" style="color: var(--color-muted); background-color: var(--color-border);">{{ strtoupper(substr($u->nombre, 0, 1)) }}</span>
+                            <div class="min-w-0 flex-1">
+                                <span class="font-medium" style="color: var(--color-text);">{{ $u->nombre }}</span>
+                                <span class="text-xs" style="color: var(--color-muted);">· {{ $u->email }}</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="px-4 py-6 text-center text-sm" style="color: var(--color-muted);">Sin usuarios registrados.</div>
+            @endif
+        </div>
+    </div>
+
+    {{-- Chart.js script --}}
+    <x-admin.vite-assets :entry="['resources/js/charts.js']" />
 @endsection

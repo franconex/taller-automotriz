@@ -23,6 +23,7 @@ class User extends Authenticatable
         'estado',
         'ultimo_acceso',
         'debe_cambiar_password',
+        'tema_preferido',
     ];
 
     protected $hidden = [
@@ -37,6 +38,7 @@ class User extends Authenticatable
             'ultimo_acceso' => 'datetime',
             'estado' => 'boolean',
             'debe_cambiar_password' => 'boolean',
+            'tema_preferido' => 'string',
             'password' => 'hashed',
         ];
     }

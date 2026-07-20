@@ -10,8 +10,8 @@
             @csrf
             @method('PUT')
 
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Datos del usuario</h3>
+            <div class="card p-6">
+                <h3 class="text-lg font-bold mb-4" style="color: var(--color-text);">Datos del usuario</h3>
 
                 <div class="grid gap-5 sm:grid-cols-2">
                     <x-admin.form-input name="nombre" label="Nombre completo" :value="$usuario->nombre" :required="true" />
@@ -34,7 +34,7 @@
                 <div class="mt-5">
                     <label class="inline-flex items-center gap-2">
                         <input type="checkbox" name="estado" value="1" @checked($usuario->estado) class="rounded border-gray-300 text-brand-red focus:ring-brand-red">
-                        <span class="text-sm text-gray-700">Usuario activo</span>
+                        <span class="text-sm" style="color: var(--color-text);">Usuario activo</span>
                     </label>
                 </div>
             </div>
@@ -43,15 +43,15 @@
                 <button type="submit" class="rounded-xl bg-brand-red px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-red/25 transition hover:bg-brand-red-dark">
                     Actualizar usuario
                 </button>
-                <a href="{{ route('admin.usuarios.index') }}" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                <a href="{{ route('admin.usuarios.index') }}" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold transition hover-surface" style="color: var(--color-text);">
                     Cancelar
                 </a>
             </div>
         </form>
 
-        <div class="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6">
-            <h3 class="text-lg font-bold text-red-800 mb-2">Restablecer contraseña</h3>
-            <p class="text-sm text-red-600 mb-4">Se generará una nueva contraseña temporal. El usuario deberá cambiarla en su próximo inicio de sesión.</p>
+        <div class="mt-8 rounded-2xl border border-red-200 p-6" style="background-color: #FEF2F2;">
+            <h3 class="text-lg font-bold mb-2" style="color: #991B1B;">Restablecer contraseña</h3>
+            <p class="text-sm mb-4" style="color: #DC2626;">Se generará una nueva contraseña temporal. El usuario deberá cambiarla en su próximo inicio de sesión.</p>
             <form method="POST" action="{{ route('admin.usuarios.password', $usuario) }}" onsubmit="return confirm('¿Restablecer la contraseña de {{ $usuario->nombre }}?')">
                 @csrf
                 @method('PUT')
@@ -59,7 +59,7 @@
                     <x-admin.form-input name="password" type="password" label="Nueva contraseña" :required="true" placeholder="Mín. 8 caracteres" />
                     <x-admin.form-input name="password_confirmation" type="password" label="Confirmar" :required="true" placeholder="Repite la contraseña" />
                 </div>
-                <button type="submit" class="mt-3 rounded-xl border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100">
+                <button type="submit" class="mt-3 rounded-xl border border-red-300 px-4 py-2 text-sm font-semibold transition hover-surface" style="color: var(--color-text);">
                     Restablecer contraseña
                 </button>
             </form>

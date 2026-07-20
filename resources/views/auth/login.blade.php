@@ -9,13 +9,13 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&family=montserrat:700,800,900&display=swap" rel="stylesheet" />
 
-    @vite(['resources/css/login.css', 'resources/js/app.js'])
+    <x-admin.vite-assets :entry="['resources/css/login.css', 'resources/js/app.js']" />
 </head>
 <body>
 
 <div class="login-wrapper">
 
-    <div class="login-left" style="background-image: url('{{ asset('img/login.png') }}');">
+    <div class="login-left" style="background-image: url('/img/login.png');">
         <div class="login-left-decoration"></div>
     </div>
 
@@ -23,7 +23,7 @@
         <div class="login-card">
 
             <div class="login-card-header">
-                <img src="{{ asset('img/logo.png') }}" alt="Taller Pro" class="login-card-logo">
+                <img src="/img/logo.png" alt="Taller Pro" class="login-card-logo">
                 <h2 class="login-card-title">Acceso al personal</h2>
                 <p class="login-card-subtitle">
                     Ingresa con las credenciales asignadas por el administrador.

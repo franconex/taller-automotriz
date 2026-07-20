@@ -10,8 +10,8 @@
             @csrf
             @method('PUT')
 
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Datos personales</h3>
+            <div class="card p-6">
+                <h3 class="text-lg font-bold mb-4" style="color: var(--color-text);">Datos personales</h3>
                 <div class="grid gap-5 sm:grid-cols-2">
                     <x-admin.form-input name="nombre" label="Nombre" :value="$empleado->nombre" :required="true" />
                     <x-admin.form-input name="apellido" label="Apellido" :value="$empleado->apellido" :required="true" />
@@ -25,8 +25,8 @@
                 </div>
             </div>
 
-            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Información laboral</h3>
+            <div class="card p-6">
+                <h3 class="text-lg font-bold mb-4" style="color: var(--color-text);">Información laboral</h3>
                 <div class="grid gap-5 sm:grid-cols-2">
                     <x-admin.form-input name="cargo" label="Cargo" :value="$empleado->cargo" />
                     <x-admin.form-input name="sucursal_id" type="select" label="Sucursal">
@@ -44,7 +44,7 @@
                 <div class="mt-5">
                     <label class="inline-flex items-center gap-2">
                         <input type="checkbox" name="estado" value="1" @checked($empleado->estado) class="rounded border-gray-300 text-brand-red focus:ring-brand-red">
-                        <span class="text-sm text-gray-700">Empleado activo</span>
+                        <span class="text-sm" style="color: var(--color-text);">Empleado activo</span>
                     </label>
                 </div>
             </div>
@@ -53,16 +53,16 @@
                 <button type="submit" class="rounded-xl bg-brand-red px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-red/25 transition hover:bg-brand-red-dark">
                     Actualizar empleado
                 </button>
-                <a href="{{ route('admin.empleados.index') }}" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                <a href="{{ route('admin.empleados.index') }}" class="rounded-xl border border-gray-300 px-6 py-3 text-sm font-semibold transition hover-surface" style="color: var(--color-text);">
                     Cancelar
                 </a>
             </div>
         </form>
 
         @if ($empleado->user)
-            <div class="rounded-2xl border border-brand-red/20 bg-red-50 p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Cuenta de acceso</h3>
-                <p class="text-sm text-gray-600 mb-4">
+            <div class="rounded-2xl border p-6" style="border-color: rgba(var(--color-brand-red), 0.2); background-color: #FEF2F2;">
+                <h3 class="text-lg font-bold mb-4" style="color: var(--color-text);">Cuenta de acceso</h3>
+                <p class="text-sm mb-4" style="color: var(--color-muted);">
                     Usuario: <strong>{{ $empleado->user->username }}</strong> · 
                     Email: <strong>{{ $empleado->user->email }}</strong> ·
                     Rol actual: <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">{{ $empleado->user->rol->nombre ?? 'Sin rol' }}</span>
@@ -72,7 +72,7 @@
                     @csrf
                     @method('PATCH')
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Cambiar rol</label>
+                        <label class="block text-sm font-semibold mb-1.5" style="color: var(--color-text);">Cambiar rol</label>
                         <select name="rol_id" class="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/10">
                             @foreach ($roles as $rol)
                                 <option value="{{ $rol->id }}" @selected($empleado->user->rol_id === $rol->id)>{{ $rol->nombre }}</option>
