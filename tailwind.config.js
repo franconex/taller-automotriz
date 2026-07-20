@@ -14,6 +14,7 @@ export default {
             fontFamily: {
                 sans: ['Inter', 'Figtree', ...defaultTheme.fontFamily.sans],
                 montserrat: ['Montserrat', 'sans-serif'],
+                manrope: ['Manrope', 'sans-serif'],
             },
             colors: {
                 brand: {

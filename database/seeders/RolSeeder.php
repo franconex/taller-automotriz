@@ -12,27 +12,23 @@ class RolSeeder extends Seeder
      */
     public function run(): void
     {
-        Rol::firstOrCreate([
+        Rol::create([
             'nombre' => 'Administrador',
-        ], [
             'descripcion' => 'Gestiona todo el sistema'
         ]);
 
-        Rol::firstOrCreate([
+        Rol::create([
             'nombre' => 'Gerente',
-        ], [
             'descripcion' => 'Gestiona reportes'
         ]);
 
-        Rol::firstOrCreate([
+        Rol::create([
             'nombre' => 'Recepcionista',
-        ], [
             'descripcion' => 'Gestiona clientes y citas'
         ]);
 
-        Rol::firstOrCreate([
+        Rol::create([
             'nombre' => 'Mecanico',
-        ], [
             'descripcion' => 'Gestiona órdenes asignadas'
         ]);
     }

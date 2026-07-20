@@ -1,13 +1,12 @@
 <?php
-
+use App\Models\User;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::view('/', 'inicio')->name('inicio');
 
 Route::middleware('auth')->group(function () {
+
 
     Route::get('/dashboard', function () {
         $roleRoutes = [
@@ -17,7 +16,7 @@ Route::middleware('auth')->group(function () {
             'Mecanico'      => 'mecanico.dashboard',
         ];
 
-        $roleName = auth()->user()->rol?->nombre;
+        $roleName = auth('web')->user()?->rol?->nombre;
 
         if (! $roleName || ! array_key_exists($roleName, $roleRoutes)) {
             abort(403, 'Rol desconocido.');
@@ -26,9 +25,7 @@ Route::middleware('auth')->group(function () {
         return redirect()->route($roleRoutes[$roleName]);
     })->name('dashboard');
 
-    Route::get('/admin', function () {
-        return view('admin.dashboard');
-    })->middleware(['rol:Administrador'])->name('admin.dashboard');
+    Route::get('/admin', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->middleware(['rol:Administrador'])->name('admin.dashboard');
 
     Route::get('/gerente', function () {
         return view('gerente.dashboard');

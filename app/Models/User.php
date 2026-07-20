@@ -16,6 +16,7 @@ class User extends Authenticatable
     protected $fillable = [
         'rol_id',
         'nombre',
+        'name',
         'username',
         'email',
         'password',
@@ -36,6 +37,16 @@ class User extends Authenticatable
             'estado' => 'boolean',
             'password' => 'hashed',
         ];
+    }
+
+    public function getNameAttribute(): ?string
+    {
+        return $this->nombre;
+    }
+
+    public function setNameAttribute(string $value): void
+    {
+        $this->attributes['nombre'] = $value;
     }
 
     public function rol(): BelongsTo

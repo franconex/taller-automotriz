@@ -1,0 +1,46 @@
+:root{--red:#E31E24;--red-dark:#B91C1C;--ink:#101114;--line:#e7e9ed;--radius:18px}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
+body:not(.menu-open){overflow-x:hidden}
+body.menu-open{overflow:hidden}
+
+@media(max-width:1023px){
+.nav-menu{position:fixed;inset:68px 0 auto;background:#fff;padding:20px 20px 30px;display:flex;flex-direction:column;align-items:stretch;gap:0;transform:translateY(-130%);opacity:0;transition:transform .3s,opacity .3s;box-shadow:0 20px 35px rgba(0,0,0,.1)}
+.nav-menu.open{transform:none;opacity:1}
+.nav-menu>a{padding:12px 0;border-bottom:1px solid var(--line);color:var(--ink)}
+.nav-menu a.btn{margin-top:10px;width:100%;text-align:center}
+}
+
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+@keyframes bounce{50%{transform:translateY(7px)}}
+
+.hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,5,7,.92) 0%,rgba(4,5,7,.7) 40%,rgba(4,5,7,.12) 76%),linear-gradient(0deg,rgba(4,5,7,.35),transparent 50%)}
+
+.service-icon{position:absolute;z-index:2;right:18px;bottom:0;transform:translateY(50%);width:48px;height:48px;background:var(--red);color:#fff;border-radius:12px;display:grid;place-items:center;font-size:1.05rem;box-shadow:0 8px 20px rgba(226,27,35,.3)}
+
+.service-image::after{content:"";position:absolute;inset:55% 0 0;background:linear-gradient(transparent,rgba(0,0,0,.35))}
+
+.cta-strip::after{content:"";position:absolute;right:-100px;top:-200px;width:500px;height:500px;border:80px solid rgba(255,255,255,.06);border-radius:50%}
+
+.whatsapp-float{position:fixed;z-index:45;right:24px;bottom:24px}
+
+.scroll-down{animation:bounce 2s infinite}
+
+.form-card input:focus,.form-card select:focus,.form-card textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(226,27,35,.1);background:#fff}
+.form-card .invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(226,27,35,.1)}
+.form-card label{font-size:.74rem;font-weight:800}
+.form-card input,.form-card select,.form-card textarea{font-size:.82rem}
+
+@media(max-width:640px){
+.whatsapp-float{right:14px;bottom:14px}
+.service-icon{width:42px;height:42px;right:14px}
+.hero-bg::after{background:linear-gradient(90deg,rgba(4,5,7,.95),rgba(4,5,7,.65)),linear-gradient(0deg,rgba(4,5,7,.7),transparent)}
+}
+
+@media(prefers-reduced-motion:reduce){
+html{scroll-behavior:auto}
+.reveal{opacity:1;transform:none;transition:none}
+.scroll-down{animation:none}
+}
