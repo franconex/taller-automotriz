@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
@@ -22,6 +22,7 @@ class User extends Authenticatable
         'password',
         'estado',
         'ultimo_acceso',
+        'debe_cambiar_password',
     ];
 
     protected $hidden = [
@@ -35,6 +36,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'ultimo_acceso' => 'datetime',
             'estado' => 'boolean',
+            'debe_cambiar_password' => 'boolean',
             'password' => 'hashed',
         ];
     }
@@ -56,6 +58,26 @@ class User extends Authenticatable
 
     public function empleado(): HasOne
     {
-        return $this->hasOne(Empleado::class);
+        return $this->hasOne(empleado::class);
+    }
+
+    public function tieneRol(string $rol): bool
+    {
+        return $this->rol?->nombre === $rol;
+    }
+
+    public function tienePermiso(string $codigo): bool
+    {
+        if (! $this->rol || ! $this->rol->estado) {
+            return false;
+        }
+
+        if ($this->rol->relationLoaded('permisos')) {
+            return $this->rol->permisos->contains('codigo', $codigo);
+        }
+
+        return $this->rol->permisos()
+            ->where('codigo', $codigo)
+            ->exists();
     }
 }

@@ -54,9 +54,9 @@ class AuthenticatedSessionController extends Controller
     {
         $map = [
             'Administrador' => 'admin.dashboard',
-            'Gerente'       => 'gerente.dashboard',
-            'Recepcionista'  => 'recepcionista.dashboard',
-            'Mecanico'      => 'mecanico.dashboard',
+            'Gerente' => 'gerente.dashboard',
+            'Recepcionista' => 'recepcionista.dashboard',
+            'Mecanico' => 'mecanico.dashboard',
         ];
 
         $roleName = $user->rol?->nombre;

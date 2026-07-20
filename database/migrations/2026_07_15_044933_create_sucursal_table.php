@@ -6,10 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-   public function up(): void{
-    Schema::create('sucursales', function(Blueprint $table)
+    public function up(): void
     {
-                    $table->id();
+        Schema::create('sucursales', function (Blueprint $table) {
+            $table->id();
             $table->string('nombre', 100)->unique();
             $table->string('direccion', 200);
             $table->string('telefono', 20)->nullable();
@@ -21,9 +21,10 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-    });
-   }
-       public function down(): void
+        });
+    }
+
+    public function down(): void
     {
         Schema::dropIfExists('sucursales');
     }

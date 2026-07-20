@@ -15,70 +15,91 @@
         </button>
     </div>
 
+    @php $user = auth()->user(); @endphp
+
     <nav class="flex-1 overflow-y-auto px-4 py-6" aria-label="Menú lateral">
         <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Principal</p>
 
-        <a href="{{ route('admin.dashboard') }}"
-            class="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition
-                {{ request()->routeIs('admin.dashboard')
-                    ? 'bg-brand-red text-white shadow-lg shadow-red-950/30'
-                    : 'text-gray-300 hover:bg-white/10 hover:text-white' }}"
-            aria-current="{{ request()->routeIs('admin.dashboard') ? 'page' : 'false' }}">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12 12 3l9 9M5 10v10h5v-6h4v6h5V10"/></svg>
+        <x-admin.nav-link href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')" icon="dashboard">
             Dashboard
-        </a>
+        </x-admin.nav-link>
+
+        <p class="mb-3 mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Personal</p>
+
+        @can('empleados.ver')
+            <x-admin.nav-link href="{{ route('admin.empleados.index') }}" :active="request()->routeIs('admin.empleados.*')" icon="employee">
+                Empleados
+            </x-admin.nav-link>
+        @endcan
+
+        @can('usuarios.ver')
+            <x-admin.nav-link href="{{ route('admin.usuarios.index') }}" :active="request()->routeIs('admin.usuarios.*')" icon="users">
+                Usuarios
+            </x-admin.nav-link>
+        @endcan
 
         <p class="mb-3 mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Gestión</p>
 
-        @php
-            $menuItems = [
-                ['texto' => 'Usuarios', 'icono' => 'users'],
-                ['texto' => 'Empleados', 'icono' => 'employee'],
-                ['texto' => 'Roles', 'icono' => 'shield'],
-                ['texto' => 'Permisos', 'icono' => 'key'],
-                ['texto' => 'Sucursales', 'icono' => 'building'],
-                ['texto' => 'Auditoría', 'icono' => 'document'],
-            ];
-        @endphp
+        @can('clientes.ver')
+            <x-admin.nav-link href="{{ route('admin.clientes.index') }}" :active="request()->routeIs('admin.clientes.*')" icon="users">
+                Clientes
+            </x-admin.nav-link>
+        @endcan
 
-        @foreach ($menuItems as $item)
-            <div class="group relative mb-1">
-                <button type="button" disabled
-                    class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-500 cursor-not-allowed"
-                    aria-disabled="true">
-                    <span class="flex h-5 w-5 items-center justify-center text-gray-600">
-                        @switch($item['icono'])
-                            @case('users')
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7-1 2 2 4-4"/></svg>
-                                @break
-                            @case('employee')
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm-7 7a7 7 0 0 1 14 0"/></svg>
-                                @break
-                            @case('shield')
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3 4 6v5c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V6l-8-3Z"/></svg>
-                                @break
-                            @case('key')
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a4 4 0 1 1-7.5 2H3v4h3v3h3v-3l2.5-2.5A4 4 0 0 1 15 7Z"/></svg>
-                                @break
-                            @case('building')
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21V5l8-2v18M4 9h8M4 13h8M4 17h8m4 4V9h4v12"/></svg>
-                                @break
-                            @default
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 3h9l3 3v15H6V3Zm3 6h6M9 13h6M9 17h4"/></svg>
-                        @endswitch
-                    </span>
-                    {{ $item['texto'] }}
-                </button>
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider text-gray-600 bg-gray-800/50 px-2 py-0.5 rounded-md">Próximamente</span>
-            </div>
-        @endforeach
+        @can('roles.ver')
+            <x-admin.nav-link href="{{ route('admin.roles.index') }}" :active="request()->routeIs('admin.roles.*')" icon="shield">
+                Roles y permisos
+            </x-admin.nav-link>
+        @endcan
+
+        @can('sucursales.ver')
+            <x-admin.nav-link href="{{ route('admin.sucursales.index') }}" :active="request()->routeIs('admin.sucursales.*')" icon="building">
+                Sucursales
+            </x-admin.nav-link>
+        @endcan
+
+        @can('especialidades.ver')
+            <x-admin.nav-link href="{{ route('admin.especialidades.index') }}" :active="request()->routeIs('admin.especialidades.*')" icon="star">
+                Especialidades
+            </x-admin.nav-link>
+        @endcan
+
+        @can('tipo_servicios.ver')
+            <x-admin.nav-link href="{{ route('admin.tipo-servicios.index') }}" :active="request()->routeIs('admin.tipo-servicios.*')" icon="service">
+                Tipos de Servicio
+            </x-admin.nav-link>
+        @endcan
+
+        @can('metodos_pago.ver')
+            <x-admin.nav-link href="{{ route('admin.metodos-pago.index') }}" :active="request()->routeIs('admin.metodos-pago.*')" icon="payment">
+                Métodos de Pago
+            </x-admin.nav-link>
+        @endcan
+
+        <p class="mb-3 mt-8 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Monitoreo</p>
+
+        @can('auditoria.ver')
+            <x-admin.nav-link href="{{ route('admin.auditoria.index') }}" :active="request()->routeIs('admin.auditoria.*')" icon="document">
+                Auditoría
+            </x-admin.nav-link>
+        @endcan
+
+        @can('reportes.ver')
+            <x-admin.nav-link href="#" icon="document">
+                Reportes
+            </x-admin.nav-link>
+        @endcan
     </nav>
 
     <div class="border-t border-white/10 p-4">
         <div class="rounded-xl bg-white/5 p-4">
-            <p class="truncate text-sm font-semibold">{{ auth()->user()->nombre }}</p>
-            <p class="mt-1 truncate text-xs text-gray-400">{{ auth()->user()->email }}</p>
-            <p class="mt-3 inline-flex rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-300">{{ auth()->user()->rol->nombre }}</p>
+            <p class="truncate text-sm font-semibold">{{ $user->nombre }}</p>
+            <p class="mt-1 truncate text-xs text-gray-400">{{ $user->email }}</p>
+            <p class="mt-3 inline-flex rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-300">{{ $user->rol->nombre }}</p>
+            <a href="{{ route('admin.perfil.edit') }}" class="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs text-gray-300 transition hover:bg-white/10 hover:text-white">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0zm-4 7a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z"/></svg>
+                Mi perfil
+            </a>
         </div>
     </div>
 </aside>
