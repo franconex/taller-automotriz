@@ -171,6 +171,5 @@
         </div>
     </div>
 
-    {{-- Chart.js script --}}
-    <x-admin.vite-assets :entry="['resources/js/charts.js']" />
+    @vite(['resources/js/charts.js'])
 @endsection

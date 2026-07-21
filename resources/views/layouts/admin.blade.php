@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#111827">
     <title>@yield('title', 'Panel') - Taller Pro</title>
-    <x-admin.vite-assets :entry="['resources/css/app.css', 'resources/js/app.js']" />
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="antialiased font-sans" style="background-color: var(--color-bg); color: var(--color-text);">
     <div x-data="{ sidebarOpen: false }" class="min-h-screen">

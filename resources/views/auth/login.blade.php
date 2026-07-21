@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&family=montserrat:700,800,900&display=swap" rel="stylesheet" />
 
-    <x-admin.vite-assets :entry="['resources/css/login.css', 'resources/js/app.js']" />
+    @vite(['resources/css/login.css', 'resources/js/app.js'])
 </head>
 <body>
 
