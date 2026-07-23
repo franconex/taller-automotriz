@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -14,16 +13,15 @@ class User extends Authenticatable
     use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
+        'empleado_id',
+        'sucursal_id',
         'rol_id',
         'nombre',
-        'name',
         'username',
         'email',
         'password',
         'estado',
         'ultimo_acceso',
-        'debe_cambiar_password',
-        'tema_preferido',
     ];
 
     protected $hidden = [
@@ -36,50 +34,22 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'ultimo_acceso' => 'datetime',
-            'estado' => 'boolean',
-            'debe_cambiar_password' => 'boolean',
-            'tema_preferido' => 'string',
             'password' => 'hashed',
         ];
     }
 
-    public function getNameAttribute(): ?string
+    public function sucursal(): BelongsTo
     {
-        return $this->nombre;
-    }
-
-    public function setNameAttribute(string $value): void
-    {
-        $this->attributes['nombre'] = $value;
+        return $this->belongsTo(Sucursal::class);
     }
 
     public function rol(): BelongsTo
     {
-        return $this->belongsTo(Rol::class);
+        return $this->belongsTo(Role::class);
     }
 
-    public function empleado(): HasOne
+    public function empleado(): BelongsTo
     {
-        return $this->hasOne(empleado::class);
-    }
-
-    public function tieneRol(string $rol): bool
-    {
-        return $this->rol?->nombre === $rol;
-    }
-
-    public function tienePermiso(string $codigo): bool
-    {
-        if (! $this->rol || ! $this->rol->estado) {
-            return false;
-        }
-
-        if ($this->rol->relationLoaded('permisos')) {
-            return $this->rol->permisos->contains('codigo', $codigo);
-        }
-
-        return $this->rol->permisos()
-            ->where('codigo', $codigo)
-            ->exists();
+        return $this->belongsTo(Empleado::class);
     }
 }

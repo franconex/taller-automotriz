@@ -2,70 +2,88 @@
 
 namespace Database\Seeders;
 
-use App\Models\permisos;
-use App\Models\Rol;
+use App\Models\Permiso;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 class RolPermisoSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = Rol::where('nombre', 'Administrador')->first();
-        $gerente = Rol::where('nombre', 'Gerente')->first();
-        $recepcionista = Rol::where('nombre', 'Recepcionista')->first();
-        $mecanico = Rol::where('nombre', 'Mecanico')->first();
+        $admin = Role::where('nombre', 'Administrador')->first();
+        $gerente = Role::where('nombre', 'Gerente')->first();
+        $recepcionista = Role::where('nombre', 'Recepcionista')->first();
+        $mecanico = Role::where('nombre', 'Mecánico')->first();
 
-        if ($admin) {
-            $admin->permisos()->sync(
-                permisos::pluck('id')->toArray()
-            );
-        }
+        // Administrador: todos los permisos
+        $admin->permisos()->sync(Permiso::pluck('id'));
 
-        if ($gerente) {
-            $gerente->permisos()->sync(
-                permisos::whereIn('codigo', [
-                    'clientes.ver',
-                    'empleados.ver',
-                    'ordenes.ver',
-                    'pagos.ver',
-                    'reportes.ver',
-                    'sucursales.ver',
-                    'auditoria.ver',
-                ])->pluck('id')->toArray()
-            );
-        }
+        // Gerente: supervisión, reportes, órdenes, inventario, pagos, clientes
+        $gerente->permisos()->sync(
+            Permiso::whereIn('codigo', [
+                'dashboard.ver',
+                'sucursales.ver',
+                'usuarios.ver',
+                'roles.ver',
+                'clientes.ver',
+                'clientes.crear',
+                'clientes.editar',
+                'vehiculos.ver',
+                'vehiculos.crear',
+                'vehiculos.editar',
+                'citas.ver',
+                'citas.crear',
+                'citas.editar',
+                'citas.cancelar',
+                'ordenes.ver',
+                'ordenes.crear',
+                'ordenes.editar',
+                'ordenes.asignar',
+                'ordenes.actualizar_estado',
+                'ordenes.cancelar',
+                'ordenes.reabrir',
+                'inventario.ver',
+                'inventario.entrada',
+                'inventario.ajustar',
+                'pagos.ver',
+                'pagos.registrar',
+                'pagos.anular',
+                'reportes.ver',
+                'auditoria.ver',
+            ])->pluck('id')
+        );
 
-        if ($recepcionista) {
-            $recepcionista->permisos()->sync(
-                permisos::whereIn('codigo', [
-                    'clientes.ver',
-                    'clientes.crear',
-                    'clientes.editar',
-                    'vehiculos.ver',
-                    'vehiculos.crear',
-                    'vehiculos.editar',
-                    'citas.ver',
-                    'citas.crear',
-                    'citas.editar',
-                    'citas.confirmar',
-                    'citas.reprogramar',
-                    'citas.cancelar',
-                    'ordenes.ver',
-                    'ordenes.crear',
-                    'pagos.ver',
-                    'pagos.registrar',
-                ])->pluck('id')->toArray()
-            );
-        }
+        // Recepcionista: clientes, vehículos, citas, órdenes (crear), pagos (registrar)
+        $recepcionista->permisos()->sync(
+            Permiso::whereIn('codigo', [
+                'dashboard.ver',
+                'clientes.ver',
+                'clientes.crear',
+                'clientes.editar',
+                'vehiculos.ver',
+                'vehiculos.crear',
+                'vehiculos.editar',
+                'citas.ver',
+                'citas.crear',
+                'citas.editar',
+                'citas.cancelar',
+                'ordenes.ver',
+                'ordenes.crear',
+                'ordenes.editar',
+                'inventario.ver',
+                'pagos.ver',
+                'pagos.registrar',
+            ])->pluck('id')
+        );
 
-        if ($mecanico) {
-            $mecanico->permisos()->sync(
-                permisos::whereIn('codigo', [
-                    'ordenes.ver',
-                    'ordenes.actualizar_estado',
-                    'ordenes.registrar_diagnostico',
-                ])->pluck('id')->toArray()
-            );
-        }
+        // Mecánico: solo asignaciones, diagnóstico, servicios y repuestos
+        $mecanico->permisos()->sync(
+            Permiso::whereIn('codigo', [
+                'dashboard.ver',
+                'ordenes.ver',
+                'ordenes.actualizar_estado',
+                'inventario.ver',
+            ])->pluck('id')
+        );
     }
 }

@@ -3,28 +3,33 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Auditoria extends Model
 {
     protected $fillable = [
         'usuario_id',
         'accion',
-        'entidad_afectada',
+        'modulo',
+        'entidad_tipo',
         'entidad_id',
-        'valores_anteriores',
-        'valores_nuevos',
-        'detalle',
-        'direccion_ip',
-        'navegador',
-        'ruta',
+        'datos_anteriores',
+        'datos_nuevos',
+        'ip_address',
+        'user_agent',
+        'fecha_accion',
     ];
 
-    protected $casts = [
-        'valores_anteriores' => 'array',
-        'valores_nuevos' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'datos_anteriores' => 'array',
+            'datos_nuevos' => 'array',
+            'fecha_accion' => 'datetime',
+        ];
+    }
 
-    public function usuario()
+    public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id');
     }

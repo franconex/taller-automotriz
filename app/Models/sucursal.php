@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class sucursal extends Model
+class Sucursal extends Model
 {
-    use HasFactory;
     use SoftDeletes;
 
     protected $table = 'sucursales';
@@ -17,21 +16,32 @@ class sucursal extends Model
         'nombre',
         'direccion',
         'telefono',
-        'email',
         'horario_atencion',
-        'latitud',
-        'longitud',
         'estado',
     ];
 
-    protected $casts = [
-        'estado' => 'boolean',
-        'latitud' => 'decimal:8',
-        'longitud' => 'decimal:8',
-    ];
-
-    public function empleados()
+    public function empleados(): HasMany
     {
-        return $this->hasMany(empleado::class, 'sucursal_id');
+        return $this->hasMany(Empleado::class);
+    }
+
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function inventarios(): HasMany
+    {
+        return $this->hasMany(Inventario::class);
+    }
+
+    public function citas(): HasMany
+    {
+        return $this->hasMany(Cita::class);
+    }
+
+    public function ordenesTrabajo(): HasMany
+    {
+        return $this->hasMany(OrdenTrabajo::class);
     }
 }

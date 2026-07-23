@@ -3,13 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TipoServicio extends Model
 {
-    use SoftDeletes;
-
-    protected $table = 'tipo_servicios';
+    protected $table = 'tipos_servicio';
 
     protected $fillable = [
         'nombre',
@@ -17,7 +15,8 @@ class TipoServicio extends Model
         'estado',
     ];
 
-    protected $casts = [
-        'estado' => 'boolean',
-    ];
+    public function servicios(): HasMany
+    {
+        return $this->hasMany(Servicio::class);
+    }
 }

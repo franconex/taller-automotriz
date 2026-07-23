@@ -2,34 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\Rol;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 class RolSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        Rol::create([
-            'nombre' => 'Administrador',
-            'descripcion' => 'Gestiona todo el sistema',
-        ]);
+        $roles = [
+            ['nombre' => 'Administrador', 'descripcion' => 'Acceso completo al sistema', 'estado' => true],
+            ['nombre' => 'Gerente', 'descripcion' => 'Supervisión, reportes y autorizaciones', 'estado' => true],
+            ['nombre' => 'Recepcionista', 'descripcion' => 'Atención al cliente, citas y órdenes', 'estado' => true],
+            ['nombre' => 'Mecánico', 'descripcion' => 'Asignaciones, diagnóstico y servicios', 'estado' => true],
+        ];
 
-        Rol::create([
-            'nombre' => 'Gerente',
-            'descripcion' => 'Gestiona reportes',
-        ]);
-
-        Rol::create([
-            'nombre' => 'Recepcionista',
-            'descripcion' => 'Gestiona clientes y citas',
-        ]);
-
-        Rol::create([
-            'nombre' => 'Mecanico',
-            'descripcion' => 'Gestiona órdenes asignadas',
-        ]);
+        foreach ($roles as $rol) {
+            Role::firstOrCreate(['nombre' => $rol['nombre']], $rol);
+        }
     }
 }

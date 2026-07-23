@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Cliente extends Model
@@ -11,31 +11,39 @@ class Cliente extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'nombre',
-        'apellido',
+        'nombre_completo',
         'ci',
         'telefono',
         'email',
         'direccion',
-        'nit',
-        'razon_social',
-        'observaciones',
+        'fecha_registro',
         'estado',
-        'creado_por',
-        'actualizado_por',
     ];
 
-    protected $casts = [
-        'estado' => 'boolean',
-    ];
-
-    public function creador(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class, 'creado_por');
+        return [
+            'fecha_registro' => 'datetime',
+        ];
     }
 
-    public function actualizador(): BelongsTo
+    public function vehiculos(): HasMany
     {
-        return $this->belongsTo(User::class, 'actualizado_por');
+        return $this->hasMany(Vehiculo::class);
+    }
+
+    public function citas(): HasMany
+    {
+        return $this->hasMany(Cita::class);
+    }
+
+    public function ordenesTrabajo(): HasMany
+    {
+        return $this->hasMany(OrdenTrabajo::class);
+    }
+
+    public function comprobantes(): HasMany
+    {
+        return $this->hasMany(Comprobante::class);
     }
 }

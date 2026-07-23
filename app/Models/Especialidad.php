@@ -3,12 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Especialidad extends Model
 {
-    use SoftDeletes;
-
     protected $table = 'especialidades';
 
     protected $fillable = [
@@ -17,7 +15,8 @@ class Especialidad extends Model
         'estado',
     ];
 
-    protected $casts = [
-        'estado' => 'boolean',
-    ];
+    public function mecanicos(): HasMany
+    {
+        return $this->hasMany(Mecanico::class);
+    }
 }
