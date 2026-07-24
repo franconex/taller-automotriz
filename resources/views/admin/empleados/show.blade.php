@@ -12,7 +12,7 @@
 @section('content')
     <x-admin.page-header
         :title="$empleado->nombre_completo"
-        :description="$empleado->cargo . ' — ' . ($empleado->sucursal->nombre ?? 'Sin sucursal')">
+        :description="($empleado->rol->nombre ?? 'Sin rol') . ' — ' . ($empleado->sucursal->nombre ?? 'Sin sucursal')">
         <x-slot:actions>
             <a href="{{ route('admin.empleados.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
@@ -42,7 +42,16 @@
             <div class="admin-table-wrap p-4">
                 <h2 class="h6 fw-bold mb-3">Datos laborales</h2>
                 <dl class="admin-meta">
-                    <dt>Cargo</dt><dd>{{ $empleado->cargo }}</dd>
+                    <dt>Rol</dt>
+                    <dd>
+                        <x-admin.status-badge
+                            tone="info"
+                            icon="bi-shield-lock"
+                            :label="$empleado->rol->nombre ?? '—'" />
+                    </dd>
+                    @if ($empleado->cargo)
+                        <dt>Cargo</dt><dd>{{ $empleado->cargo }}</dd>
+                    @endif
                     <dt>Sucursal</dt><dd>{{ $empleado->sucursal->nombre ?? '—' }}</dd>
                     <dt>Fecha contratación</dt><dd>{{ $empleado->fecha_contratacion?->format('d/m/Y') ?? '—' }}</dd>
                     <dt>Estado</dt>
@@ -64,5 +73,28 @@
                 </dl>
             </div>
         </div>
+
+        @if ($empleado->mecanico)
+            <div class="col-12">
+                <div class="admin-table-wrap p-4">
+                    <h2 class="h6 fw-bold mb-3">
+                        <i class="bi bi-wrench-adjustable-circle me-1" aria-hidden="true"></i>
+                        Datos de mecánico
+                    </h2>
+                    <dl class="admin-meta">
+                        <dt>Especialidad</dt><dd>{{ $empleado->mecanico->especialidad->nombre ?? '—' }}</dd>
+                        <dt>Disponibilidad</dt>
+                        <dd>
+                            <x-admin.status-badge
+                                :tone="$empleado->mecanico->disponibilidad === 'disponible' ? 'success' : ($empleado->mecanico->disponibilidad === 'ocupado' ? 'warning' : 'neutral')"
+                                :label="ucfirst($empleado->mecanico->disponibilidad)" />
+                        </dd>
+                        @if ($empleado->mecanico->observaciones)
+                            <dt>Observaciones</dt><dd>{{ $empleado->mecanico->observaciones }}</dd>
+                        @endif
+                    </dl>
+                </div>
+            </div>
+        @endif
     </div>
 @endsection

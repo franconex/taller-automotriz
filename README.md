@@ -1,6 +1,6 @@
 # Taller Automotriz - Sistema de Gestión
 
-Sistema web para la gestión integral de un taller automotriz. Desarrollado con Laravel 12.
+Sistema web para la gestión integral de un taller automotriz. Desarrollado con Laravel 13.
 
 ## Roles del Sistema
 
@@ -43,9 +43,42 @@ Todos los usuarios comparten la contraseña: **`TallerPro2026!`**
 | Email | `mecanico@tallerpro.com` |
 | Rol | Mecánico |
 
-## Campo Administrador
+## Funcionalidades del Sistema
 
-El usuario administrador (`admin`) tiene el rol **Administrador** con todos los permisos del sistema habilitados. Las rutas del panel administrador están protegidas bajo el middleware `rol:Administrador` y se encuentran en el prefijo `/admin/*`. Cualquier usuario sin este rol no puede acceder a estas rutas, sin importar que esté autenticado.
+### Módulo de Citas (Calendario Interactivo)
+- Calendario FullCalendar con vistas **Día**, **Semana** y **Mes**
+- Vista semanal predeterminada con horario de 08:00 a 19:00
+- **Mini calendario** lateral para navegación rápida de fechas
+- Filtros por sucursal, servicio, mecánico y estado
+- Leyenda de estados con colores (Confirmada, Pendiente, Atendida, Cancelada, No asistió)
+- **Agendar cita** seleccionando un espacio en el calendario (precarga fecha y hora)
+- Auto-asignación de hora más cercana disponible (redondeo a 30 min)
+- **Detalle de cita** modal con acciones contextuales según estado
+- Reprogramar, confirmar, cancelar, marcar no asistió, convertir a orden
+- Validación de cruces de horario (vehículo y mecánico)
+- Tabla "Citas del Día" debajo del calendario
+- Lista de "Próximas Citas" en columna lateral
+- Solo mecánicos **disponibles** se muestran en el formulario
+- Validación client-side: no permite fechas/horas pasadas
+
+### Perfil de Usuario
+- Los usuarios heredan automáticamente datos del empleado (nombre, email, rol, sucursal)
+- El formulario de creación de usuario solo pide **empleado + username + password**
+- Página **"Mi perfil"** con foto, datos del empleado (solo lectura), username editable y cambio de contraseña
+- La foto se muestra en el navbar en lugar de las iniciales
+
+### Empleados y Usuarios
+- Los empleados tienen un **rol predefinido** (Administrador, Gerente, Recepcionista, Mecánico)
+- Un rol puede tener **muchos empleados** (relación 1:N)
+- Al asignar rol "Mecánico", se piden especialidad y disponibilidad
+- Al cambiar el rol de Mecánico a otro, se elimina el registro de mecánico
+- Al dar de baja un empleado (toggle), su **usuario** también se desactiva automáticamente
+- Un usuario con empleado inactivo **no puede iniciar sesión**
+
+### Métodos de Pago
+- Solo 3 métodos fijos: **Efectivo** (no editable), **Tarjeta** (editable), **QR** (editable)
+- No se pueden crear ni eliminar métodos de pago
+- Efectivo no se puede desactivar
 
 ## Requisitos
 
@@ -77,6 +110,9 @@ php artisan key:generate
 # Ejecutar migraciones y seeders
 php artisan migrate --seed
 
+# Crear enlace simbólico para almacenamiento
+php artisan storage:link
+
 # Iniciar servidor de desarrollo
 php artisan serve
 ```
@@ -87,5 +123,7 @@ php artisan serve
 - **Roles y Permisos:** Control de acceso basado en roles (RBAC) con permisos granulares por acción.
 - **Panel Administrador:** CRUD completo de todos los recursos del sistema.
 - **Auditoría:** Registro de todas las acciones importantes realizadas en el sistema.
+- **Perfil:** Cada usuario puede ver y editar su perfil desde el navbar.
+- **Citas:** Calendario interactivo con FullCalendar, filtros y gestión completa.
 
 > ⚠️ **Importante:** Cambiar la contraseña `TallerPro2026!` en producción.

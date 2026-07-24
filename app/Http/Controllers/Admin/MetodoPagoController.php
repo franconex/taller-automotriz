@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\Admin\MetodoPagoRequest;
 use App\Models\MetodoPago;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -10,6 +9,8 @@ use Illuminate\View\View;
 
 class MetodoPagoController extends AdminController
 {
+    private const FIJOS = ['Efectivo', 'QR', 'Tarjeta'];
+
     public function index(Request $request): View
     {
         $query = MetodoPago::query()->withCount('pagos');
@@ -17,28 +18,25 @@ class MetodoPagoController extends AdminController
         $this->aplicarFiltros($request, $query, ['estado']);
         $this->aplicarBusqueda($query, $request, ['nombre', 'descripcion']);
 
-        $metodos = $query->orderBy('nombre')->paginate(15)->withQueryString();
+        $metodos = $query->orderBy('nombre')
+            ->paginate(15)
+            ->withQueryString();
 
         return view('admin.metodos-pago.index', [
             'metodos' => $metodos,
         ]);
     }
 
-    public function create(): View
+    public function create(): RedirectResponse
     {
-        return view('admin.metodos-pago.create', [
-            'metodo' => new \App\Models\MetodoPago(),
-        ]);
+        return redirect()->route('admin.metodos-pago.index')
+            ->with('info', 'No es posible agregar nuevos métodos de pago. Solo están disponibles Efectivo, Tarjeta y QR.');
     }
 
-    public function store(MetodoPagoRequest $request): RedirectResponse
+    public function store(): RedirectResponse
     {
-        $datos = $request->validated();
-        $datos['estado'] = (bool) ($datos['estado'] ?? true);
-
-        MetodoPago::create($datos);
-
-        return $this->redirigirConExito('métodos de pago', 'registrado');
+        return redirect()->route('admin.metodos-pago.index')
+            ->with('info', 'No es posible agregar nuevos métodos de pago.');
     }
 
     public function show(MetodoPago $metodoPago): View
@@ -50,16 +48,30 @@ class MetodoPagoController extends AdminController
         ]);
     }
 
-    public function edit(MetodoPago $metodoPago): View
+    public function edit(MetodoPago $metodoPago): RedirectResponse|View
     {
+        if ($this->esFijo($metodoPago, 'Efectivo')) {
+            return redirect()->route('admin.metodos-pago.index')
+                ->with('info', 'El método de pago Efectivo no se puede editar.');
+        }
+
         return view('admin.metodos-pago.edit', [
             'metodo' => $metodoPago,
         ]);
     }
 
-    public function update(MetodoPagoRequest $request, MetodoPago $metodoPago): RedirectResponse
+    public function update(Request $request, MetodoPago $metodoPago): RedirectResponse
     {
-        $datos = $request->validated();
+        if ($this->esFijo($metodoPago, 'Efectivo')) {
+            return back()->with('error', 'El método de pago Efectivo no se puede modificar.');
+        }
+
+        $datos = $request->validate([
+            'nombre' => ['required', 'string', 'max:50', \Illuminate\Validation\Rule::unique('metodos_pago', 'nombre')->ignore($metodoPago->id)],
+            'descripcion' => ['nullable', 'string', 'max:255'],
+            'estado' => ['nullable', 'boolean'],
+        ]);
+
         $datos['estado'] = (bool) ($datos['estado'] ?? false);
 
         $metodoPago->update($datos);
@@ -67,19 +79,22 @@ class MetodoPagoController extends AdminController
         return $this->redirigirConExito('métodos de pago', 'actualizado');
     }
 
-    public function destroy(MetodoPago $metodoPago): RedirectResponse
+    public function destroy(): RedirectResponse
     {
-        if ($metodoPago->pagos()->exists()) {
-            return back()->with('error', 'No se puede eliminar el método de pago porque tiene pagos registrados.');
-        }
-
-        $metodoPago->delete();
-
-        return $this->redirigirConExito('métodos de pago', 'eliminado');
+        return back()->with('error', 'No se puede eliminar métodos de pago del sistema.');
     }
 
     public function toggle(Request $request, MetodoPago $metodoPago): RedirectResponse
     {
+        if ($this->esFijo($metodoPago, 'Efectivo')) {
+            return back()->with('error', 'El método de pago Efectivo no se puede desactivar.');
+        }
+
         return $this->cambiarEstado($request, $metodoPago, 'métodos de pago');
+    }
+
+    private function esFijo(MetodoPago $metodoPago, string $nombre): bool
+    {
+        return strcasecmp($metodoPago->nombre, $nombre) === 0;
     }
 }

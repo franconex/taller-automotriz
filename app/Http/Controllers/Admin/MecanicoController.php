@@ -15,7 +15,7 @@ class MecanicoController extends AdminController
     public function index(Request $request): View
     {
         $query = Mecanico::query()
-            ->with(['empleado.sucursal', 'especialidad']);
+            ->with(['empleado.sucursal', 'empleado.rol', 'especialidad']);
 
         if ($sucursalId = $this->usuarioSucursalId()) {
             $query->whereHas('empleado', fn ($q) => $q->where('sucursal_id', $sucursalId));
@@ -38,6 +38,7 @@ class MecanicoController extends AdminController
     {
         $empleados = Empleado::query()
             ->whereDoesntHave('mecanico')
+            ->whereHas('rol', fn ($q) => $q->whereRaw('LOWER(nombre) = ?', ['mecánico']))
             ->when($this->usuarioSucursalId(), fn ($q) => $q->where('sucursal_id', $this->usuarioSucursalId()))
             ->orderBy('nombre_completo')
             ->get();
@@ -59,7 +60,7 @@ class MecanicoController extends AdminController
 
     public function show(Mecanico $mecanico): View
     {
-        $mecanico->load(['empleado.sucursal', 'especialidad', 'asignaciones.ordenTrabajo']);
+        $mecanico->load(['empleado.sucursal', 'empleado.rol', 'especialidad', 'asignaciones.ordenTrabajo']);
 
         return view('admin.mecanicos.show', [
             'mecanico' => $mecanico,
@@ -73,6 +74,7 @@ class MecanicoController extends AdminController
                 $q->whereDoesntHave('mecanico')
                   ->orWhere('id', $mecanico->empleado_id);
             })
+            ->whereHas('rol', fn ($q) => $q->whereRaw('LOWER(nombre) = ?', ['mecánico']))
             ->when($this->usuarioSucursalId(), fn ($q) => $q->where('sucursal_id', $this->usuarioSucursalId()))
             ->orderBy('nombre_completo')
             ->get();

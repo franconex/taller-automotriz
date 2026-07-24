@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/css/admin.css', 'resources/js/app.js', 'resources/js/admin.js'])
+    @stack('styles')
 </head>
 <body class="admin-body">
     <a class="visually-hidden-focusable" href="#adminMain">Saltar al contenido principal</a>
@@ -18,6 +19,8 @@
     @php
         $usuario = Auth::user();
         $rolNombre = $usuario->rol->nombre ?? 'Sin rol';
+        $empleado = $usuario->empleado;
+        $fotoPerfil = $empleado && $empleado->foto ? asset('storage/' . $empleado->foto) : null;
         $partesNombre = array_filter(explode(' ', trim($usuario->nombre ?? '')));
         $iniciales = mb_strtoupper(
             collect($partesNombre)->take(2)->map(fn($p) => mb_substr($p, 0, 1))->implode('')
@@ -97,7 +100,11 @@
                                 data-bs-toggle="dropdown"
                                 aria-expanded="false"
                                 aria-label="Menú de usuario">
-                            <span class="admin-avatar" aria-hidden="true">{{ $iniciales }}</span>
+                            @if ($fotoPerfil)
+                                <img src="{{ $fotoPerfil }}" alt="" class="admin-avatar admin-avatar--img" aria-hidden="true">
+                            @else
+                                <span class="admin-avatar" aria-hidden="true">{{ $iniciales }}</span>
+                            @endif
                             <span class="d-none d-sm-inline">
                                 <span class="admin-navbar__user-name d-block">{{ $usuario->nombre }}</span>
                                 <span class="admin-navbar__user-role d-block">{{ $rolNombre }}</span>
@@ -107,16 +114,16 @@
                             <li class="dropdown-header">{{ $usuario->email }}</li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <span class="dropdown-item disabled" aria-disabled="true">
+                                <a class="dropdown-item" href="{{ route('admin.perfil.index') }}">
                                     <i class="bi bi-person" aria-hidden="true"></i>
                                     Mi perfil
-                                </span>
+                                </a>
                             </li>
                             <li>
-                                <span class="dropdown-item disabled" aria-disabled="true">
+                                <a class="dropdown-item" href="{{ route('admin.configuracion.index') }}">
                                     <i class="bi bi-sliders" aria-hidden="true"></i>
                                     Configuración
-                                </span>
+                                </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
@@ -151,5 +158,6 @@
 
     @stack('modals')
     @stack('offcanvas')
+    @stack('scripts')
 </body>
 </html>

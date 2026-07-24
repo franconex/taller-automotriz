@@ -4,19 +4,23 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\Admin\EmpleadoRequest;
 use App\Models\Empleado;
+use App\Models\Especialidad;
+use App\Models\Mecanico;
+use App\Models\Rol;
 use App\Models\Sucursal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class EmpleadoController extends AdminController
 {
     public function index(Request $request): View
     {
-        $query = Empleado::query()->with('sucursal', 'user');
+        $query = Empleado::query()->with(['sucursal', 'user', 'rol']);
 
         $this->scopeSucursal($query, 'sucursal_id');
-        $this->aplicarFiltros($request, $query, ['estado', 'sucursal_id']);
+        $this->aplicarFiltros($request, $query, ['estado', 'sucursal_id', 'rol_id']);
         $this->aplicarBusqueda($query, $request, [
             'nombre_completo',
             'ci',
@@ -32,9 +36,12 @@ class EmpleadoController extends AdminController
             ->orderBy('nombre')
             ->get();
 
+        $roles = Rol::where('estado', true)->orderBy('nombre')->get();
+
         return view('admin.empleados.index', [
             'empleados' => $empleados,
             'sucursales' => $sucursales,
+            'roles' => $roles,
         ]);
     }
 
@@ -45,8 +52,14 @@ class EmpleadoController extends AdminController
             ->orderBy('nombre')
             ->get();
 
+        $roles = Rol::where('estado', true)->orderBy('nombre')->get();
+        $especialidades = Especialidad::orderBy('nombre')->get();
+
         return view('admin.empleados.create', [
             'empleado' => new \App\Models\Empleado(),
+            'sucursales' => $sucursales,
+            'roles' => $roles,
+            'especialidades' => $especialidades,
         ]);
     }
 
@@ -55,14 +68,32 @@ class EmpleadoController extends AdminController
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? true);
 
-        Empleado::create($datos);
+        $rol = Rol::findOrFail($datos['rol_id']);
+        $esMecanico = strcasecmp($rol->nombre, 'Mecánico') === 0;
+
+        try {
+            DB::transaction(function () use ($datos, $esMecanico, $request) {
+                $empleado = Empleado::create($datos);
+
+                if ($esMecanico) {
+                    Mecanico::create([
+                        'empleado_id' => $empleado->id,
+                        'especialidad_id' => $datos['especialidad_id'],
+                        'disponibilidad' => $datos['disponibilidad'] ?? 'disponible',
+                        'observaciones' => $datos['observaciones_mecanico'] ?? null,
+                    ]);
+                }
+            });
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'Error al registrar el empleado: '.$e->getMessage());
+        }
 
         return $this->redirigirConExito('empleados', 'registrado');
     }
 
     public function show(Empleado $empleado): View
     {
-        $empleado->load(['sucursal', 'user.rol', 'mecanico.especialidad']);
+        $empleado->load(['sucursal', 'user.rol', 'mecanico.especialidad', 'rol']);
 
         return view('admin.empleados.show', [
             'empleado' => $empleado,
@@ -76,9 +107,15 @@ class EmpleadoController extends AdminController
             ->orderBy('nombre')
             ->get();
 
+        $roles = Rol::where('estado', true)->orderBy('nombre')->get();
+        $especialidades = Especialidad::orderBy('nombre')->get();
+        $empleado->load('mecanico');
+
         return view('admin.empleados.edit', [
             'empleado' => $empleado,
             'sucursales' => $sucursales,
+            'roles' => $roles,
+            'especialidades' => $especialidades,
         ]);
     }
 
@@ -87,28 +124,81 @@ class EmpleadoController extends AdminController
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? false);
 
-        $empleado->update($datos);
+        $rol = Rol::findOrFail($datos['rol_id']);
+        $esMecanico = strcasecmp($rol->nombre, 'Mecánico') === 0;
+
+        try {
+            DB::transaction(function () use ($empleado, $datos, $esMecanico) {
+                $empleado->update($datos);
+
+                if ($esMecanico) {
+                    $mecanicoExistente = Mecanico::withTrashed()
+                        ->where('empleado_id', $empleado->id)
+                        ->first();
+
+                    if ($mecanicoExistente) {
+                        if ($mecanicoExistente->trashed()) {
+                            $mecanicoExistente->restore();
+                        }
+                        $mecanicoExistente->update([
+                            'especialidad_id' => $datos['especialidad_id'],
+                            'disponibilidad' => $datos['disponibilidad'] ?? 'disponible',
+                            'observaciones' => $datos['observaciones_mecanico'] ?? null,
+                        ]);
+                    } else {
+                        Mecanico::create([
+                            'empleado_id' => $empleado->id,
+                            'especialidad_id' => $datos['especialidad_id'],
+                            'disponibilidad' => $datos['disponibilidad'] ?? 'disponible',
+                            'observaciones' => $datos['observaciones_mecanico'] ?? null,
+                        ]);
+                    }
+                } else {
+                    $mecanicoExistente = Mecanico::withTrashed()
+                        ->where('empleado_id', $empleado->id)
+                        ->first();
+                    if ($mecanicoExistente) {
+                        $mecanicoExistente->forceDelete();
+                    }
+                }
+            });
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'Error al actualizar el empleado: '.$e->getMessage());
+        }
 
         return $this->redirigirConExito('empleados', 'actualizado');
     }
 
     public function destroy(Empleado $empleado): RedirectResponse
     {
+        $empleado->estado = false;
+        $empleado->save();
+
         if ($empleado->user()->exists()) {
-            return back()->with('error', 'No se puede eliminar el empleado porque tiene una cuenta de acceso asociada.');
+            $empleado->user->estado = 'inactivo';
+            $empleado->user->save();
         }
 
-        if ($empleado->mecanico()->exists()) {
-            return back()->with('error', 'No se puede eliminar el empleado porque está registrado como mecánico.');
-        }
-
-        $empleado->delete();
-
-        return $this->redirigirConExito('empleados', 'eliminado');
+        return back()->with('success', 'El empleado fue dado de baja correctamente. Su cuenta de acceso fue desactivada.');
     }
 
     public function toggle(Request $request, Empleado $empleado): RedirectResponse
     {
-        return $this->cambiarEstado($request, $empleado, 'empleados');
+        $nuevoEstado = !$empleado->estado;
+        $empleado->estado = $nuevoEstado;
+        $empleado->save();
+
+        if ($empleado->user()->exists()) {
+            $empleado->user->estado = $nuevoEstado ? 'activo' : 'inactivo';
+            $empleado->user->save();
+        }
+
+        $texto = $nuevoEstado ? 'activado' : 'desactivado';
+        $usuarioTexto = '';
+        if ($empleado->user()->exists()) {
+            $usuarioTexto = " Su cuenta de acceso fue {$texto}.";
+        }
+
+        return back()->with('success', "El empleado fue {$texto} correctamente.{$usuarioTexto}");
     }
 }

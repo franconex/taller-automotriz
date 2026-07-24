@@ -13,11 +13,13 @@ class Empleado extends Model
 
     protected $fillable = [
         'sucursal_id',
+        'rol_id',
         'nombre_completo',
         'ci',
         'telefono',
         'email',
         'direccion',
+        'foto',
         'cargo',
         'fecha_contratacion',
         'estado',
@@ -33,6 +35,11 @@ class Empleado extends Model
     public function sucursal(): BelongsTo
     {
         return $this->belongsTo(Sucursal::class);
+    }
+
+    public function rol(): BelongsTo
+    {
+        return $this->belongsTo(Rol::class);
     }
 
     public function user(): HasOne

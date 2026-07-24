@@ -14,6 +14,12 @@ class MecanicoRequest extends AdminFormRequest
             'empleado_id' => [
                 'required', 'exists:empleados,id',
                 Rule::unique('mecanicos', 'empleado_id')->ignore($id)->whereNull('deleted_at'),
+                function ($attribute, $value, $fail) {
+                    $empleado = \App\Models\Empleado::find($value);
+                    if ($empleado && $empleado->rol && strcasecmp($empleado->rol->nombre, 'Mecánico') !== 0) {
+                        $fail('El empleado seleccionado debe tener el rol Mecánico.');
+                    }
+                },
             ],
             'especialidad_id' => ['required', 'exists:especialidades,id'],
             'disponibilidad' => ['required', 'in:disponible,ocupado,ausente'],

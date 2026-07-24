@@ -24,7 +24,7 @@
     <div class="admin-table-wrap p-4">
         <form method="POST" action="{{ route('admin.empleados.store') }}">
             @csrf
-            @include('admin.empleados._form', ['empleado' => null])
+            @include('admin.empleados._form', ['empleado' => new \App\Models\Empleado()])
 
             <div class="d-flex justify-content-end gap-2 mt-3">
                 <a href="{{ route('admin.empleados.index') }}" class="btn btn-outline-secondary">Cancelar</a>

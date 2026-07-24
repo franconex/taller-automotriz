@@ -36,6 +36,16 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
+        if ($user->empleado && ! $user->empleado->estado) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'login' => 'No puedes iniciar sesión porque el empleado asociado a tu cuenta fue dado de baja. Contacta al administrador.',
+            ]);
+        }
+
         $user->update(['ultimo_acceso' => now()]);
 
         return $this->redirectAfterLogin($user);

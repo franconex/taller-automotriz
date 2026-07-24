@@ -10,6 +10,11 @@
         "vite": "^8.0.0"
     },
     "dependencies": {
+        "@fullcalendar/core": "^6.1.15",
+        "@fullcalendar/daygrid": "^6.1.15",
+        "@fullcalendar/interaction": "^6.1.15",
+        "@fullcalendar/list": "^6.1.15",
+        "@fullcalendar/timegrid": "^6.1.15",
         "@popperjs/core": "^2.11.8",
         "axios": "^1.18.1",
         "bootstrap": "^5.3.3",

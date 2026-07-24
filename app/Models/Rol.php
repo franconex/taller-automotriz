@@ -21,6 +21,11 @@ class Rol extends Model
         return $this->hasMany(User::class, 'rol_id');
     }
 
+    public function empleados(): HasMany
+    {
+        return $this->hasMany(Empleado::class, 'rol_id');
+    }
+
     public function permisos(): BelongsToMany
     {
         return $this->belongsToMany(Permiso::class, 'permiso_rol', 'rol_id', 'permiso_id')

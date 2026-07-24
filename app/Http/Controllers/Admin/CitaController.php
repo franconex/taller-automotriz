@@ -3,164 +3,605 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\Admin\CitaRequest;
+use App\Models\Auditoria;
 use App\Models\Cita;
 use App\Models\Cliente;
+use App\Models\Mecanico;
 use App\Models\OrdenTrabajo;
+use App\Models\Servicio;
 use App\Models\Sucursal;
 use App\Models\Vehiculo;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class CitaController extends AdminController
 {
+    /* =========================================================
+       VISTA PRINCIPAL
+       ========================================================= */
+
     public function index(Request $request): View
     {
-        $query = Cita::query()->with(['cliente', 'vehiculo', 'sucursal']);
+        $fechaSeleccionada = $request->input('fecha', now()->toDateString());
+        try {
+            Carbon::parse($fechaSeleccionada);
+        } catch (\Throwable $e) {
+            $fechaSeleccionada = now()->toDateString();
+        }
 
-        $this->scopeSucursal($query, 'sucursal_id');
-        $this->aplicarFiltros($request, $query, ['estado', 'sucursal_id', 'fecha']);
-        $this->aplicarBusqueda($query, $request, [
-            'descripcion_problema',
-            'cliente.nombre_completo',
-            'vehiculo.placa',
-        ]);
-
-        $citas = $query->orderByDesc('fecha')->orderBy('hora')->paginate(15)->withQueryString();
-
-        $sucursales = Sucursal::query()
-            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
-            ->orderBy('nombre')
+        $citasDelDia = Cita::query()
+            ->with(['cliente', 'vehiculo', 'sucursal', 'mecanico.empleado', 'servicio'])
+            ->deFecha($fechaSeleccionada)
+            ->when(true, fn ($q) => $this->scopeSucursal($q, 'sucursal_id'))
+            ->orderBy('hora')
             ->get();
+
+        $proximasCitas = Cita::query()
+            ->with(['cliente', 'vehiculo', 'sucursal', 'mecanico.empleado', 'servicio'])
+            ->futuras()
+            ->when(true, fn ($q) => $this->scopeSucursal($q, 'sucursal_id'))
+            ->where('fecha', '!=', $fechaSeleccionada)
+            ->where('estado', '!=', 'cancelada')
+            ->limit(5)
+            ->get();
+
+        $clientes   = $this->clientesParaSelect();
+        $vehiculos  = Vehiculo::with('cliente')->orderBy('placa')->get();
+        $servicios  = Servicio::where('estado', true)->orderBy('nombre')->get();
+        $mecanicos  = Mecanico::with('empleado')
+            ->where('disponibilidad', 'disponible')
+            ->get()
+            ->filter(fn ($m) => $m->empleado && $m->empleado->estado)
+            ->sortBy(fn ($m) => $m->empleado->nombre_completo)
+            ->values();
+
+        $sucursales = $this->sucursalesParaSelect();
+
+        $puedeCrear      = $request->user()?->tienePermiso('citas.crear') ?? false;
+        $puedeEditar      = $request->user()?->tienePermiso('citas.editar') ?? false;
+        $puedeCancelar    = $request->user()?->tienePermiso('citas.cancelar') ?? false;
+        $puedeReprogramar = $puedeEditar;
+        $puedeConvertir   = $request->user()?->tienePermiso('ordenes.crear') ?? false;
 
         return view('admin.citas.index', [
-            'citas' => $citas,
-            'sucursales' => $sucursales,
+            'citasDelDia'        => $citasDelDia,
+            'proximasCitas'      => $proximasCitas,
+            'fechaSeleccionada'  => $fechaSeleccionada,
+            'clientes'           => $clientes,
+            'vehiculos'          => $vehiculos,
+            'servicios'          => $servicios,
+            'mecanicos'          => $mecanicos,
+            'sucursales'         => $sucursales,
+            'mostrarFiltroSucursal' => $sucursales->count() > 1,
+            'estados'            => Cita::ESTADOS,
+            'puedeCrear'         => $puedeCrear,
+            'puedeEditar'        => $puedeEditar,
+            'puedeCancelar'      => $puedeCancelar,
+            'puedeReprogramar'   => $puedeReprogramar,
+            'puedeConvertir'     => $puedeConvertir,
         ]);
     }
 
-    public function create(): View
-    {
-        $clientes = Cliente::orderBy('nombre_completo')->get();
-        $vehiculos = Vehiculo::with('cliente')->orderBy('placa')->get();
-        $sucursales = Sucursal::query()
-            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
-            ->orderBy('nombre')
-            ->get();
+    /* =========================================================
+       ENDPOINT JSON PARA FullCalendar
+       ========================================================= */
 
-        return view('admin.citas.create', [
-            'clientes' => $clientes,
-            'vehiculos' => $vehiculos,
-            'sucursales' => $sucursales,
-            'cita' => new \App\Models\Cita(),
+    public function eventos(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'start'        => ['required', 'date'],
+            'end'          => ['required', 'date', 'after_or_equal:start'],
+            'sucursal_id'  => ['nullable', 'integer', Rule::exists('sucursales', 'id')],
+            'servicio_id'  => ['nullable', 'integer', Rule::exists('servicios', 'id')],
+            'mecanico_id'  => ['nullable', 'integer', Rule::exists('mecanicos', 'id')],
+            'estado'       => ['nullable', 'in:pendiente,confirmada,atendida,cancelada,no_asistio'],
         ]);
+
+        $start = Carbon::parse($validated['start'])->toDateString();
+        $end   = Carbon::parse($validated['end'])->toDateString();
+
+        $query = Cita::query()
+            ->with(['cliente:id,nombre_completo', 'vehiculo:id,placa', 'mecanico.empleado:id,nombre_completo', 'servicio:id,nombre'])
+            ->enRango($start, $end)
+            ->when(true, fn ($q) => $this->scopeSucursal($q, 'sucursal_id'))
+            ->when(! empty($validated['sucursal_id']), fn ($q) => $q->where('sucursal_id', $validated['sucursal_id']))
+            ->when(! empty($validated['servicio_id']), fn ($q) => $q->where('servicio_id', $validated['servicio_id']))
+            ->when(! empty($validated['mecanico_id']), fn ($q) => $q->where('mecanico_id', $validated['mecanico_id']))
+            ->when(! empty($validated['estado']), fn ($q) => $q->where('estado', $validated['estado']));
+
+        $eventos = $query->get()->map(function (Cita $cita) {
+            $cliente  = $cita->cliente?->nombre_completo ?? '—';
+            $servicio = $cita->servicio?->nombre ?? $cita->tipo;
+            $vehiculo = $cita->vehiculo?->placa ?? '';
+            $mecanico = $cita->mecanico?->empleado?->nombre_completo ?? null;
+            $color    = $cita->estado_color;
+
+            $fechaStr = $cita->fecha->format('Y-m-d');
+            $horaInicio = strlen((string) $cita->hora) === 5 ? $cita->hora . ':00' : (string) $cita->hora;
+            $start = Carbon::createFromFormat('Y-m-d H:i:s', $fechaStr . ' ' . $horaInicio);
+
+            $horaFin = $cita->hora_fin
+                ? (strlen((string) $cita->hora_fin) === 5 ? $cita->hora_fin . ':00' : (string) $cita->hora_fin)
+                : $start->copy()->addHour()->format('H:i:s');
+            $end = Carbon::createFromFormat('Y-m-d H:i:s', $fechaStr . ' ' . $horaFin);
+
+            return [
+                'id'              => $cita->id,
+                'title'           => $cliente . ($vehiculo ? " · {$vehiculo}" : ''),
+                'start'           => $start->toIso8601String(),
+                'end'             => $end->toIso8601String(),
+                'backgroundColor' => $color,
+                'borderColor'     => $color,
+                'textColor'       => '#ffffff',
+                'extendedProps'   => [
+                    'cliente'   => $cliente,
+                    'vehiculo'  => $vehiculo,
+                    'servicio'  => $servicio,
+                    'mecanico'  => $mecanico,
+                    'estado'    => $cita->estado,
+                    'estado_label' => $cita->estado_label,
+                    'hora'      => $cita->hora,
+                    'hora_fin'  => $cita->hora_fin,
+                ],
+            ];
+        });
+
+        return response()->json($eventos);
     }
 
-    public function store(CitaRequest $request): RedirectResponse
-    {
-        $datos = $request->validated();
-        $datos['usuario_id'] = auth()->id();
-        $datos['estado'] = $datos['estado'] ?? 'pendiente';
-        $datos['deja_vehiculo'] = (bool) ($datos['deja_vehiculo'] ?? false);
-        $datos['costo_consulta'] = $datos['costo_consulta'] ?? 0;
+    /* =========================================================
+       CRUD
+       ========================================================= */
 
-        Cita::create($datos);
+    public function store(CitaRequest $request): RedirectResponse|JsonResponse
+    {
+        try {
+            $cita = DB::transaction(function () use ($request) {
+                $datos = $request->validated();
+                $datos['usuario_id'] = Auth::id();
+                $datos['estado'] = $datos['estado'] ?? 'pendiente';
+                $datos['deja_vehiculo'] = (bool) ($datos['deja_vehiculo'] ?? false);
+                $datos['costo_consulta'] = $datos['costo_consulta'] ?? 0;
+                $datos['hora_fin'] = $datos['hora_fin'] ?? $this->calcularHoraFin($datos['hora'], $datos['duracion_minutos'] ?? 60);
+                $datos['estado_anterior'] = $datos['estado'];
+
+                return Cita::create($datos);
+            });
+        } catch (ValidationException $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                throw $e;
+            }
+            return back()->withErrors($e->errors())->withInput();
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'cita' => $cita->load('cliente', 'vehiculo', 'servicio', 'mecanico.empleado')], 201);
+        }
 
         return $this->redirigirConExito('citas', 'registrada');
     }
 
-    public function show(Cita $cita): View
+    public function show(Cita $cita): JsonResponse
     {
-        $cita->load(['cliente', 'vehiculo', 'sucursal', 'usuario', 'ordenTrabajo']);
+        $this->asegurarSucursalPermitida($cita);
 
-        return view('admin.citas.show', [
-            'cita' => $cita,
+        $cita->loadMissing(['cliente', 'vehiculo', 'sucursal', 'servicio', 'mecanico.empleado', 'usuario', 'reprogramadoPor', 'canceladoPor', 'ordenTrabajo']);
+
+        return response()->json([
+            'id'                  => $cita->id,
+            'cliente'             => $cita->cliente?->nombre_completo,
+            'cliente_telefono'    => $cita->cliente?->telefono,
+            'vehiculo'            => $cita->vehiculo?->placa,
+            'vehiculo_detalle'    => $cita->vehiculo?->placa,
+            'servicio'            => $cita->servicio?->nombre ?? ucfirst((string) $cita->tipo),
+            'mecanico'            => $cita->mecanico?->empleado?->nombre_completo,
+            'sucursal'            => $cita->sucursal?->nombre,
+            'fecha'               => $cita->fecha?->format('Y-m-d'),
+            'fecha_label'         => $cita->fecha?->format('d/m/Y'),
+            'hora'                => $cita->hora,
+            'hora_fin'            => $cita->hora_fin,
+            'estado'              => $cita->estado,
+            'estado_label'        => $cita->estado_label,
+            'estado_color'        => $cita->estado_color,
+            'descripcion_problema'=> $cita->descripcion_problema,
+            'observaciones'       => $cita->observaciones,
+            'deja_vehiculo'       => (bool) $cita->deja_vehiculo,
+            'costo_consulta'      => (float) $cita->costo_consulta,
+            'tipo'                => $cita->tipo,
+            'servicio_id'         => $cita->servicio_id,
+            'mecanico_id'         => $cita->mecanico_id,
+            'sucursal_id'         => $cita->sucursal_id,
+            'cliente_id'          => $cita->cliente_id,
+            'vehiculo_id'         => $cita->vehiculo_id,
+            'usuario'             => $cita->usuario?->nombre,
+            'reprogramado_por'   => $cita->reprogramadoPor?->nombre,
+            'reprogramado_en'     => $cita->reprogramado_en?->format('d/m/Y H:i'),
+            'motivo_reprogramacion' => $cita->motivo_reprogramacion,
+            'cancelado_por'       => $cita->canceladoPor?->nombre,
+            'cancelado_en'        => $cita->cancelado_en?->format('d/m/Y H:i'),
+            'cancelado_motivo'    => $cita->cancelado_motivo,
+            'created_at'          => $cita->created_at?->format('d/m/Y H:i'),
+            'orden_id'            => $cita->ordenTrabajo?->id,
+            'orden_numero'        => $cita->ordenTrabajo?->numero_orden,
+            'es_pasable_reprogramar' => $cita->esPasableReprogramar(),
+            'es_pasable_confirmar'   => $cita->esPasableConfirmar(),
+            'es_pasable_cancelar'    => $cita->esPasableCancelar(),
+            'es_pasable_no_asistio'  => $cita->esPasableNoAsistio(),
+            'ya_paso'                => $cita->yaPaso(),
+            'tiene_orden'            => (bool) $cita->ordenTrabajo,
         ]);
     }
 
-    public function edit(Cita $cita): View
+    public function update(CitaRequest $request, Cita $cita): RedirectResponse|JsonResponse
     {
-        $clientes = Cliente::orderBy('nombre_completo')->get();
-        $vehiculos = Vehiculo::with('cliente')->orderBy('placa')->get();
-        $sucursales = Sucursal::query()
-            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
-            ->orderBy('nombre')
-            ->get();
+        $this->asegurarSucursalPermitida($cita);
 
-        return view('admin.citas.edit', [
-            'cita' => $cita,
-            'clientes' => $clientes,
-            'vehiculos' => $vehiculos,
-            'sucursales' => $sucursales,
-        ]);
-    }
+        try {
+            DB::transaction(function () use ($request, $cita) {
+                $datos = $request->validated();
+                $datos['deja_vehiculo'] = (bool) ($datos['deja_vehiculo'] ?? false);
+                $datos['estado_anterior'] = $cita->estado;
+                $datos['hora_fin'] = $datos['hora_fin'] ?? $this->calcularHoraFin($datos['hora'], $datos['duracion_minutos'] ?? 60);
 
-    public function update(CitaRequest $request, Cita $cita): RedirectResponse
-    {
-        $datos = $request->validated();
-        $datos['deja_vehiculo'] = (bool) ($datos['deja_vehiculo'] ?? false);
+                $cita->update($datos);
+            });
+        } catch (ValidationException $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                throw $e;
+            }
+            return back()->withErrors($e->errors())->withInput();
+        }
 
-        $cita->update($datos);
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'cita' => $cita->fresh()->load('cliente', 'vehiculo', 'servicio', 'mecanico.empleado')]);
+        }
 
         return $this->redirigirConExito('citas', 'actualizada');
     }
 
-    public function destroy(Cita $cita): RedirectResponse
+    /* =========================================================
+       ACCIONES
+       ========================================================= */
+
+    public function reprogramar(Request $request, Cita $cita): RedirectResponse|JsonResponse
     {
-        if ($cita->ordenTrabajo) {
-            return back()->with('error', 'No se puede eliminar la cita porque ya tiene una orden de trabajo asociada.');
+        $this->asegurarSucursalPermitida($cita);
+
+        if (! $cita->esPasableReprogramar()) {
+            $msg = 'La cita no se puede reprogramar en su estado actual.';
+            return $this->respuestaAccion($request, $msg, false);
         }
 
-        $cita->delete();
+        $request->merge(['__accion' => 'reprogramar']);
+        $datos = $request->validate([
+            'fecha'                 => ['required', 'date'],
+            'hora'                  => ['required', 'date_format:H:i'],
+            'hora_fin'              => ['nullable', 'date_format:H:i', 'after:hora'],
+            'duracion_minutos'      => ['nullable', 'integer', 'min:5', 'max:600'],
+            'mecanico_id'           => ['nullable', 'exists:mecanicos,id'],
+            'sucursal_id'           => ['required', 'exists:sucursales,id'],
+            'motivo_reprogramacion' => ['required', 'string', 'min:3', 'max:1000'],
+        ], [], [
+            'motivo_reprogramacion' => 'motivo de reprogramación',
+        ]);
 
-        return $this->redirigirConExito('citas', 'eliminada');
+        try {
+            DB::transaction(function () use ($cita, $datos) {
+                $estadoAnterior = $cita->estado;
+                $cita->fill([
+                    'fecha'                 => $datos['fecha'],
+                    'hora'                  => $datos['hora'],
+                    'hora_fin'              => $datos['hora_fin'] ?? $this->calcularHoraFin($datos['hora'], $datos['duracion_minutos'] ?? 60),
+                    'duracion_minutos'      => $datos['duracion_minutos'] ?? null,
+                    'mecanico_id'           => $datos['mecanico_id'] ?? $cita->mecanico_id,
+                    'sucursal_id'           => $datos['sucursal_id'],
+                    'estado'                => $estadoAnterior, // reprogramar no cambia estado
+                    'estado_anterior'       => $estadoAnterior,
+                    'motivo_reprogramacion' => $datos['motivo_reprogramacion'],
+                    'reprogramado_por_id'   => Auth::id(),
+                    'reprogramado_en'       => now(),
+                ])->save();
+
+                $this->registrarAuditoria('citas', $cita->id, 'reprogramar', [
+                    'antes'  => ['fecha' => null, 'hora' => null],
+                    'despues' => ['fecha' => $cita->fecha, 'hora' => $cita->hora],
+                ]);
+            });
+        } catch (ValidationException $e) {
+            return $this->respuestaAccion($request, 'Error al reprogramar', false, $e->errors());
+        }
+
+        return $this->respuestaAccion($request, 'La cita fue reprogramada correctamente.', true);
     }
 
-    public function toggle(Request $request, Cita $cita): RedirectResponse
+    public function confirmar(Request $request, Cita $cita): RedirectResponse|JsonResponse
     {
-        $estados = ['pendiente', 'confirmada', 'atendida', 'cancelada'];
-        $actual = array_search($cita->estado, $estados);
-        $nuevo = $estados[($actual + 1) % count($estados)];
-        $cita->estado = $nuevo;
-        $cita->save();
+        $this->asegurarSucursalPermitida($cita);
 
-        return back()->with('success', "La cita fue marcada como {$nuevo}.");
-    }
-
-    public function cancelar(Request $request, Cita $cita): RedirectResponse
-    {
-        $cita->estado = 'cancelada';
-        $cita->save();
-
-        return back()->with('success', 'La cita fue cancelada correctamente.');
-    }
-
-    public function convertirOrden(Request $request, Cita $cita): RedirectResponse
-    {
-        if ($cita->ordenTrabajo) {
-            return back()->with('error', 'La cita ya tiene una orden de trabajo asociada.');
+        if (! $cita->esPasableConfirmar()) {
+            return $this->respuestaAccion($request, 'Solo se pueden confirmar citas en estado pendiente.', false);
         }
 
         DB::transaction(function () use ($cita) {
-            $orden = OrdenTrabajo::create([
-                'numero_orden' => 'OT-' . str_pad((string) (OrdenTrabajo::max('id') + 1), 6, '0', STR_PAD_LEFT),
-                'cliente_id' => $cita->cliente_id,
-                'vehiculo_id' => $cita->vehiculo_id,
-                'sucursal_id' => $cita->sucursal_id,
-                'usuario_recepcion_id' => auth()->id(),
-                'cita_id' => $cita->id,
-                'fecha_emision' => now(),
-                'descripcion_problema' => $cita->descripcion_problema,
-                'estado' => 'recibida',
-            ]);
-
-            $cita->estado = 'atendida';
+            $cita->estado_anterior = $cita->estado;
+            $cita->estado = 'confirmada';
             $cita->save();
-
-            return $orden;
+            $this->registrarAuditoria('citas', $cita->id, 'confirmar', [
+                'antes'  => $cita->estado_anterior,
+                'despues' => 'confirmada',
+            ]);
         });
 
-        return back()->with('success', 'La cita fue convertida en orden de trabajo correctamente.');
+        return $this->respuestaAccion($request, 'La cita fue confirmada correctamente.', true);
+    }
+
+    public function cancelar(Request $request, Cita $cita): RedirectResponse|JsonResponse
+    {
+        $this->asegurarSucursalPermitida($cita);
+
+        if (! $cita->esPasableCancelar()) {
+            return $this->respuestaAccion($request, 'La cita no se puede cancelar en su estado actual.', false);
+        }
+
+        $request->merge(['__accion' => 'cancelar']);
+        $datos = $request->validate([
+            'cancelado_motivo' => ['required', 'string', 'min:3', 'max:1000'],
+        ], [], [
+            'cancelado_motivo' => 'motivo de cancelación',
+        ]);
+
+        DB::transaction(function () use ($cita, $datos) {
+            $estadoAnterior = $cita->estado;
+            $cita->estado_anterior   = $estadoAnterior;
+            $cita->estado            = 'cancelada';
+            $cita->cancelado_motivo  = $datos['cancelado_motivo'];
+            $cita->cancelado_por_id  = Auth::id();
+            $cita->cancelado_en      = now();
+            $cita->save();
+
+            $this->registrarAuditoria('citas', $cita->id, 'cancelar', [
+                'antes'  => $estadoAnterior,
+                'despues' => 'cancelada',
+                'motivo' => $datos['cancelado_motivo'],
+            ]);
+        });
+
+        return $this->respuestaAccion($request, 'La cita fue cancelada correctamente.', true);
+    }
+
+    public function marcarNoAsistio(Request $request, Cita $cita): RedirectResponse|JsonResponse
+    {
+        $this->asegurarSucursalPermitida($cita);
+
+        if (! $cita->esPasableNoAsistio()) {
+            return $this->respuestaAccion($request, 'Solo se puede marcar no asistió en citas pasadas y no canceladas/atendidas.', false);
+        }
+
+        DB::transaction(function () use ($cita) {
+            $estadoAnterior = $cita->estado;
+            $cita->estado_anterior = $estadoAnterior;
+            $cita->estado = 'no_asistio';
+            $cita->save();
+            $this->registrarAuditoria('citas', $cita->id, 'no_asistio', [
+                'antes'  => $estadoAnterior,
+                'despues' => 'no_asistio',
+            ]);
+        });
+
+        return $this->respuestaAccion($request, 'La cita fue marcada como no asistida.', true);
+    }
+
+    public function convertirEnOrden(Request $request, Cita $cita): RedirectResponse|JsonResponse
+    {
+        $this->asegurarSucursalPermitida($cita);
+
+        if ($cita->ordenTrabajo) {
+            return $this->respuestaAccion($request, 'La cita ya tiene una orden de trabajo asociada.', false);
+        }
+
+        if ($cita->estaCancelada() || $cita->estaAtendida() || $cita->estado === 'no_asistio') {
+            return $this->respuestaAccion($request, 'No se puede convertir a orden una cita cancelada o finalizada.', false);
+        }
+
+        try {
+            $orden = DB::transaction(function () use ($cita) {
+                $siguienteId = (OrdenTrabajo::withTrashed()->max('id') ?? 0) + 1;
+                $numeroOrden  = 'OT-' . str_pad((string) $siguienteId, 6, '0', STR_PAD_LEFT);
+
+                $orden = OrdenTrabajo::create([
+                    'numero_orden'          => $numeroOrden,
+                    'cliente_id'            => $cita->cliente_id,
+                    'vehiculo_id'           => $cita->vehiculo_id,
+                    'sucursal_id'           => $cita->sucursal_id,
+                    'usuario_recepcion_id'  => Auth::id(),
+                    'cita_id'               => $cita->id,
+                    'fecha_emision'         => now(),
+                    'descripcion_problema'  => $cita->descripcion_problema,
+                    'estado'                => 'recibida',
+                    'descuento'             => 0,
+                    'kilometraje_ingreso'   => 0,
+                ]);
+
+                $cita->estado_anterior = $cita->estado;
+                $cita->estado = 'atendida';
+                $cita->save();
+
+                $this->registrarAuditoria('citas', $cita->id, 'convertir_orden', [
+                    'orden_id'     => $orden->id,
+                    'orden_numero' => $orden->numero_orden,
+                ]);
+
+                return $orden;
+            });
+        } catch (\Throwable $e) {
+            return $this->respuestaAccion($request, 'No se pudo crear la orden: ' . $e->getMessage(), false);
+        }
+
+        $msg = "La cita fue convertida en la orden {$orden->numero_orden}.";
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'message' => $msg, 'orden_id' => $orden->id]);
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    /* =========================================================
+       ENDPOINTS JSON AUXILIARES
+       ========================================================= */
+
+    public function tablaDia(Request $request): JsonResponse
+    {
+        $fecha = $request->input('fecha', now()->toDateString());
+        try {
+            Carbon::parse($fecha);
+        } catch (\Throwable $e) {
+            $fecha = now()->toDateString();
+        }
+
+        $citas = Cita::query()
+            ->with(['cliente:id,nombre_completo,telefono', 'vehiculo:id,placa', 'mecanico.empleado:id,nombre_completo', 'servicio:id,nombre'])
+            ->deFecha($fecha)
+            ->when(true, fn ($q) => $this->scopeSucursal($q, 'sucursal_id'))
+            ->orderBy('hora')
+            ->get();
+
+        $data = $citas->map(function (Cita $c) {
+            return [
+                'id'           => $c->id,
+                'hora'         => $c->hora,
+                'hora_fin'     => $c->hora_fin,
+                'cliente'      => $c->cliente?->nombre_completo ?? '—',
+                'telefono'     => $c->cliente?->telefono,
+                'vehiculo'     => $c->vehiculo?->placa,
+                'servicio'     => $c->servicio?->nombre ?? ucfirst((string) $c->tipo),
+                'mecanico'     => $c->mecanico?->empleado?->nombre_completo ?? '—',
+                'estado'       => $c->estado,
+                'estado_label' => $c->estado_label,
+            ];
+        });
+
+        return response()->json([
+            'fecha'  => $fecha,
+            'citas'  => $data,
+            'puede_editar'    => $request->user()?->tienePermiso('citas.editar') ?? false,
+            'puede_cancelar'  => $request->user()?->tienePermiso('citas.cancelar') ?? false,
+        ]);
+    }
+
+    public function proximas(Request $request): JsonResponse
+    {
+        $desde = $request->input('desde', now()->toDateString());
+
+        $citas = Cita::query()
+            ->with(['cliente:id,nombre_completo', 'mecanico.empleado:id,nombre_completo', 'servicio:id,nombre'])
+            ->where('fecha', '>=', $desde)
+            ->where('estado', '!=', 'cancelada')
+            ->when(true, fn ($q) => $this->scopeSucursal($q, 'sucursal_id'))
+            ->orderBy('fecha')
+            ->orderBy('hora')
+            ->limit(5)
+            ->get();
+
+        $data = $citas->map(function (Cita $c) {
+            return [
+                'id'           => $c->id,
+                'fecha'        => $c->fecha->format('Y-m-d'),
+                'fecha_label'  => $c->fecha->format('d/m/Y'),
+                'hora'         => $c->hora,
+                'cliente'      => $c->cliente?->nombre_completo ?? '—',
+                'servicio'     => $c->servicio?->nombre ?? ucfirst((string) $c->tipo),
+                'estado'       => $c->estado,
+                'estado_label' => $c->estado_label,
+                'estado_color' => $c->estado_color,
+            ];
+        });
+
+        return response()->json(['citas' => $data]);
+    }
+
+    /* =========================================================
+       HELPERS
+       ========================================================= */
+
+    protected function asegurarSucursalPermitida(Cita $cita): void
+    {
+        $sucursalId = $this->usuarioSucursalId();
+        if ($sucursalId !== null && (int) $cita->sucursal_id !== (int) $sucursalId) {
+            abort(403, 'No tienes acceso a esta cita.');
+        }
+    }
+
+    protected function clientesParaSelect()
+    {
+        return Cliente::orderBy('nombre_completo')->get();
+    }
+
+    protected function sucursalesParaSelect()
+    {
+        $q = Sucursal::orderBy('nombre');
+        if ($sucursalId = $this->usuarioSucursalId()) {
+            $q->where('id', $sucursalId);
+        }
+        return $q->get();
+    }
+
+    protected function calcularHoraFin(string $hora, int $minutos): string
+    {
+        try {
+            return Carbon::createFromFormat('H:i', $hora)->addMinutes($minutos)->format('H:i');
+        } catch (\Throwable $e) {
+            return $hora;
+        }
+    }
+
+    protected function respuestaAccion(Request $request, string $mensaje, bool $ok = true, array $errors = []): RedirectResponse|JsonResponse
+    {
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => $ok,
+                'message' => $mensaje,
+                'errors' => $errors,
+            ], $ok ? 200 : 422);
+        }
+
+        return back()->with($ok ? 'success' : 'error', $mensaje);
+    }
+
+    protected function registrarAuditoria(string $entidad, int $entidadId, string $accion, array $detalle = []): void
+    {
+        try {
+            $antes  = $detalle['antes']  ?? null;
+            $despues = $detalle['despues'] ?? null;
+            $motivo  = $detalle['motivo']  ?? null;
+            $extra   = $detalle;
+            unset($extra['antes'], $extra['despues'], $extra['motivo']);
+
+            Auditoria::create([
+                'usuario_id'       => Auth::id(),
+                'modulo'           => $entidad,
+                'entidad_tipo'     => $entidad,
+                'entidad_id'       => $entidadId,
+                'accion'           => $accion,
+                'datos_anteriores'  => $antes !== null
+                    ? array_merge((array) $antes, (array) ($extra ?: []))
+                    : ($extra ?: null),
+                'datos_nuevos'      => $despues !== null
+                    ? array_merge((array) $despues, $motivo ? ['motivo' => $motivo] : [])
+                    : null,
+                'ip_address'       => request()?->ip(),
+                'user_agent'       => request()?->userAgent(),
+                'fecha_accion'     => now(),
+            ]);
+        } catch (\Throwable $e) {
+            // No fallar la operación por error de auditoría
+        }
     }
 }

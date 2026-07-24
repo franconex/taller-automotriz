@@ -31,6 +31,12 @@
                     <option value="{{ $s->id }}" @selected((string) request('sucursal_id') === (string) $s->id)>{{ $s->nombre }}</option>
                 @endforeach
             </select>
+            <select name="rol_id" class="form-select" style="max-width:200px;" onchange="this.form.submit()">
+                <option value="">Todos los roles</option>
+                @foreach (($roles ?? collect()) as $r)
+                    <option value="{{ $r->id }}" @selected((string) request('rol_id') === (string) $r->id)>{{ $r->nombre }}</option>
+                @endforeach
+            </select>
             <select name="estado" class="form-select" style="max-width:160px;" onchange="this.form.submit()">
                 <option value="">Todos</option>
                 <option value="1" @selected(request('estado') === '1')>Activos</option>
@@ -39,7 +45,7 @@
         </x-slot:filters>
     </x-admin.filters>
 
-    @if ($empleados->isEmpty() && ! request()->has('q') && ! request()->has('sucursal_id') && ! request()->has('estado'))
+    @if ($empleados->isEmpty() && ! request()->has('q') && ! request()->has('sucursal_id') && ! request()->has('rol_id') && ! request()->has('estado'))
         <x-admin.empty-state
             icon="bi-people"
             title="Aún no hay empleados registrados"
@@ -53,7 +59,7 @@
                     <tr>
                         <th>Empleado</th>
                         <th class="d-none d-md-table-cell">CI</th>
-                        <th class="d-none d-md-table-cell">Cargo</th>
+                        <th class="d-none d-md-table-cell">Rol</th>
                         <th class="d-none d-lg-table-cell">Sucursal</th>
                         <th class="d-none d-lg-table-cell">Cuenta</th>
                         <th>Estado</th>
@@ -75,7 +81,15 @@
                                 </div>
                             </td>
                             <td class="d-none d-md-table-cell col-muted">{{ $emp->ci }}</td>
-                            <td class="d-none d-md-table-cell">{{ $emp->cargo }}</td>
+                            <td class="d-none d-md-table-cell">
+                                <x-admin.status-badge
+                                    tone="info"
+                                    icon="bi-shield-lock"
+                                    :label="$emp->rol->nombre ?? '—'" />
+                                @if ($emp->cargo)
+                                    <div class="cell-muted small mt-1">{{ $emp->cargo }}</div>
+                                @endif
+                            </td>
                             <td class="d-none d-lg-table-cell cell-muted">{{ $emp->sucursal->nombre ?? '—' }}</td>
                             <td class="d-none d-lg-table-cell">
                                 @if ($emp->user)
@@ -110,29 +124,10 @@
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit"
-                                                class="btn-icon"
-                                                title="{{ $emp->estado ? 'Desactivar' : 'Activar' }}"
-                                                aria-label="{{ $emp->estado ? 'Desactivar' : 'Activar' }} {{ $emp->nombre_completo }}">
+                                                class="btn-icon {{ $emp->estado ? '' : 'btn-icon--primary' }}"
+                                                title="{{ $emp->estado ? 'Dar de baja' : 'Activar' }}"
+                                                aria-label="{{ $emp->estado ? 'Dar de baja' : 'Activar' }} {{ $emp->nombre_completo }}">
                                             <i class="bi {{ $emp->estado ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
-                                        </button>
-                                    </form>
-                                    <form id="delete-empleado-{{ $emp->id }}"
-                                          method="POST"
-                                          action="{{ route('admin.empleados.destroy', $emp) }}"
-                                          class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button"
-                                                class="btn-icon btn-icon--danger"
-                                                title="Eliminar"
-                                                aria-label="Eliminar {{ $emp->nombre_completo }}"
-                                                data-tp-confirm
-                                                data-tp-confirm-title="¿Eliminar empleado?"
-                                                data-tp-confirm-message="Se eliminará a {{ $emp->nombre_completo }}. Esta acción no se puede deshacer."
-                                                data-tp-confirm-text="Eliminar"
-                                                data-tp-form-id="delete-empleado-{{ $emp->id }}"
-                                                data-tp-confirm-icon="warning">
-                                            <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>
                                 </div>

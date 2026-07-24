@@ -10,6 +10,8 @@
 @endsection
 
 @section('content')
+    @php $esEfectivo = strcasecmp($metodo->nombre, 'Efectivo') === 0; @endphp
+
     <x-admin.page-header
         :title="$metodo->nombre"
         :description="$metodo->descripcion ?? ''">
@@ -18,10 +20,12 @@
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 Volver
             </a>
-            <a href="{{ route('admin.metodos-pago.edit', $metodo) }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                Editar
-            </a>
+            @if (! $esEfectivo)
+                <a href="{{ route('admin.metodos-pago.edit', $metodo) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                    Editar
+                </a>
+            @endif
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -36,6 +40,9 @@
                     :tone="$metodo->estado ? 'success' : 'neutral'"
                     :icon="$metodo->estado ? 'bi-check-circle-fill' : 'bi-pause-circle-fill'"
                     :label="$metodo->estado ? 'Activo' : 'Inactivo'" />
+                @if ($esEfectivo)
+                    <span class="cell-muted small ms-2">(Fijo — no editable)</span>
+                @endif
             </dd>
         </dl>
     </div>

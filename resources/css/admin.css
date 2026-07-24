@@ -395,6 +395,8 @@ body.admin-body {
 
 .admin-avatar--muted { background: #475467; }
 
+.admin-avatar--img { object-fit: cover; }
+
 .admin-dropdown {
     border: 1px solid var(--tp-border);
     border-radius: var(--tp-radius);

@@ -114,27 +114,7 @@
                                             <i class="bi {{ $u->estado === 'activo' ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
                                         </button>
                                     </form>
-                                    @if ($u->id !== auth()->id())
-                                        <form id="delete-usuario-{{ $u->id }}"
-                                              method="POST"
-                                              action="{{ route('admin.usuarios.destroy', $u) }}"
-                                              class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="button"
-                                                    class="btn-icon btn-icon--danger"
-                                                    title="Eliminar"
-                                                    aria-label="Eliminar {{ $u->nombre }}"
-                                                    data-tp-confirm
-                                                    data-tp-confirm-title="¿Eliminar usuario?"
-                                                    data-tp-confirm-message="Se eliminará el acceso de {{ $u->nombre }}. Esta acción no se puede deshacer."
-                                                    data-tp-confirm-text="Eliminar"
-                                                    data-tp-form-id="delete-usuario-{{ $u->id }}"
-                                                    data-tp-confirm-icon="warning">
-                                                <i class="bi bi-trash3" aria-hidden="true"></i>
-                                            </button>
-                                        </form>
-                                    @endif
+
                                 </div>
                             </td>
                         </tr>

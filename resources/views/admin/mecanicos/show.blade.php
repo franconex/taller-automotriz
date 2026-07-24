@@ -36,7 +36,10 @@
                             <a href="{{ route('admin.empleados.show', $mecanico->empleado) }}">{{ $mecanico->empleado->nombre_completo }}</a>
                         @else — @endif
                     </dd>
-                    <dt>Cargo</dt><dd>{{ $mecanico->empleado->cargo ?? '—' }}</dd>
+                    <dt>Rol</dt><dd>{{ $mecanico->empleado->rol->nombre ?? '—' }}</dd>
+                    @if ($mecanico->empleado?->cargo)
+                        <dt>Cargo</dt><dd>{{ $mecanico->empleado->cargo }}</dd>
+                    @endif
                     <dt>Sucursal</dt><dd>{{ $mecanico->empleado->sucursal->nombre ?? '—' }}</dd>
                     <dt>Teléfono</dt><dd>{{ $mecanico->empleado->telefono ?? '—' }}</dd>
                 </dl>

@@ -12,27 +12,20 @@
 @section('content')
     <x-admin.page-header
         title="Nueva cita"
-        description="Agenda una nueva cita en la sucursal seleccionada.">
+        description="Usa el calendario para crear la cita.">
         <x-slot:actions>
             <a href="{{ route('admin.citas.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                Volver
+                Volver al calendario
             </a>
         </x-slot:actions>
     </x-admin.page-header>
 
-    <div class="admin-table-wrap p-4">
-        <form method="POST" action="{{ route('admin.citas.store') }}">
-            @csrf
-            @include('admin.citas._form', ['cita' => null])
-
-            <div class="d-flex justify-content-end gap-2 mt-3">
-                <a href="{{ route('admin.citas.index') }}" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check2" aria-hidden="true"></i>
-                    Guardar cita
-                </button>
-            </div>
-        </form>
+    <div class="admin-table-wrap p-4 text-center">
+        <p class="text-muted">Esta acción se realiza desde el calendario.</p>
+        <a href="{{ route('admin.citas.index') }}" class="btn btn-primary">
+            <i class="bi bi-calendar-check" aria-hidden="true"></i>
+            Ir al calendario
+        </a>
     </div>
 @endsection

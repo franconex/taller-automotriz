@@ -11,14 +11,7 @@
 @section('content')
     <x-admin.page-header
         title="Métodos de pago"
-        description="Formas de pago aceptadas por el taller.">
-        <x-slot:actions>
-            <a href="{{ route('admin.metodos-pago.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                Nuevo método
-            </a>
-        </x-slot:actions>
-    </x-admin.page-header>
+        description="Formas de pago aceptadas por el taller." />
 
     <x-admin.filters
         :action="route('admin.metodos-pago.index')"
@@ -36,10 +29,8 @@
     @if ($metodos->isEmpty() && ! request()->has('q') && ! request()->has('estado'))
         <x-admin.empty-state
             icon="bi-credit-card"
-            title="Aún no hay métodos de pago"
-            message="Registra las formas de pago aceptadas (efectivo, tarjeta, transferencia, etc.)."
-            :action-label="'Nuevo método'"
-            :action-href="route('admin.metodos-pago.create')" />
+            title="No hay métodos de pago"
+            message="Los métodos disponibles son Efectivo, Tarjeta y QR." />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de métodos de pago">
@@ -69,43 +60,32 @@
                             </td>
                             <td>
                                 <div class="row-actions">
-                                    <a href="{{ route('admin.metodos-pago.edit', $m) }}"
-                                       class="btn-icon btn-icon--primary"
-                                       title="Editar"
-                                       aria-label="Editar {{ $m->nombre }}">
-                                        <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                                    </a>
-                                    <form method="POST"
-                                          action="{{ route('admin.metodos-pago.toggle', $m) }}"
-                                          class="d-inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit"
-                                                class="btn-icon"
-                                                title="{{ $m->estado ? 'Desactivar' : 'Activar' }}"
-                                                aria-label="{{ $m->estado ? 'Desactivar' : 'Activar' }} {{ $m->nombre }}">
-                                            <i class="bi {{ $m->estado ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
-                                        </button>
-                                    </form>
-                                    <form id="delete-metodo-{{ $m->id }}"
-                                          method="POST"
-                                          action="{{ route('admin.metodos-pago.destroy', $m) }}"
-                                          class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button"
-                                                class="btn-icon btn-icon--danger"
-                                                title="Eliminar"
-                                                aria-label="Eliminar {{ $m->nombre }}"
-                                                data-tp-confirm
-                                                data-tp-confirm-title="¿Eliminar método de pago?"
-                                                data-tp-confirm-message="Se eliminará {{ $m->nombre }}. Esta acción no se puede deshacer."
-                                                data-tp-confirm-text="Eliminar"
-                                                data-tp-form-id="delete-metodo-{{ $m->id }}"
-                                                data-tp-confirm-icon="warning">
-                                            <i class="bi bi-trash3" aria-hidden="true"></i>
-                                        </button>
-                                    </form>
+                                    @php $esEfectivo = strcasecmp($m->nombre, 'Efectivo') === 0; @endphp
+
+                                    @if (! $esEfectivo)
+                                        <a href="{{ route('admin.metodos-pago.edit', $m) }}"
+                                           class="btn-icon btn-icon--primary"
+                                           title="Editar"
+                                           aria-label="Editar {{ $m->nombre }}">
+                                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                        </a>
+                                        <form method="POST"
+                                              action="{{ route('admin.metodos-pago.toggle', $m) }}"
+                                              class="d-inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit"
+                                                    class="btn-icon"
+                                                    title="{{ $m->estado ? 'Desactivar' : 'Activar' }}"
+                                                    aria-label="{{ $m->estado ? 'Desactivar' : 'Activar' }} {{ $m->nombre }}">
+                                                <i class="bi {{ $m->estado ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="cell-muted small" title="Método fijo" aria-label="Efectivo no editable">
+                                            <i class="bi bi-lock" aria-hidden="true"></i>
+                                        </span>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

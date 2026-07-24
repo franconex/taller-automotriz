@@ -1,0 +1,930 @@
+/* =============================================================
+   CITAS · Layout y estilo del calendario
+   ============================================================= */
+
+:root {
+    --citas-rojo: #E31E24;
+    --citas-rojo-hover: #C01A20;
+    --citas-gris: #6B7280;
+    --citas-gris-claro: #F3F4F6;
+    --citas-borde: #E5E7EB;
+    --citas-fondo: #FFFFFF;
+    --citas-borde-radio: 12px;
+    --citas-borde-radio-sm: 8px;
+}
+
+.citas-page-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1F2937;
+}
+
+.citas-page-header p {
+    color: var(--citas-gris);
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+
+/* =========== Toolbar =========== */
+.citas-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    padding: .65rem .85rem;
+    background: var(--citas-fondo);
+    border: 1px solid var(--citas-borde);
+    border-radius: var(--citas-borde-radio);
+    margin-bottom: 1rem;
+}
+
+.citas-toolbar .citas-toolbar__group {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+}
+
+.citas-toolbar__btn {
+    background: var(--citas-fondo);
+    border: 1px solid var(--citas-borde);
+    color: #1F2937;
+    border-radius: var(--citas-borde-radio-sm);
+    padding: .35rem .75rem;
+    font-size: .85rem;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    transition: all .15s ease;
+}
+
+.citas-toolbar__btn:hover {
+    background: var(--citas-gris-claro);
+    border-color: #D1D5DB;
+}
+
+.citas-toolbar__btn:focus-visible {
+    outline: 2px solid var(--citas-rojo);
+    outline-offset: 2px;
+}
+
+.citas-toolbar__btn--icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+}
+
+.citas-toolbar__rango {
+    font-size: .9rem;
+    color: #1F2937;
+    font-weight: 500;
+    min-width: 12rem;
+    text-align: center;
+    cursor: pointer;
+    padding: .25rem .5rem;
+    border-radius: var(--citas-borde-radio-sm);
+}
+
+.citas-toolbar__rango:hover {
+    background: var(--citas-gris-claro);
+}
+
+.citas-views {
+    display: inline-flex;
+    background: var(--citas-gris-claro);
+    border-radius: var(--citas-borde-radio-sm);
+    padding: 3px;
+    gap: 2px;
+}
+
+.citas-views__btn {
+    background: transparent;
+    border: none;
+    color: #1F2937;
+    padding: .3rem .75rem;
+    font-size: .82rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.citas-views__btn:hover {
+    color: var(--citas-rojo);
+}
+
+.citas-views__btn.is-active {
+    background: var(--citas-rojo);
+    color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+
+.citas-views__btn.is-active:hover {
+    color: #fff;
+}
+
+.citas-toolbar__nueva {
+    background: var(--citas-rojo);
+    color: #fff;
+    border: 1px solid var(--citas-rojo);
+    border-radius: var(--citas-borde-radio-sm);
+    padding: .45rem 1rem;
+    font-size: .85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    margin-left: auto;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.citas-toolbar__nueva:hover {
+    background: var(--citas-rojo-hover);
+    border-color: var(--citas-rojo-hover);
+}
+
+.citas-toolbar__nueva:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--citas-rojo);
+}
+
+/* =========== Layout principal =========== */
+.citas-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 1199.98px) {
+    .citas-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.citas-main {
+    background: var(--citas-fondo);
+    border: 1px solid var(--citas-borde);
+    border-radius: var(--citas-borde-radio);
+    padding: 1rem;
+    min-height: 600px;
+}
+
+.citas-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* =========== Botón nueva cita del sidebar =========== */
+.citas-aside__nueva {
+    background: var(--citas-rojo);
+    color: #fff;
+    border: 1px solid var(--citas-rojo);
+    border-radius: var(--citas-borde-radio);
+    padding: .65rem 1rem;
+    font-size: .9rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    cursor: pointer;
+    width: 100%;
+    transition: all .15s ease;
+}
+
+.citas-aside__nueva:hover {
+    background: var(--citas-rojo-hover);
+    border-color: var(--citas-rojo-hover);
+}
+
+.citas-aside__card {
+    background: var(--citas-fondo);
+    border: 1px solid var(--citas-borde);
+    border-radius: var(--citas-borde-radio);
+    padding: 1rem;
+}
+
+.citas-aside__title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0 0 .75rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.citas-aside__title .badge {
+    background: var(--citas-rojo);
+}
+
+/* =========== Mini calendario =========== */
+#mini-calendario {
+    font-size: .8rem;
+}
+
+#mini-calendario .fc {
+    --fc-border-color: var(--citas-borde);
+    --fc-today-bg-color: rgba(227, 30, 36, .08);
+    --fc-daygrid-event-dot-width: 6px;
+    font-family: 'Manrope', system-ui, sans-serif;
+}
+
+#mini-calendario .fc-toolbar-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #1F2937;
+    text-transform: capitalize;
+}
+
+#mini-calendario .fc-toolbar.fc-header-toolbar {
+    margin-bottom: .5rem;
+}
+
+#mini-calendario .fc-toolbar-chunk {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+}
+
+#mini-calendario .fc-button {
+    background: transparent;
+    border: 1px solid var(--citas-borde);
+    color: #1F2937;
+    font-size: .75rem;
+    text-transform: capitalize;
+    padding: .15rem .5rem;
+    box-shadow: none;
+}
+
+#mini-calendario .fc-button:hover {
+    background: var(--citas-gris-claro);
+    color: var(--citas-rojo);
+}
+
+#mini-calendario .fc-button:disabled {
+    opacity: .35;
+}
+
+#mini-calendario .fc-daygrid-day-number {
+    color: #1F2937;
+    font-weight: 500;
+    text-decoration: none;
+    padding: .25rem;
+    font-size: .8rem;
+}
+
+#mini-calendario .fc-day-today .fc-daygrid-day-number {
+    color: var(--citas-rojo);
+    font-weight: 700;
+}
+
+#mini-calendario .fc-day-other .fc-daygrid-day-number {
+    color: #9CA3AF;
+}
+
+#mini-calendario .fc-daygrid-day-frame {
+    cursor: pointer;
+}
+
+#mini-calendario .fc-daygrid-day-frame:hover {
+    background: var(--citas-gris-claro);
+}
+
+#mini-calendario .fc-highlight {
+    background: rgba(227, 30, 36, .12) !important;
+}
+
+#mini-calendario .fc-col-header-cell-cushion {
+    color: var(--citas-gris);
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    text-decoration: none;
+    padding: .25rem 0;
+}
+
+/* =========== Calendario principal =========== */
+#calendario-citas .fc {
+    --fc-border-color: var(--citas-borde);
+    --fc-today-bg-color: rgba(227, 30, 36, .04);
+    --fc-now-indicator-color: var(--citas-rojo);
+    --fc-page-bg-color: transparent;
+    --fc-neutral-bg-color: var(--citas-fondo);
+    --fc-list-event-hover-bg-color: var(--citas-gris-claro);
+    --fc-today-button-color: var(--citas-rojo);
+    font-family: 'Manrope', system-ui, sans-serif;
+}
+
+#calendario-citas .fc-toolbar {
+    display: none;
+}
+
+#calendario-citas .fc-view-harness {
+    background: var(--citas-fondo);
+}
+
+#calendario-citas .fc-col-header-cell {
+    background: var(--citas-fondo);
+    border-color: var(--citas-borde);
+}
+
+#calendario-citas .fc-col-header-cell-cushion {
+    color: #1F2937;
+    font-weight: 600;
+    text-decoration: none;
+    padding: .75rem 0;
+    text-transform: capitalize;
+    font-size: .9rem;
+}
+
+#calendario-citas .fc-day-today .fc-col-header-cell-cushion {
+    color: var(--citas-rojo);
+}
+
+#calendario-citas .fc-timegrid-slot-label-cushion {
+    color: var(--citas-gris);
+    font-size: .75rem;
+    font-weight: 500;
+}
+
+#calendario-citas .fc-timegrid-slot-minor {
+    border-color: rgba(229, 231, 235, .5);
+}
+
+#calendario-citas .fc-timegrid-event-harness,
+#calendario-citas .fc-daygrid-event-harness {
+    margin-right: 3px;
+}
+
+#calendario-citas .fc-event {
+    border-radius: 6px;
+    border: none;
+    padding: 4px 8px;
+    font-size: .78rem;
+    line-height: 1.25;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+    overflow: hidden;
+}
+
+#calendario-citas .fc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,.12);
+}
+
+#calendario-citas .fc-event-title {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#calendario-citas .fc-event-time {
+    font-weight: 500;
+    opacity: .9;
+    font-size: .72rem;
+}
+
+#calendario-citas .fc-timegrid-now-indicator-line {
+    border-color: var(--citas-rojo);
+    border-width: 2px;
+}
+
+#calendario-citas .fc-timegrid-now-indicator-arrow {
+    border-color: var(--citas-rojo);
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,.15));
+}
+
+#calendario-citas .fc-daygrid-day-number {
+    color: #1F2937;
+    font-weight: 500;
+    font-size: .85rem;
+    padding: .4rem;
+}
+
+#calendario-citas .fc-day-today .fc-daygrid-day-number {
+    color: var(--citas-rojo);
+    font-weight: 700;
+}
+
+#calendario-citas .fc-day-other .fc-daygrid-day-number {
+    color: #9CA3AF;
+}
+
+#calendario-citas .fc-daygrid-day-frame {
+    min-height: 6.5rem;
+}
+
+#calendario-citas .fc-highlight {
+    background: rgba(227, 30, 36, .12) !important;
+}
+
+#calendario-citas .fc-list-day-cushion {
+    background: var(--citas-gris-claro);
+}
+
+#calendario-citas .fc-list-event-time {
+    color: var(--citas-gris);
+    font-weight: 500;
+}
+
+#calendario-citas .fc-list-event:hover td {
+    background: var(--citas-gris-claro);
+}
+
+/* =========== Filtros laterales =========== */
+.citas-filter {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    margin-bottom: .65rem;
+}
+
+.citas-filter__label {
+    font-size: .72rem;
+    color: var(--citas-gris);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+}
+
+.citas-filter__select {
+    background: var(--citas-fondo);
+    border: 1px solid var(--citas-borde);
+    color: #1F2937;
+    border-radius: var(--citas-borde-radio-sm);
+    padding: .35rem .55rem;
+    font-size: .82rem;
+    width: 100%;
+}
+
+.citas-filter__select:focus {
+    border-color: var(--citas-rojo);
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(227, 30, 36, .15);
+}
+
+.citas-filter__clear {
+    background: transparent;
+    border: 1px dashed var(--citas-borde);
+    color: var(--citas-gris);
+    border-radius: var(--citas-borde-radio-sm);
+    padding: .3rem;
+    font-size: .78rem;
+    cursor: pointer;
+    width: 100%;
+    margin-top: .25rem;
+    transition: all .15s ease;
+}
+
+.citas-filter__clear:hover {
+    color: var(--citas-rojo);
+    border-color: var(--citas-rojo);
+}
+
+/* =========== Leyenda =========== */
+.citas-legend {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+
+.citas-legend li {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .82rem;
+    color: #1F2937;
+}
+
+.citas-legend__dot {
+    width: .75rem;
+    height: .75rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* =========== Tabla "Citas del Día" =========== */
+.citas-dia-titulo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 1.5rem 0 .5rem;
+}
+
+.citas-dia-tabla {
+    width: 100%;
+    background: var(--citas-fondo);
+    border: 1px solid var(--citas-borde);
+    border-radius: var(--citas-borde-radio);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.citas-dia-tabla thead {
+    background: var(--citas-gris-claro);
+}
+
+.citas-dia-tabla th {
+    text-align: left;
+    padding: .65rem .85rem;
+    font-size: .72rem;
+    color: var(--citas-gris);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--citas-borde);
+}
+
+.citas-dia-tabla td {
+    padding: .7rem .85rem;
+    border-bottom: 1px solid var(--citas-borde);
+    font-size: .85rem;
+    color: #1F2937;
+    vertical-align: middle;
+}
+
+.citas-dia-tabla tr:last-child td {
+    border-bottom: 0;
+}
+
+.citas-dia-tabla tbody tr:hover {
+    background: rgba(227, 30, 36, .03);
+}
+
+.citas-dia-tabla__vehiculo {
+    color: var(--citas-gris);
+    font-size: .78rem;
+}
+
+.citas-estado-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .15rem .55rem;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    line-height: 1.4;
+}
+
+.citas-estado-badge--confirmada { background: #DCFCE7; color: #166534; border-color: #BBF7D0; }
+.citas-estado-badge--pendiente  { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
+.citas-estado-badge--atendida   { background: #CFFAFE; color: #155E75; border-color: #A5F3FC; }
+.citas-estado-badge--cancelada  { background: #E5E7EB; color: #374151; border-color: #D1D5DB; }
+.citas-estado-badge--no_asistio { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+
+.citas-dia-acciones {
+    display: inline-flex;
+    gap: .25rem;
+}
+
+.citas-icon-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--citas-gris);
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.citas-icon-btn:hover {
+    background: var(--citas-gris-claro);
+    color: var(--citas-rojo);
+}
+
+.citas-icon-btn:focus-visible {
+    outline: 2px solid var(--citas-rojo);
+    outline-offset: 1px;
+}
+
+.citas-icon-btn--danger:hover {
+    color: #B91C1C;
+}
+
+/* =========== Próximas Citas =========== */
+.citas-proximas {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .65rem;
+}
+
+.citas-proximas__item {
+    display: flex;
+    gap: .65rem;
+    align-items: flex-start;
+    padding: .5rem 0;
+    border-bottom: 1px solid var(--citas-borde);
+}
+
+.citas-proximas__item:last-child {
+    border-bottom: 0;
+}
+
+.citas-proximas__dot {
+    width: .65rem;
+    height: .65rem;
+    border-radius: 50%;
+    margin-top: .35rem;
+    flex-shrink: 0;
+}
+
+.citas-proximas__fecha {
+    font-size: .72rem;
+    color: var(--citas-gris);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+}
+
+.citas-proximas__cliente {
+    font-size: .85rem;
+    color: #1F2937;
+    font-weight: 600;
+}
+
+.citas-proximas__servicio {
+    font-size: .78rem;
+    color: var(--citas-gris);
+}
+
+.citas-proximas__ver {
+    color: var(--citas-rojo);
+    font-weight: 600;
+    text-decoration: none;
+    font-size: .82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    margin-top: .25rem;
+}
+
+.citas-proximas__ver:hover {
+    text-decoration: underline;
+}
+
+/* =========== Modal genérico =========== */
+.modal-content {
+    border: 1px solid var(--citas-borde);
+    border-radius: var(--citas-borde-radio);
+    box-shadow: 0 10px 30px rgba(0,0,0,.12);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--citas-borde);
+    padding: 1rem 1.25rem;
+}
+
+.modal-body {
+    padding: 1.25rem;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--citas-borde);
+    padding: 1rem 1.25rem;
+}
+
+#modal-detalle-cita .citas-detalle-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .85rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+#modal-detalle-cita .citas-detalle-grid dt {
+    font-size: .72rem;
+    color: var(--citas-gris);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+    margin: 0;
+}
+
+#modal-detalle-cita .citas-detalle-grid dd {
+    font-size: .9rem;
+    color: #1F2937;
+    margin: 0 0 .35rem;
+    font-weight: 500;
+}
+
+#modal-detalle-cita .citas-detalle-section {
+    border-top: 1px solid var(--citas-borde);
+    padding-top: 1rem;
+    margin-top: .5rem;
+}
+
+#modal-detalle-cita .citas-detalle-section dt {
+    color: var(--citas-gris);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+    margin-top: .65rem;
+}
+
+#modal-detalle-cita .citas-detalle-section dd {
+    font-size: .9rem;
+    color: #1F2937;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+#modal-detalle-cita .citas-detalle-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin-top: 1rem;
+}
+
+#modal-detalle-cita .citas-detalle-actions .btn {
+    font-size: .82rem;
+    padding: .35rem .65rem;
+}
+
+#modal-detalle-cita .citas-detalle-info-extra {
+    background: var(--citas-gris-claro);
+    border-radius: 6px;
+    padding: .65rem .85rem;
+    margin-bottom: 1rem;
+    font-size: .8rem;
+    color: var(--citas-gris);
+}
+
+@media (max-width: 575.98px) {
+    #modal-detalle-cita .citas-detalle-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========== Formulario =========== */
+.citas-form-section {
+    margin-bottom: 1.25rem;
+}
+
+.citas-form-section__title {
+    font-size: .82rem;
+    color: var(--citas-gris);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-weight: 700;
+    margin: 0 0 .65rem;
+    padding-bottom: .35rem;
+    border-bottom: 1px solid var(--citas-borde);
+}
+
+.citas-form-section .form-label {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: .25rem;
+}
+
+.citas-form-section .form-label .required {
+    color: var(--citas-rojo);
+    margin-left: .15rem;
+}
+
+.citas-form-section .form-control,
+.citas-form-section .form-select {
+    border-radius: var(--citas-borde-radio-sm);
+    font-size: .88rem;
+    border-color: var(--citas-borde);
+}
+
+.citas-form-section .form-control:focus,
+.citas-form-section .form-select:focus {
+    border-color: var(--citas-rojo);
+    box-shadow: 0 0 0 3px rgba(227, 30, 36, .15);
+}
+
+.citas-form-section .invalid-feedback {
+    font-size: .78rem;
+}
+
+.citas-form-section .form-text {
+    font-size: .75rem;
+    color: var(--citas-gris);
+}
+
+/* =========== Empty states =========== */
+.citas-empty {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--citas-gris);
+}
+
+.citas-empty__icon {
+    font-size: 2rem;
+    color: #D1D5DB;
+    margin-bottom: .5rem;
+}
+
+.citas-empty__title {
+    font-size: .95rem;
+    font-weight: 600;
+    color: #4B5563;
+    margin-bottom: .25rem;
+}
+
+.citas-empty__text {
+    font-size: .82rem;
+    color: var(--citas-gris);
+    margin: 0;
+}
+
+/* =========== Loading =========== */
+.citas-loading {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+.citas-loading.is-active {
+    display: flex;
+}
+
+.citas-loading__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--citas-borde);
+    border-top-color: var(--citas-rojo);
+    border-radius: 50%;
+    animation: citas-spin 0.8s linear infinite;
+}
+
+@keyframes citas-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* =========== Reduced motion =========== */
+@media (prefers-reduced-motion: reduce) {
+    #calendario-citas .fc-event,
+    .citas-toolbar__nueva,
+    .citas-toolbar__btn {
+        transition: none;
+    }
+
+    .citas-loading__spinner {
+        animation: none;
+    }
+}
+
+/* =========== Mobile =========== */
+@media (max-width: 767.98px) {
+    .citas-toolbar {
+        padding: .55rem;
+    }
+    .citas-toolbar__nueva {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+    }
+    .citas-views {
+        width: 100%;
+        justify-content: center;
+    }
+    .citas-aside__nueva {
+        display: none;
+    }
+    .citas-dia-tabla {
+        font-size: .78rem;
+    }
+    .citas-dia-tabla th,
+    .citas-dia-tabla td {
+        padding: .5rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .citas-dia-tabla thead th:nth-child(4),
+    .citas-dia-tabla tbody td:nth-child(4),
+    .citas-dia-tabla thead th:nth-child(5),
+    .citas-dia-tabla tbody td:nth-child(5) {
+        display: none;
+    }
+}

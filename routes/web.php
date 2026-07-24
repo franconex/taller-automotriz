@@ -52,6 +52,11 @@ Route::middleware('auth')->group(function () {
         return view('mecanico.dashboard');
     })->middleware('rol:Mecánico')->name('mecanico.dashboard');
 
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'index'])->name('perfil.index');
+        Route::put('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'update'])->name('perfil.update');
+    });
+
     Route::prefix('admin')
         ->middleware('rol:Administrador')
         ->name('admin.')
@@ -60,14 +65,12 @@ Route::middleware('auth')->group(function () {
             Route::get('/dashboard', [DashboardController::class, 'index'])
                 ->name('dashboard');
 
-            Route::patch('/{recurso}/{id}/toggle', [DashboardController::class, 'toggleGenerico'])
-                ->name('toggle');
-
             Route::resource('sucursales', SucursalController::class);
             Route::patch('sucursales/{sucursale}/toggle', [SucursalController::class, 'toggle'])
                 ->name('sucursales.toggle');
 
-            Route::resource('empleados', EmpleadoController::class);
+            Route::resource('empleados', EmpleadoController::class)
+                ->except(['destroy']);
             Route::patch('empleados/{empleado}/toggle', [EmpleadoController::class, 'toggle'])
                 ->name('empleados.toggle');
 
@@ -93,13 +96,7 @@ Route::middleware('auth')->group(function () {
             Route::patch('vehiculos/{vehiculo}/toggle', [VehiculoController::class, 'toggle'])
                 ->name('vehiculos.toggle');
 
-            Route::resource('citas', CitaController::class);
-            Route::patch('citas/{cita}/toggle', [CitaController::class, 'toggle'])
-                ->name('citas.toggle');
-            Route::patch('citas/{cita}/cancelar', [CitaController::class, 'cancelar'])
-                ->name('citas.cancelar');
-            Route::post('citas/{cita}/convertir-orden', [CitaController::class, 'convertirOrden'])
-                ->name('citas.convertir-orden');
+            // (citas movido fuera del grupo admin, ver bloque más abajo)
 
             Route::resource('ordenes', OrdenTrabajoController::class);
             Route::patch('ordenes/{orden}/toggle', [OrdenTrabajoController::class, 'toggle'])
@@ -138,7 +135,8 @@ Route::middleware('auth')->group(function () {
                 ->except(['edit', 'update']);
 
             Route::resource('metodos-pago', MetodoPagoController::class)
-                ->parameters(['metodos-pago' => 'metodoPago']);
+                ->parameters(['metodos-pago' => 'metodoPago'])
+                ->except(['create', 'store', 'destroy']);
             Route::patch('metodos-pago/{metodoPago}/toggle', [MetodoPagoController::class, 'toggle'])
                 ->name('metodos-pago.toggle');
 
@@ -167,5 +165,37 @@ Route::middleware('auth')->group(function () {
                 ->name('auditoria.index');
             Route::get('auditoria/{auditoria}', [AuditoriaController::class, 'show'])
                 ->name('auditoria.show');
+        });
+
+        // Citas: módulo accesible para cualquier usuario con permiso citas.ver
+        // (Recepcionista, Administrador, Gerente). El control fino por acción
+        // se hace con permisos (citas.crear, citas.editar, citas.cancelar, ordenes.crear).
+        Route::middleware('permiso:citas.ver')
+            ->prefix('admin')
+            ->name('admin.')
+            ->group(function () {
+            // Rutas específicas ANTES del resource para evitar conflictos con {cita}
+            Route::get('citas/eventos', [CitaController::class, 'eventos'])->name('citas.eventos');
+            Route::get('citas/tabla-dia', [CitaController::class, 'tablaDia'])->name('citas.tabla-dia');
+            Route::get('citas/proximas', [CitaController::class, 'proximas'])->name('citas.proximas');
+            Route::post('citas', [CitaController::class, 'store'])
+                ->middleware('permiso:citas.crear')
+                ->name('citas.store');
+            Route::resource('citas', CitaController::class)->except(['create', 'store', 'destroy']);
+            Route::put('citas/{cita}/reprogramar', [CitaController::class, 'reprogramar'])
+                ->middleware('permiso:citas.editar')
+                ->name('citas.reprogramar');
+            Route::patch('citas/{cita}/confirmar', [CitaController::class, 'confirmar'])
+                ->middleware('permiso:citas.editar')
+                ->name('citas.confirmar');
+            Route::patch('citas/{cita}/cancelar', [CitaController::class, 'cancelar'])
+                ->middleware('permiso:citas.cancelar')
+                ->name('citas.cancelar');
+            Route::patch('citas/{cita}/no-asistio', [CitaController::class, 'marcarNoAsistio'])
+                ->middleware('permiso:citas.editar')
+                ->name('citas.no-asistio');
+            Route::post('citas/{cita}/convertir-orden', [CitaController::class, 'convertirEnOrden'])
+                ->middleware('permiso:ordenes.crear')
+                ->name('citas.convertir-orden');
         });
 });

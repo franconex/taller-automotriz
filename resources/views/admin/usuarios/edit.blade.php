@@ -12,7 +12,7 @@
 @section('content')
     <x-admin.page-header
         title="Editar usuario"
-        :description="'Modifica la cuenta de ' . $usuario->nombre . '.'">
+        :description="'Modifica la cuenta de ' . ($usuario->empleado->nombre_completo ?? $usuario->nombre) . '.'">
         <x-slot:actions>
             <a href="{{ route('admin.usuarios.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>

@@ -63,7 +63,12 @@
                                     </span>
                                     <div>
                                         <div class="cell-strong">{{ $m->empleado->nombre_completo ?? '—' }}</div>
-                                        <div class="cell-muted small">{{ $m->empleado->cargo ?? '' }}</div>
+                                        <div class="cell-muted small">
+                                            {{ $m->empleado->rol->nombre ?? '' }}
+                                            @if ($m->empleado->cargo)
+                                                — {{ $m->empleado->cargo }}
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </td>

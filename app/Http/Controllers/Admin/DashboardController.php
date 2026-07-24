@@ -142,8 +142,4 @@ class DashboardController extends AdminController
         ]);
     }
 
-    public function toggleGenerico(Request $request, string $recurso, int $id)
-    {
-        return back()->with('error', 'La ruta de cambio de estado no es válida.');
-    }
 }

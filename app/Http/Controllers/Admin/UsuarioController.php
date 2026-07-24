@@ -38,21 +38,26 @@ class UsuarioController extends AdminController
 
     public function create(): View
     {
-        $roles = Rol::orderBy('nombre')->get();
-        $sucursales = Sucursal::query()
-            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
-            ->orderBy('nombre')
-            ->get();
         $empleados = Empleado::query()
+            ->with('rol', 'sucursal')
             ->whereDoesntHave('user')
             ->when($this->usuarioSucursalId(), fn ($q) => $q->where('sucursal_id', $this->usuarioSucursalId()))
             ->orderBy('nombre_completo')
             ->get();
 
+        $empleadosData = $empleados->map(fn ($e) => [
+            'id' => $e->id,
+            'nombre_completo' => $e->nombre_completo,
+            'email' => $e->email,
+            'rol_id' => $e->rol_id,
+            'rol_nombre' => $e->rol?->nombre ?? '—',
+            'sucursal_id' => $e->sucursal_id,
+            'sucursal_nombre' => $e->sucursal?->nombre ?? '—',
+        ]);
+
         return view('admin.usuarios.create', [
-            'roles' => $roles,
-            'sucursales' => $sucursales,
             'empleados' => $empleados,
+            'empleadosData' => $empleadosData,
             'usuario' => new \App\Models\User(),
         ]);
     }
@@ -60,6 +65,12 @@ class UsuarioController extends AdminController
     public function store(UsuarioRequest $request): RedirectResponse
     {
         $datos = $request->validated();
+        $empleado = Empleado::findOrFail($datos['empleado_id']);
+
+        $datos['nombre'] = $empleado->nombre_completo;
+        $datos['email'] = $empleado->email ?? $empleado->nombre_completo.'@tallerpro.com';
+        $datos['rol_id'] = $empleado->rol_id;
+        $datos['sucursal_id'] = $empleado->sucursal_id;
         $datos['password'] = Hash::make($datos['password']);
         $datos['estado'] = $datos['estado'] ?? 'activo';
         unset($datos['password_confirmation']);
@@ -80,12 +91,8 @@ class UsuarioController extends AdminController
 
     public function edit(User $usuario): View
     {
-        $roles = Rol::orderBy('nombre')->get();
-        $sucursales = Sucursal::query()
-            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
-            ->orderBy('nombre')
-            ->get();
         $empleados = Empleado::query()
+            ->with('rol', 'sucursal')
             ->where(function ($q) use ($usuario) {
                 $q->whereDoesntHave('user')
                   ->orWhere('id', $usuario->empleado_id);
@@ -94,17 +101,32 @@ class UsuarioController extends AdminController
             ->orderBy('nombre_completo')
             ->get();
 
+        $empleadosData = $empleados->map(fn ($e) => [
+            'id' => $e->id,
+            'nombre_completo' => $e->nombre_completo,
+            'email' => $e->email,
+            'rol_id' => $e->rol_id,
+            'rol_nombre' => $e->rol?->nombre ?? '—',
+            'sucursal_id' => $e->sucursal_id,
+            'sucursal_nombre' => $e->sucursal?->nombre ?? '—',
+        ]);
+
         return view('admin.usuarios.edit', [
             'usuario' => $usuario,
-            'roles' => $roles,
-            'sucursales' => $sucursales,
             'empleados' => $empleados,
+            'empleadosData' => $empleadosData,
         ]);
     }
 
     public function update(UsuarioRequest $request, User $usuario): RedirectResponse
     {
         $datos = $request->validated();
+        $empleado = Empleado::findOrFail($datos['empleado_id']);
+
+        $datos['nombre'] = $empleado->nombre_completo;
+        $datos['email'] = $empleado->email ?? $usuario->email;
+        $datos['rol_id'] = $empleado->rol_id;
+        $datos['sucursal_id'] = $empleado->sucursal_id;
 
         if (! empty($datos['password'])) {
             $datos['password'] = Hash::make($datos['password']);
@@ -114,6 +136,10 @@ class UsuarioController extends AdminController
 
         unset($datos['password_confirmation']);
         $datos['estado'] = $datos['estado'] ?? $usuario->estado;
+
+        if ($datos['estado'] === 'activo' && $empleado && !$empleado->estado) {
+            return back()->with('error', 'No se puede activar el usuario porque el empleado asociado está dado de baja.')->withInput();
+        }
 
         $usuario->update($datos);
 
@@ -137,7 +163,13 @@ class UsuarioController extends AdminController
             return back()->with('error', 'No puedes cambiar tu propio estado.');
         }
 
-        $usuario->estado = $usuario->estado === 'activo' ? 'inactivo' : 'activo';
+        $nuevoEstado = $usuario->estado === 'activo' ? 'inactivo' : 'activo';
+
+        if ($nuevoEstado === 'activo' && $usuario->empleado && !$usuario->empleado->estado) {
+            return back()->with('error', 'No se puede activar el usuario porque el empleado asociado está dado de baja.');
+        }
+
+        $usuario->estado = $nuevoEstado;
         $usuario->save();
 
         return back()->with('success', "El usuario fue {$usuario->estado} correctamente.");
