@@ -3,17 +3,17 @@
 namespace Database\Seeders;
 
 use App\Models\Permiso;
-use App\Models\Role;
+use App\Models\Rol;
 use Illuminate\Database\Seeder;
 
 class RolPermisoSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = Role::where('nombre', 'Administrador')->first();
-        $gerente = Role::where('nombre', 'Gerente')->first();
-        $recepcionista = Role::where('nombre', 'Recepcionista')->first();
-        $mecanico = Role::where('nombre', 'Mecánico')->first();
+        $admin = Rol::where('nombre', 'Administrador')->first();
+        $gerente = Rol::where('nombre', 'Gerente')->first();
+        $recepcionista = Rol::where('nombre', 'Recepcionista')->first();
+        $mecanico = Rol::where('nombre', 'Mecánico')->first();
 
         // Administrador: todos los permisos
         $admin->permisos()->sync(Permiso::pluck('id'));

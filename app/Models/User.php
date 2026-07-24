@@ -45,11 +45,30 @@ class User extends Authenticatable
 
     public function rol(): BelongsTo
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Rol::class);
     }
 
     public function empleado(): BelongsTo
     {
         return $this->belongsTo(Empleado::class);
+    }
+
+    public function isActivo(): bool
+    {
+        return $this->estado === 'activo';
+    }
+
+    public function tieneRol(string $nombreRol): bool
+    {
+        return $this->rol !== null && $this->rol->nombre === $nombreRol;
+    }
+
+    public function tienePermiso(string $codigoPermiso): bool
+    {
+        if ($this->rol === null) {
+            return false;
+        }
+
+        return $this->rol->permisos()->where('codigo', $codigoPermiso)->exists();
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,9 +24,21 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $request->user()->update(['ultimo_acceso' => now()]);
+        $user = Auth::user();
 
-        return redirect()->intended($this->redirectBasedOnRole());
+        if (! $user->rol || ! $user->rol->estado) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'login' => 'No tienes un rol activo asignado. Contacta al administrador.',
+            ]);
+        }
+
+        $user->update(['ultimo_acceso' => now()]);
+
+        return $this->redirectAfterLogin($user);
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -36,21 +49,41 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect()->route('login');
     }
 
-    private function redirectBasedOnRole(): string
+    private function redirectBasedOnRole(User $user): string
     {
-        $roleName = Auth::user()->rol?->nombre;
-
-        return match ($roleName) {
+        return match ($user->rol->nombre) {
             'Administrador' => '/admin/dashboard',
             'Gerente' => '/gerente/dashboard',
             'Recepcionista' => '/recepcion/dashboard',
             'Mecánico' => '/mecanico/dashboard',
-            default => throw ValidationException::withMessages([
-                'login' => 'Credenciales incorrectas. Verifica tu correo/usuario y contraseña.',
-            ]),
         };
+    }
+
+    private function redirectAfterLogin(User $user): RedirectResponse
+    {
+        $intended = session()->get('url.intended');
+
+        if ($intended && ! $this->intendedUrlMatchesRole($intended, $user)) {
+            session()->forget('url.intended');
+        }
+
+        return redirect()->intended($this->redirectBasedOnRole($user));
+    }
+
+    private function intendedUrlMatchesRole(string $url, User $user): bool
+    {
+        $path = parse_url($url, PHP_URL_PATH) ?? '';
+
+        $panelPaths = [
+            'Administrador' => '/admin/dashboard',
+            'Gerente' => '/gerente/dashboard',
+            'Recepcionista' => '/recepcion/dashboard',
+            'Mecánico' => '/mecanico/dashboard',
+        ];
+
+        return str_ends_with($path, $panelPaths[$user->rol->nombre] ?? '');
     }
 }

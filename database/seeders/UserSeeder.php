@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
+use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -21,21 +21,60 @@ class UserSeeder extends Seeder
             ]
         );
 
-        $adminRole = Role::where('nombre', 'Administrador')->first();
+        $adminRole = Rol::where('nombre', 'Administrador')->first();
+        $gerenteRole = Rol::where('nombre', 'Gerente')->first();
+        $recepcionistaRole = Rol::where('nombre', 'Recepcionista')->first();
+        $mecanicoRole = Rol::where('nombre', 'Mecánico')->first();
 
-        if ($adminRole && ! User::where('username', 'admin')->exists()) {
-            User::create([
+        $usuarios = [
+            [
+                'rol' => $adminRole,
                 'nombre' => 'Administrador Principal',
                 'username' => 'admin',
                 'email' => 'admin@tallerpro.com',
-                'password' => Hash::make('Cambiar123!'),
-                'estado' => 'activo',
-                'rol_id' => $adminRole->id,
-                'sucursal_id' => $sucursal->id,
-            ]);
+            ],
+            [
+                'rol' => $gerenteRole,
+                'nombre' => 'Gerente General',
+                'username' => 'gerente',
+                'email' => 'gerente@tallerpro.com',
+            ],
+            [
+                'rol' => $recepcionistaRole,
+                'nombre' => 'Recepcionista Principal',
+                'username' => 'recepcion',
+                'email' => 'recepcion@tallerpro.com',
+            ],
+            [
+                'rol' => $mecanicoRole,
+                'nombre' => 'Mecánico Principal',
+                'username' => 'mecanico',
+                'email' => 'mecanico@tallerpro.com',
+            ],
+        ];
 
-            $this->command->info('Usuario administrador creado: admin / Cambiar123!');
-            $this->command->warn('CAMBIA ESTA CONTRASEÑA EN PRODUCCIÓN.');
+        $passwordPlano = 'TallerPro2026!';
+
+        foreach ($usuarios as $datos) {
+            if (! $datos['rol']) {
+                continue;
+            }
+
+            if (! User::where('username', $datos['username'])->exists()) {
+                User::create([
+                    'nombre' => $datos['nombre'],
+                    'username' => $datos['username'],
+                    'email' => $datos['email'],
+                    'password' => Hash::make($passwordPlano),
+                    'estado' => 'activo',
+                    'rol_id' => $datos['rol']->id,
+                    'sucursal_id' => $sucursal->id,
+                ]);
+
+                $this->command->info("Usuario {$datos['username']} creado ({$datos['rol']->nombre}).");
+            }
         }
+
+        $this->command->warn('Contraseña común para pruebas: ' . $passwordPlano . ' — CAMBIAR EN PRODUCCIÓN.');
     }
 }

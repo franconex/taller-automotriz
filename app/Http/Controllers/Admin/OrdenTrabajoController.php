@@ -1,0 +1,163 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Requests\Admin\OrdenTrabajoRequest;
+use App\Models\Cliente;
+use App\Models\OrdenTrabajo;
+use App\Models\Sucursal;
+use App\Models\Vehiculo;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class OrdenTrabajoController extends AdminController
+{
+    public function index(Request $request): View
+    {
+        $query = OrdenTrabajo::query()->with(['cliente', 'vehiculo', 'sucursal']);
+
+        $this->scopeSucursal($query, 'sucursal_id');
+        $this->aplicarFiltros($request, $query, ['estado', 'sucursal_id']);
+        $this->aplicarBusqueda($query, $request, [
+            'numero_orden',
+            'descripcion_problema',
+            'cliente.nombre_completo',
+            'vehiculo.placa',
+        ]);
+
+        $ordenes = $query->orderByDesc('fecha_emision')->paginate(15)->withQueryString();
+
+        $sucursales = Sucursal::query()
+            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.ordenes.index', [
+            'ordenes' => $ordenes,
+            'sucursales' => $sucursales,
+        ]);
+    }
+
+    public function create(): View
+    {
+        $clientes = Cliente::orderBy('nombre_completo')->get();
+        $vehiculos = Vehiculo::with('cliente')->orderBy('placa')->get();
+        $sucursales = Sucursal::query()
+            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.ordenes.create', [
+            'clientes' => $clientes,
+            'vehiculos' => $vehiculos,
+            'sucursales' => $sucursales,
+            'orden' => new \App\Models\OrdenTrabajo(),
+        ]);
+    }
+
+    public function store(OrdenTrabajoRequest $request): RedirectResponse
+    {
+        $datos = $request->validated();
+        $datos['numero_orden'] = $datos['numero_orden'] ?? 'OT-' . str_pad((string) (OrdenTrabajo::max('id') + 1), 6, '0', STR_PAD_LEFT);
+        $datos['fecha_emision'] = now();
+        $datos['usuario_recepcion_id'] = auth()->id();
+        $datos['estado'] = $datos['estado'] ?? 'recibida';
+        $datos['descuento'] = $datos['descuento'] ?? 0;
+        $datos['kilometraje_ingreso'] = $datos['kilometraje_ingreso'] ?? 0;
+
+        OrdenTrabajo::create($datos);
+
+        return $this->redirigirConExito('órdenes de trabajo', 'creada');
+    }
+
+    public function show(OrdenTrabajo $ordene): View
+    {
+        $ordene->load(['cliente', 'vehiculo.modelo.marcaVehiculo', 'sucursal', 'usuarioRecepcion', 'cita', 'pagos.comprobante', 'detalles']);
+
+        return view('admin.ordenes.show', [
+            'orden' => $ordene,
+        ]);
+    }
+
+    public function edit(OrdenTrabajo $ordene): View
+    {
+        $clientes = Cliente::orderBy('nombre_completo')->get();
+        $vehiculos = Vehiculo::with('cliente')->orderBy('placa')->get();
+        $sucursales = Sucursal::query()
+            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.ordenes.edit', [
+            'orden' => $ordene,
+            'clientes' => $clientes,
+            'vehiculos' => $vehiculos,
+            'sucursales' => $sucursales,
+        ]);
+    }
+
+    public function update(OrdenTrabajoRequest $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        $datos = $request->validated();
+        $ordene->update($datos);
+
+        return $this->redirigirConExito('órdenes de trabajo', 'actualizada');
+    }
+
+    public function destroy(OrdenTrabajo $ordene): RedirectResponse
+    {
+        if ($ordene->pagos()->exists()) {
+            return back()->with('error', 'No se puede eliminar la orden porque tiene pagos registrados.');
+        }
+
+        $ordene->delete();
+
+        return $this->redirigirConExito('órdenes de trabajo', 'eliminada');
+    }
+
+    public function toggle(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        $estados = ['recibida', 'diagnostico', 'en_proceso', 'finalizada', 'entregada'];
+        $actual = array_search($ordene->estado, $estados);
+        $nuevo = $estados[min($actual + 1, count($estados) - 1)];
+        $ordene->estado = $nuevo;
+        $ordene->save();
+
+        return back()->with('success', "La orden fue marcada como {$nuevo}.");
+    }
+
+    public function cambiarEstadoOrden(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        $request->validate([
+            'estado' => ['required', 'in:recibida,diagnostico,en_proceso,finalizada,entregada,anulada'],
+        ], [], ['estado' => 'estado']);
+
+        $nuevoEstado = $request->input('estado');
+        $cambios = [];
+
+        if ($nuevoEstado === 'en_proceso' && ! $ordene->fecha_inicio) {
+            $cambios['fecha_inicio'] = now();
+        }
+        if ($nuevoEstado === 'finalizada' && ! $ordene->fecha_fin) {
+            $cambios['fecha_fin'] = now();
+        }
+        if ($nuevoEstado === 'entregada' && ! $ordene->fecha_entrega) {
+            $cambios['fecha_entrega'] = now();
+        }
+
+        $ordene->fill($cambios);
+        $ordene->estado = $nuevoEstado;
+        $ordene->save();
+
+        return back()->with('success', "La orden fue actualizada a {$nuevoEstado}.");
+    }
+
+    public function cancelar(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        $ordene->estado = 'anulada';
+        $ordene->save();
+
+        return back()->with('success', 'La orden fue anulada correctamente.');
+    }
+}

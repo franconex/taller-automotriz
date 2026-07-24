@@ -13,18 +13,20 @@ class RolMiddleware
     {
         $user = Auth::user();
 
-        if (! $user) {
-            abort(403, 'No autenticado.');
+        if (! $user || ! $user->isActivo()) {
+            abort(403, 'No autenticado o usuario inactivo.');
         }
 
-        if (! $user->estado) {
-            abort(403, 'Usuario inactivo.');
+        if (! $user->rol || ! $user->rol->estado) {
+            abort(403, 'Rol inactivo o no asignado.');
         }
 
-        if (! $user->rol || ! in_array($user->rol->nombre, $roles)) {
-            abort(403, 'No autorizado para este panel.');
+        foreach ($roles as $rol) {
+            if ($user->tieneRol($rol)) {
+                return $next($request);
+            }
         }
 
-        return $next($request);
+        abort(403, 'No autorizado para este panel.');
     }
 }

@@ -13,22 +13,18 @@ class PermisoMiddleware
     {
         $user = Auth::user();
 
-        if (! $user) {
-            abort(403, 'No autenticado.');
-        }
-
-        if (! $user->estado) {
-            abort(403, 'Usuario inactivo.');
+        if (! $user || ! $user->isActivo()) {
+            abort(403, 'No autenticado o usuario inactivo.');
         }
 
         if (! $user->rol || ! $user->rol->estado) {
             abort(403, 'Rol inactivo o no asignado.');
         }
 
-        foreach ($permisos as $permiso) {
-            if ($user->tienePermiso($permiso)) {
-                return $next($request);
-            }
+        $permisosUsuario = $user->rol->permisos()->pluck('codigo')->toArray();
+
+        if (array_intersect($permisos, $permisosUsuario)) {
+            return $next($request);
         }
 
         abort(403, 'No tienes permiso para realizar esta acción.');

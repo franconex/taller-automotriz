@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\PermisoMiddleware;
+use App\Http\Middleware\RolMiddleware;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,7 +15,26 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'rol' => RolMiddleware::class,
+            'permiso' => PermisoMiddleware::class,
+        ]);
+
+        RedirectIfAuthenticated::redirectUsing(function (Request $request) {
+            $user = $request->user();
+
+            if ($user && $user->rol) {
+                return match ($user->rol->nombre) {
+                    'Administrador' => route('admin.dashboard'),
+                    'Gerente'      => route('gerente.dashboard'),
+                    'Recepcionista' => route('recepcion.dashboard'),
+                    'Mecánico'     => route('mecanico.dashboard'),
+                    default => route('admin.dashboard'),
+                };
+            }
+
+            return '/';
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

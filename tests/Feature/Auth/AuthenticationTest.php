@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Models\Role;
+use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,10 +24,10 @@ class AuthenticationTest extends TestCase
         parent::setUp();
 
         $roles = [
-            'Administrador' => Role::create(['nombre' => 'Administrador']),
-            'Gerente' => Role::create(['nombre' => 'Gerente']),
-            'Recepcionista' => Role::create(['nombre' => 'Recepcionista']),
-            'Mecánico' => Role::create(['nombre' => 'Mecánico']),
+            'Administrador' => Rol::create(['nombre' => 'Administrador']),
+            'Gerente' => Rol::create(['nombre' => 'Gerente']),
+            'Recepcionista' => Rol::create(['nombre' => 'Recepcionista']),
+            'Mecánico' => Rol::create(['nombre' => 'Mecánico']),
         ];
 
         $this->sucursal = Sucursal::create([
@@ -37,7 +37,7 @@ class AuthenticationTest extends TestCase
             'horario_atencion' => 'Lun-Vie 8-18',
         ]);
 
-        $createUser = fn(string $nombre, string $username, string $email, Role $rol, string $estado = 'activo') =>
+        $createUser = fn(string $nombre, string $username, string $email, Rol $rol, string $estado = 'activo') =>
             User::create([
                 'nombre' => $nombre,
                 'username' => $username,
@@ -261,5 +261,78 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/register');
 
         $this->assertEquals(404, $response->status());
+    }
+
+    public function test_cada_rol_accede_solo_a_su_panel(): void
+    {
+        $usuarios = [
+            'Administrador' => $this->adminUser,
+            'Gerente' => $this->gerenteUser,
+            'Recepcionista' => $this->recepcionistaUser,
+            'Mecánico' => $this->mecanicoUser,
+        ];
+
+        $rutas = [
+            'Administrador' => 'admin.dashboard',
+            'Gerente' => 'gerente.dashboard',
+            'Recepcionista' => 'recepcion.dashboard',
+            'Mecánico' => 'mecanico.dashboard',
+        ];
+
+        foreach ($usuarios as $nombreRol => $usuario) {
+            foreach ($rutas as $panelRol => $ruta) {
+                $response = $this->actingAs($usuario)->get(route($ruta));
+
+                if ($nombreRol === $panelRol) {
+                    $response->assertOk();
+                } else {
+                    $response->assertForbidden();
+                }
+            }
+        }
+    }
+
+    public function test_rechaza_login_con_rol_inactivo(): void
+    {
+        $this->adminUser->rol->update(['estado' => false]);
+
+        $response = $this->post(route('login'), [
+            'login' => 'admin@test.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('login');
+        $this->assertGuest();
+    }
+
+    public function test_usuario_inactivo_no_accede_a_panel(): void
+    {
+        $this->adminUser->update(['estado' => 'inactivo']);
+
+        $response = $this->actingAs($this->adminUser)->get(route('admin.dashboard'));
+
+        $response->assertForbidden();
+    }
+
+    public function test_no_redirige_a_panel_no_autorizado_tras_login(): void
+    {
+        $this->get(route('admin.dashboard'));
+
+        $response = $this->post(route('login'), [
+            'login' => 'gerente@test.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/gerente/dashboard');
+    }
+
+    public function test_admin_ve_dashboard_con_layout(): void
+    {
+        $response = $this->actingAs($this->adminUser)->get(route('admin.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Panel de Administrador');
+        $response->assertSee('Hola, Admin');
+        $response->assertSee('adminSidebar');
     }
 }
