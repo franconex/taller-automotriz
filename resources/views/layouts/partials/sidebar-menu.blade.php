@@ -5,6 +5,11 @@
         ['route' => 'admin.dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
     ];
 
+    $mecanicoOp = [
+        ['route' => 'mecanico.dashboard',   'permission' => null, 'icon' => 'bi-speedometer2', 'label' => 'Panel Mecánico'],
+        ['route' => 'mecanico.mis_ordenes', 'permission' => null, 'icon' => 'bi-tools',        'label' => 'Mis Órdenes'],
+    ];
+
     $organizacion = [
         ['route' => 'admin.sucursales.index', 'permission' => 'sucursales.ver', 'icon' => 'bi-building',     'label' => 'Sucursales'],
         ['route' => 'admin.empleados.index',  'permission' => 'usuarios.ver',   'icon' => 'bi-people',       'label' => 'Empleados'],
@@ -62,6 +67,22 @@
             icon="bi-speedometer2"
             label="Dashboard" />
     </ul>
+
+    {{-- MÓDULO MECÁNICO (Se muestra si existen las rutas de mecánico) --}}
+    @if (Route::has('mecanico.dashboard'))
+        <div class="admin-sidebar__section">MECÁNICO</div>
+        <ul class="list-unstyled m-0">
+            @foreach ($mecanicoOp as $item)
+                @if(Route::has($item['route']))
+                    <x-admin.sidebar-item
+                        :routeName="$item['route']"
+                        :permission="$item['permission']"
+                        :icon="$item['icon']"
+                        :label="$item['label']" />
+                @endif
+            @endforeach
+        </ul>
+    @endif
 
     {{-- ORGANIZACIÓN --}}
     @if ($hasVisible($organizacion))

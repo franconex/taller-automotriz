@@ -1,41 +1,47 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mecánico — Taller Pro</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body>
-    <div class="container mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Panel de Mecánico</h1>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="btn btn-outline-danger btn-sm">Cerrar sesión</button>
-            </form>
-        </div>
+@extends('layouts.admin')
 
-        <div class="alert alert-info">
-            Bienvenido, {{ auth()->user()->nombre }}. Tu rol es <strong>Mecánico</strong>.
-        </div>
+@section('title', 'Panel de Mecánico')
 
-        <!-- Acceso al módulo de Diana -->
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold">🔧 Mis Órdenes Asignadas</h5>
-                        <p class="card-text text-muted">
-                            Revisa los vehículos a tu cargo, registra diagnósticos técnicos y asigna los repuestos utilizados con validación de stock.
-                        </p>
-                        <a href="{{ route('mecanico.mis_ordenes') }}" class="btn btn-primary">
-                            Ir a mis órdenes ➔
+@section('content')
+<div class="container-fluid p-0">
+    <!-- Encabezado de Bienvenida -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Buenos días, {{ auth()->user()->nombre ?? 'Mecánico' }}</h1>
+            <p class="text-muted small mb-0">
+                {{ \Carbon\Carbon::now()->translatedFormat('l d \d\e F, Y') }} — Sucursal Principal · Mecánico
+            </p>
+        </div>
+        <div>
+            <a href="{{ route('mecanico.mis_ordenes') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </a>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="row g-4">
+        <div class="col-12 col-xl-8">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-danger bg-opacity-10 text-danger p-3 rounded-3 me-3">
+                            <i class="bi bi-tools fs-3"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-1">Mis Órdenes Asignadas</h4>
+                            <p class="text-muted small mb-0">Revisa los vehículos a tu cargo, registra diagnósticos técnicos y asigna repuestos con validación de stock.</p>
+                        </div>
+                    </div>
+                    <hr class="my-3 opacity-25">
+                    <div class="d-flex justify-content-end">
+                        <a href="{{ route('mecanico.mis_ordenes') }}" class="btn btn-danger px-4 fw-bold shadow-sm">
+                            Ir a mis órdenes <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</body>
-</html>
+</div>
+@endsection

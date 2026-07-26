@@ -1,53 +1,68 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Mis Órdenes Asignadas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light p-4">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>🔧 Mis Órdenes Asignadas</h2>
-            <a href="{{ route('mecanico.dashboard') }}" class="btn btn-outline-secondary">⬅ Ir al Dashboard</a>
-        </div>
+@extends('layouts.admin')
 
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <table class="table table-hover align-middle">
-                    <thead class="table-dark">
+@section('title', 'Mis Órdenes Asignadas')
+
+@section('content')
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1"> Mis Órdenes Asignadas</h1>
+            <p class="text-muted small mb-0">Gestión e inspección técnica de vehículos a tu cargo.</p>
+        </div>
+        <a href="{{ route('mecanico.dashboard') }}" class="btn btn-outline-secondary btn-sm fw-bold">
+            ← Volver al Dashboard
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4"># Órden</th>
+                        <th>Vehículo</th>
+                        <th>Cliente</th>
+                        <th>Estado</th>
+                        <th class="text-end pe-4">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($ordenes as $orden)
                         <tr>
-                            <th># Orden</th>
-                            <th>Vehículo</th>
-                            <th>Cliente</th>
-                            <th>Estado</th>
-                            <th>Acción</th>
+                            <td class="ps-4 fw-bold">#{{ $orden->id }}</td>
+                            <td>
+                                <span class="fw-bold text-dark">{{ $orden->vehiculo->marca ?? 'N/A' }} {{ $orden->vehiculo->modelo ?? '' }}</span>
+                                <br><small class="text-muted">Placa: {{ $orden->vehiculo->placa ?? 'S/N' }}</small>
+                            </td>
+                            <td>{{ $orden->cliente->nombre ?? 'Cliente General' }}</td>
+                            <td>
+                                @if($orden->estado == 'pendiente')
+                                    <span class="badge bg-warning text-dark px-3 py-2">Pendiente</span>
+                                @elseif($orden->estado == 'en_proceso')
+                                    <span class="badge bg-primary px-3 py-2">En Proceso</span>
+                                @elseif($orden->estado == 'completado')
+                                    <span class="badge bg-success px-3 py-2">Completado</span>
+                                @else
+                                    <span class="badge bg-secondary px-3 py-2">{{ ucfirst($orden->estado) }}</span>
+                                @endif
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="{{ route('mecanico.atender', $orden->id) }}" class="btn btn-danger btn-sm px-3 fw-bold shadow-sm">
+                                    Atender Órden →
+                                </a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($ordenes as $orden)
-                            <tr>
-                                <td><strong>#{{ $orden->id }}</strong></td>
-                                <td>{{ $orden->vehiculo->placa ?? 'Sin placa' }}</td>
-                                <td>{{ $orden->cliente->nombre ?? 'General' }}</td>
-                                <td>
-                                    <span class="badge bg-{{ $orden->estado == 'Completado' ? 'success' : 'warning' }}">
-                                        {{ $orden->estado ?? 'Pendiente' }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('mecanico.atender', $orden->id) }}" class="btn btn-sm btn-primary">Atender Orden ➔</a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">No hay órdenes asignadas en este momento.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                <span>No tienes órdenes de trabajo asignadas en este momento.</span>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
-</body>
-</html>
+</div>
+@endsection
