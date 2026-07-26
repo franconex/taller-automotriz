@@ -138,12 +138,12 @@ body.admin-body {
     font-weight: 700;
 }
 
+.admin-sidebar--collapsed {
+    width: var(--tp-sidebar-collapsed-width);
+}
+
 .admin-sidebar--collapsed .admin-sidebar__section {
-    text-align: center;
-    padding: 1rem 0.4rem 0.4rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: none;
 }
 
 .admin-sidebar__link {
@@ -202,8 +202,13 @@ body.admin-body {
 
 .admin-sidebar--collapsed .admin-sidebar__link {
     justify-content: center;
-    padding: 0.55rem 0.25rem;
+    padding: 0.6rem 0.25rem;
     margin: 0.1rem 0.35rem;
+}
+
+.admin-sidebar--collapsed .admin-sidebar__link i {
+    font-size: 1.25rem;
+    width: auto;
 }
 
 .admin-sidebar--collapsed .admin-sidebar__group-toggle { padding: 0.55rem 0.25rem; }
@@ -1300,4 +1305,21 @@ textarea.form-control,
     .admin-navbar__toggle,
     .admin-navbar__user,
     .btn { transition: none !important; }
+}
+
+/* ============================================
+   TOOLTIP (collapsed sidebar)
+   ============================================ */
+.admin-tooltip {
+    --bs-tooltip-bg: #1a1d23;
+    --bs-tooltip-color: #fff;
+    --bs-tooltip-font-size: 0.75rem;
+    --bs-tooltip-padding-x: 0.6rem;
+    --bs-tooltip-padding-y: 0.35rem;
+    --bs-tooltip-border-radius: 6px;
+}
+
+.admin-tooltip .tooltip-inner {
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }

@@ -56,7 +56,7 @@ class CitaRequest extends AdminFormRequest
             'fecha' => ['required', 'date'],
             'hora' => ['required', 'date_format:H:i'],
             'tipo' => ['required', 'in:diagnostico,mantenimiento,reparacion,otro'],
-            'descripcion_problema' => ['required', 'string', 'max:1000'],
+            'descripcion_problema' => ['nullable', 'string', 'max:1000'],
             'costo_consulta' => ['nullable', 'numeric', 'min:0'],
             'deja_vehiculo' => ['nullable', 'boolean'],
             'observaciones' => ['nullable', 'string', 'max:1000'],

@@ -130,6 +130,18 @@
                                             <i class="bi {{ $emp->estado ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
                                         </button>
                                     </form>
+                                    <form method="POST"
+                                          action="{{ route('admin.empleados.destroy', $emp) }}"
+                                          class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="btn-icon btn-icon--danger"
+                                                title="Eliminar"
+                                                aria-label="Eliminar {{ $emp->nombre_completo }}">
+                                            <i class="bi bi-trash3" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

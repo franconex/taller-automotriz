@@ -97,22 +97,15 @@
                                             <i class="bi {{ $r->estado ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
                                         </button>
                                     </form>
-                                    <form id="delete-repuesto-{{ $r->id }}"
-                                          method="POST"
+                                    <form method="POST"
                                           action="{{ route('admin.repuestos.destroy', $r) }}"
                                           class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button"
+                                        <button type="submit"
                                                 class="btn-icon btn-icon--danger"
                                                 title="Eliminar"
-                                                aria-label="Eliminar {{ $r->nombre }}"
-                                                data-tp-confirm
-                                                data-tp-confirm-title="¿Eliminar repuesto?"
-                                                data-tp-confirm-message="Se eliminará {{ $r->nombre }}. Esta acción no se puede deshacer."
-                                                data-tp-confirm-text="Eliminar"
-                                                data-tp-form-id="delete-repuesto-{{ $r->id }}"
-                                                data-tp-confirm-icon="warning">
+                                                aria-label="Eliminar {{ $r->nombre }}">
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>

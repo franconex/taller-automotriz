@@ -102,22 +102,15 @@
                                             <i class="bi {{ $cliente->estado ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
                                         </button>
                                     </form>
-                                    <form id="delete-cliente-{{ $cliente->id }}"
-                                          method="POST"
+                                    <form method="POST"
                                           action="{{ route('admin.clientes.destroy', $cliente) }}"
                                           class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button"
+                                        <button type="submit"
                                                 class="btn-icon btn-icon--danger"
                                                 title="Eliminar"
-                                                aria-label="Eliminar {{ $cliente->nombre_completo }}"
-                                                data-tp-confirm
-                                                data-tp-confirm-title="¿Eliminar cliente?"
-                                                data-tp-confirm-message="Se eliminará a {{ $cliente->nombre_completo }}. Esta acción no se puede deshacer."
-                                                data-tp-confirm-text="Eliminar"
-                                                data-tp-form-id="delete-cliente-{{ $cliente->id }}"
-                                                data-tp-confirm-icon="warning">
+                                                aria-label="Eliminar {{ $cliente->nombre_completo }}">
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>

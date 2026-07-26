@@ -181,6 +181,7 @@ class CitaController extends AdminController
                 $datos = $request->validated();
                 $datos['usuario_id'] = Auth::id();
                 $datos['estado'] = $datos['estado'] ?? 'pendiente';
+                $datos['descripcion_problema'] = trim($datos['descripcion_problema'] ?? '') ?: 'Cita agendada';
                 $datos['deja_vehiculo'] = (bool) ($datos['deja_vehiculo'] ?? false);
                 $datos['costo_consulta'] = $datos['costo_consulta'] ?? 0;
                 $datos['hora_fin'] = $datos['hora_fin'] ?? $this->calcularHoraFin($datos['hora'], $datos['duracion_minutos'] ?? 60);
@@ -260,6 +261,7 @@ class CitaController extends AdminController
         try {
             DB::transaction(function () use ($request, $cita) {
                 $datos = $request->validated();
+                $datos['descripcion_problema'] = trim($datos['descripcion_problema'] ?? '') ?: 'Cita agendada';
                 $datos['deja_vehiculo'] = (bool) ($datos['deja_vehiculo'] ?? false);
                 $datos['estado_anterior'] = $cita->estado;
                 $datos['hora_fin'] = $datos['hora_fin'] ?? $this->calcularHoraFin($datos['hora'], $datos['duracion_minutos'] ?? 60);

@@ -104,22 +104,15 @@
                                        aria-label="Ver detalle">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
                                     </a>
-                                    <form id="delete-movimiento-{{ $m->id }}"
-                                          method="POST"
+                                    <form method="POST"
                                           action="{{ route('admin.movimientos-inventario.destroy', $m) }}"
                                           class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button"
+                                        <button type="submit"
                                                 class="btn-icon btn-icon--danger"
                                                 title="Eliminar"
-                                                aria-label="Eliminar movimiento"
-                                                data-tp-confirm
-                                                data-tp-confirm-title="¿Eliminar movimiento?"
-                                                data-tp-confirm-message="Se eliminará el movimiento de inventario. Esta acción no se puede deshacer."
-                                                data-tp-confirm-text="Eliminar"
-                                                data-tp-form-id="delete-movimiento-{{ $m->id }}"
-                                                data-tp-confirm-icon="warning">
+                                                aria-label="Eliminar movimiento">
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>
