@@ -52,6 +52,14 @@ Route::middleware('auth')->group(function () {
         return view('mecanico.dashboard');
     })->middleware('rol:Mecánico')->name('mecanico.dashboard');
 
+    // rutas operativas del mecanico - diana-
+    Route::middleware('rol:Mecánico')->group(function () {
+        Route::get('/mis-ordenes', [MecanicoController::class, 'misOrdenes'])->name('mecanico.mis_ordenes');
+        Route::get('/mis-ordenes/{id}', [MecanicoController::class, 'atenderOrden'])->name('mecanico.atender');
+        Route::put('/mis-ordenes/{id}/diagnostico', [MecanicoController::class, 'guardarDiagnostico'])->name('mecanico.diagnostico');
+        Route::post('/mis-ordenes/{id}/repuestos', [MecanicoController::class, 'registrarRepuesto'])->name('mecanico.repuestos');
+    });
+
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'index'])->name('perfil.index');
         Route::put('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'update'])->name('perfil.update');
@@ -95,8 +103,6 @@ Route::middleware('auth')->group(function () {
             Route::resource('vehiculos', VehiculoController::class);
             Route::patch('vehiculos/{vehiculo}/toggle', [VehiculoController::class, 'toggle'])
                 ->name('vehiculos.toggle');
-
-            // (citas movido fuera del grupo admin, ver bloque más abajo)
 
             Route::resource('ordenes', OrdenTrabajoController::class);
             Route::patch('ordenes/{orden}/toggle', [OrdenTrabajoController::class, 'toggle'])
@@ -168,13 +174,10 @@ Route::middleware('auth')->group(function () {
         });
 
         // Citas: módulo accesible para cualquier usuario con permiso citas.ver
-        // (Recepcionista, Administrador, Gerente). El control fino por acción
-        // se hace con permisos (citas.crear, citas.editar, citas.cancelar, ordenes.crear).
         Route::middleware('permiso:citas.ver')
             ->prefix('admin')
             ->name('admin.')
             ->group(function () {
-            // Rutas específicas ANTES del resource para evitar conflictos con {cita}
             Route::get('citas/eventos', [CitaController::class, 'eventos'])->name('citas.eventos');
             Route::get('citas/tabla-dia', [CitaController::class, 'tablaDia'])->name('citas.tabla-dia');
             Route::get('citas/proximas', [CitaController::class, 'proximas'])->name('citas.proximas');
