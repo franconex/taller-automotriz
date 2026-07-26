@@ -12,7 +12,7 @@
 @section('content')
     <x-admin.page-header
         :title="$inventario->repuesto->nombre ?? 'Inventario'"
-        :description="$inventario->sucursal->nombre ?? ''">
+        :description="'Stock: ' . $inventario->cantidad_actual . ' unidades'">
         <x-slot:actions>
             <a href="{{ route('admin.inventario.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
@@ -37,11 +37,14 @@
                             <span class="d-block cell-muted small">{{ $inventario->repuesto->codigo }}</span>
                         @else — @endif
                     </dd>
-                    <dt>Sucursal</dt><dd>{{ $inventario->sucursal->nombre ?? '—' }}</dd>
                     <dt>Stock actual</dt><dd><strong>{{ $inventario->cantidad_actual }}</strong></dd>
                     <dt>Reservado</dt><dd>{{ $inventario->cantidad_reservada }}</dd>
-                    <dt>Disponible</dt><dd>{{ (int) $inventario->cantidad_actual - (int) $inventario->cantidad_reservada }}</dd>
-                    <dt>Stock mínimo</dt><dd>{{ $inventario->repuesto->stock_minimo ?? 0 }}</dd>
+                    <dt>Disponible</dt><dd class="{{ (int) $inventario->cantidad_actual - (int) $inventario->cantidad_reservada < 5 ? 'text-danger fw-bold' : '' }}">
+                        {{ (int) $inventario->cantidad_actual - (int) $inventario->cantidad_reservada }}
+                        @if ((int) $inventario->cantidad_actual - (int) $inventario->cantidad_reservada < 5)
+                            <span class="badge bg-danger ms-1">Stock bajo</span>
+                        @endif
+                    </dd>
                     <dt>Última actualización</dt><dd>{{ $inventario->fecha_actualizacion?->format('d/m/Y H:i') ?? '—' }}</dd>
                 </dl>
             </div>
@@ -50,7 +53,7 @@
             <div class="admin-table-wrap">
                 <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
                     <h2 class="h6 fw-bold mb-0">Últimos movimientos</h2>
-                    <a href="{{ route('admin.movimientos-inventario.index', ['repuesto_id' => $inventario->repuesto_id, 'sucursal_id' => $inventario->sucursal_id]) }}" class="cell-muted small">Ver todos</a>
+                    <a href="{{ route('admin.movimientos-inventario.index', ['repuesto_id' => $inventario->repuesto_id]) }}" class="cell-muted small">Ver todos</a>
                 </div>
                 @if ($inventario->movimientos->isEmpty())
                     <div class="p-4 text-center cell-muted">Sin movimientos registrados.</div>

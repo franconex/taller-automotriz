@@ -35,9 +35,35 @@
                     <dt>Teléfono</dt><dd>{{ $proveedor->telefono }}</dd>
                     <dt>Email</dt><dd>{{ $proveedor->email ?? '—' }}</dd>
                     <dt>NIT</dt><dd>{{ $proveedor->nit ?? '—' }}</dd>
-                    <dt>Dirección</dt><dd>{{ $proveedor->direccion ?? '—' }}</dd>
-                    <dt>Tiempo de entrega</dt><dd>{{ $proveedor->tiempo_entrega_dias ? $proveedor->tiempo_entrega_dias . ' días' : '—' }}</dd>
+                    <dt>Dirección</dt>
+                    <dd>
+                        {{ $proveedor->direccion ?? '—' }}
+                        @if ($proveedor->direccion)
+                            <a href="https://www.google.com/maps/search/{{ urlencode($proveedor->direccion) }}"
+                               target="_blank"
+                               class="btn-icon ms-2"
+                               title="Ver en Google Maps"
+                               aria-label="Ver en Google Maps">
+                                <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                            </a>
+                        @endif
+                    </dd>
                 </dl>
+
+                @if ($proveedor->direccion)
+                    <div class="mt-3">
+                        <h2 class="h6 fw-bold mb-2">Ubicación</h2>
+                        <div class="ratio ratio-16x9" style="max-width:100%;border-radius:var(--tp-radius-lg);overflow:hidden;">
+                            <iframe src="https://www.google.com/maps?q={{ urlencode($proveedor->direccion) }}&output=embed"
+                                    allowfullscreen
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer-when-downgrade"
+                                    style="border:0;width:100%;height:100%;"
+                                    title="Ubicación de {{ $proveedor->nombre_empresa }}">
+                            </iframe>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
         <div class="col-12 col-lg-6">

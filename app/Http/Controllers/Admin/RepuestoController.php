@@ -2,42 +2,24 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Requests\Admin\EscanerBuscarRequest;
 use App\Http\Requests\Admin\RepuestoRequest;
-use App\Models\Proveedor;
+use App\Models\Inventario;
+use App\Models\MovimientoInventario;
 use App\Models\Repuesto;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class RepuestoController extends AdminController
 {
-    public function index(Request $request): View
-    {
-        $query = Repuesto::query()->with('proveedor');
-
-        $this->aplicarFiltros($request, $query, ['estado', 'proveedor_id']);
-        $this->aplicarBusqueda($query, $request, [
-            'codigo',
-            'nombre',
-            'descripcion',
-        ]);
-
-        $repuestos = $query->orderBy('nombre')->paginate(15)->withQueryString();
-
-        $proveedores = Proveedor::orderBy('nombre_empresa')->get();
-
-        return view('admin.repuestos.index', [
-            'repuestos' => $repuestos,
-            'proveedores' => $proveedores,
-        ]);
-    }
-
     public function create(): View
     {
-        $proveedores = Proveedor::orderBy('nombre_empresa')->get();
-
+        $categorias = Repuesto::whereNotNull('categoria')->distinct()->orderBy('categoria')->pluck('categoria');
         return view('admin.repuestos.create', [
-            'proveedores' => $proveedores,
+            'categorias' => $categorias,
             'repuesto' => new \App\Models\Repuesto(),
         ]);
     }
@@ -46,55 +28,108 @@ class RepuestoController extends AdminController
     {
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? true);
-        $datos['stock_minimo'] = $datos['stock_minimo'] ?? 0;
 
-        Repuesto::create($datos);
+        $producto = DB::transaction(function () use ($datos, $request) {
+            $r = Repuesto::create($datos);
 
-        return $this->redirigirALista('admin.repuestos.index', 'Repuesto creado con éxito.');
+            $cantidadInicial = $r->tipo === 'herramienta' ? (int) $request->input('cantidad_inicial', 1) : 0;
+
+            $inv = Inventario::firstOrCreate(
+                ['repuesto_id' => $r->id],
+                [
+                    'cantidad_actual' => $cantidadInicial,
+                    'cantidad_reservada' => 0,
+                    'costo_promedio' => $datos['costo_compra'] ?? 0,
+                    'fecha_actualizacion' => now(),
+                ]
+            );
+
+            if ($cantidadInicial > 0) {
+                MovimientoInventario::create([
+                    'inventario_id' => $inv->id,
+                    'usuario_id' => Auth::id(),
+                    'tipo' => 'entrada_inicial',
+                    'cantidad' => $cantidadInicial,
+                    'existencia_anterior' => 0,
+                    'existencia_nueva' => $cantidadInicial,
+                    'motivo' => $r->tipo === 'herramienta' ? 'Registro inicial de herramienta' : 'Registro inicial de repuesto',
+                    'fecha_movimiento' => now(),
+                ]);
+            }
+
+            return $r;
+        });
+
+        return redirect()->route('admin.inventario.index')->with('success', "{$producto->nombre} creado con éxito.");
     }
 
-    public function show(Repuesto $repuesto): View
+    public function buscarPorEscaner(EscanerBuscarRequest $request)
     {
-        $repuesto->load('proveedor', 'inventarios.sucursal');
+        $codigo = trim($request->input('codigo'));
 
-        return view('admin.repuestos.show', [
-            'repuesto' => $repuesto,
+        $repuesto = Repuesto::where('codigo_barras', $codigo)
+            ->orWhere('codigo', $codigo)
+            ->orWhere('codigo_fabricante', $codigo)
+            ->with(['inventarios' => fn ($q) => $q->select('repuesto_id', 'sucursal_id', 'cantidad_actual', 'cantidad_reservada')])
+            ->first();
+
+        if (! $repuesto) {
+            return response()->json([
+                'encontrado' => false,
+                'codigo' => $codigo,
+                'mensaje' => 'El código no está registrado.',
+            ]);
+        }
+
+        $stockTotal = (int) $repuesto->inventarios->sum('cantidad_actual');
+        $stockReservado = (int) $repuesto->inventarios->sum('cantidad_reservada');
+        $disponible = $stockTotal - $stockReservado;
+
+        return response()->json([
+            'encontrado' => true,
+            'codigo' => $codigo,
+            'repuesto' => [
+                'id' => $repuesto->id,
+                'codigo_interno' => $repuesto->codigo,
+                'codigo_barras' => $repuesto->codigo_barras,
+                'codigo_fabricante' => $repuesto->codigo_fabricante,
+                'nombre' => $repuesto->nombre,
+                'marca' => $repuesto->marca,
+                'categoria' => $repuesto->categoria,
+                'descripcion' => $repuesto->descripcion,
+                'stock_total' => $stockTotal,
+                'stock_reservado' => $stockReservado,
+                'stock_disponible' => $disponible,
+                'precio_venta' => (float) ($repuesto->precio_venta ?? 0),
+                'costo_compra' => auth()->user()?->tienePermiso('precios.ver')
+                    ? (float) ($repuesto->costo_compra ?? 0)
+                    : null,
+                'tipo' => $repuesto->tipo,
+                'estado' => $repuesto->estado,
+            ],
         ]);
     }
 
     public function edit(Repuesto $repuesto): View
     {
-        $proveedores = Proveedor::orderBy('nombre_empresa')->get();
-
-        return view('admin.repuestos.edit', [
-            'repuesto' => $repuesto,
-            'proveedores' => $proveedores,
-        ]);
+        $categorias = Repuesto::whereNotNull('categoria')->distinct()->orderBy('categoria')->pluck('categoria');
+        return view('admin.repuestos.edit', ['repuesto' => $repuesto, 'categorias' => $categorias]);
     }
 
     public function update(RepuestoRequest $request, Repuesto $repuesto): RedirectResponse
     {
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? false);
-
         $repuesto->update($datos);
-
-        return $this->redirigirConExito('repuestos', 'actualizado');
+        return redirect()->route('admin.inventario.index')->with('success', 'Producto actualizado.');
     }
 
     public function destroy(Repuesto $repuesto): RedirectResponse
     {
         if ($repuesto->inventarios()->where('cantidad_actual', '>', 0)->exists()) {
-            return back()->with('error', 'No se puede eliminar el repuesto porque tiene stock registrado.');
+            return back()->with('error', 'No se puede eliminar porque tiene stock.');
         }
-
         $repuesto->delete();
-
-        return $this->redirigirConExito('repuestos', 'eliminado');
-    }
-
-    public function toggle(Request $request, Repuesto $repuesto): RedirectResponse
-    {
-        return $this->cambiarEstado($request, $repuesto, 'repuestos');
+        return back()->with('success', 'Producto eliminado.');
     }
 }

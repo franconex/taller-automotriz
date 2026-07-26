@@ -25,11 +25,27 @@
         search-name="q"
         search-placeholder="Buscar por repuesto o motivo">
         <x-slot:filters>
-            <select name="tipo" class="form-select" style="max-width:160px;" onchange="this.form.submit()">
+            <select name="tipo" class="form-select" style="max-width:180px;" onchange="this.form.submit()">
                 <option value="">Todos los tipos</option>
-                <option value="entrada" @selected(request('tipo') === 'entrada')>Entrada</option>
-                <option value="salida"  @selected(request('tipo') === 'salida')>Salida</option>
-                <option value="ajuste"  @selected(request('tipo') === 'ajuste')>Ajuste</option>
+                <optgroup label="Entradas">
+                    <option value="entrada_inicial" @selected(request('tipo') === 'entrada_inicial')>Entrada inicial</option>
+                    <option value="entrada_compra" @selected(request('tipo') === 'entrada_compra')>Entrada por compra</option>
+                    <option value="devolucion" @selected(request('tipo') === 'devolucion')>Devolución</option>
+                    <option value="liberacion_reserva" @selected(request('tipo') === 'liberacion_reserva')>Liberación reserva</option>
+                </optgroup>
+                <optgroup label="Salidas">
+                    <option value="salida_orden" @selected(request('tipo') === 'salida_orden')>Salida por orden</option>
+                    <option value="consumo" @selected(request('tipo') === 'consumo')>Consumo</option>
+                    <option value="dañado" @selected(request('tipo') === 'dañado')>Dañado</option>
+                    <option value="vencido" @selected(request('tipo') === 'vencido')>Vencido</option>
+                    <option value="perdida" @selected(request('tipo') === 'perdida')>Pérdida</option>
+                    <option value="devolucion_proveedor" @selected(request('tipo') === 'devolucion_proveedor')>Devolución proveedor</option>
+                    <option value="reserva" @selected(request('tipo') === 'reserva')>Reserva</option>
+                </optgroup>
+                <optgroup label="Ajustes">
+                    <option value="ajuste_positivo" @selected(request('tipo') === 'ajuste_positivo')>Ajuste positivo</option>
+                    <option value="ajuste_negativo" @selected(request('tipo') === 'ajuste_negativo')>Ajuste negativo</option>
+                </optgroup>
             </select>
             <select name="sucursal_id" class="form-select" style="max-width:200px;" onchange="this.form.submit()">
                 <option value="">Todas las sucursales</option>
@@ -68,7 +84,30 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php
+                        $tiposLabels = [
+                            'entrada_inicial' => ['label' => 'Entrada inicial', 'tone' => 'success', 'icon' => 'bi-plus-circle-fill'],
+                            'entrada_compra' => ['label' => 'Entrada compra', 'tone' => 'success', 'icon' => 'bi-plus-circle-fill'],
+                            'devolucion' => ['label' => 'Devolución', 'tone' => 'success', 'icon' => 'bi-arrow-return-left'],
+                            'liberacion_reserva' => ['label' => 'Lib. reserva', 'tone' => 'info', 'icon' => 'bi-bookmark-x'],
+                            'salida_orden' => ['label' => 'Salida orden', 'tone' => 'warning', 'icon' => 'bi-dash-circle-fill'],
+                            'consumo' => ['label' => 'Consumo', 'tone' => 'warning', 'icon' => 'bi-wrench'],
+                            'dañado' => ['label' => 'Dañado', 'tone' => 'danger', 'icon' => 'bi-x-circle-fill'],
+                            'vencido' => ['label' => 'Vencido', 'tone' => 'danger', 'icon' => 'bi-calendar-x'],
+                            'perdida' => ['label' => 'Pérdida', 'tone' => 'danger', 'icon' => 'bi-question-circle'],
+                            'devolucion_proveedor' => ['label' => 'Dev. proveedor', 'tone' => 'warning', 'icon' => 'bi-box-arrow-up'],
+                            'reserva' => ['label' => 'Reserva', 'tone' => 'info', 'icon' => 'bi-bookmark'],
+                            'ajuste_positivo' => ['label' => 'Ajuste +', 'tone' => 'success', 'icon' => 'bi-plus'],
+                            'ajuste_negativo' => ['label' => 'Ajuste -', 'tone' => 'danger', 'icon' => 'bi-dash'],
+                            'entrada' => ['label' => 'Entrada', 'tone' => 'success', 'icon' => 'bi-plus-circle-fill'],
+                            'salida' => ['label' => 'Salida', 'tone' => 'warning', 'icon' => 'bi-dash-circle-fill'],
+                            'ajuste' => ['label' => 'Ajuste', 'tone' => 'info', 'icon' => 'bi-arrow-left-right'],
+                        ];
+                    @endphp
                     @forelse ($movimientos as $m)
+                        @php
+                            $tipoInfo = $tiposLabels[$m->tipo] ?? ['label' => $m->tipo, 'tone' => 'neutral', 'icon' => 'bi-circle'];
+                        @endphp
                         <tr>
                             <td class="cell-muted">{{ $m->fecha_movimiento?->format('d/m/Y H:i') ?? '—' }}</td>
                             <td>
@@ -78,19 +117,9 @@
                             <td class="d-none d-md-table-cell cell-muted">{{ optional($m->inventario->sucursal)->nombre ?? '—' }}</td>
                             <td>
                                 <x-admin.status-badge
-                                    :tone="match($m->tipo) {
-                                        'entrada' => 'success',
-                                        'salida' => 'warning',
-                                        'ajuste' => 'info',
-                                        default => 'neutral',
-                                    }"
-                                    :icon="match($m->tipo) {
-                                        'entrada' => 'bi-plus-circle-fill',
-                                        'salida' => 'bi-dash-circle-fill',
-                                        'ajuste' => 'bi-arrow-left-right',
-                                        default => 'bi-circle',
-                                    }"
-                                    :label="ucfirst($m->tipo)" />
+                                    :tone="$tipoInfo['tone']"
+                                    :icon="$tipoInfo['icon']"
+                                    :label="$tipoInfo['label']" />
                             </td>
                             <td class="d-none d-lg-table-cell text-end cell-strong">{{ $m->cantidad }}</td>
                             <td class="d-none d-lg-table-cell text-end cell-muted">

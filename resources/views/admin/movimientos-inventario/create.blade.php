@@ -42,9 +42,25 @@
             <div class="admin-form-section">
                 <h3 class="admin-form-section__title">Movimiento</h3>
                 <x-admin.form-field name="tipo" label="Tipo" type="select" required>
-                    <option value="entrada" @selected(old('tipo', 'entrada') === 'entrada')>Entrada (suma stock)</option>
-                    <option value="salida"  @selected(old('tipo') === 'salida')>Salida (resta stock)</option>
-                    <option value="ajuste"  @selected(old('tipo') === 'ajuste')>Ajuste (fija cantidad exacta)</option>
+                    <optgroup label="Entradas (suman stock)">
+                        <option value="entrada_inicial" @selected(old('tipo', 'entrada_inicial') === 'entrada_inicial')>Entrada inicial</option>
+                        <option value="entrada_compra" @selected(old('tipo') === 'entrada_compra')>Entrada por compra</option>
+                        <option value="devolucion" @selected(old('tipo') === 'devolucion')>Devolución desde orden</option>
+                        <option value="liberacion_reserva" @selected(old('tipo') === 'liberacion_reserva')>Liberación de reserva</option>
+                    </optgroup>
+                    <optgroup label="Salidas (restan stock)">
+                        <option value="salida_orden" @selected(old('tipo') === 'salida_orden')>Salida por orden de trabajo</option>
+                        <option value="consumo" @selected(old('tipo') === 'consumo')>Consumo técnico</option>
+                        <option value="dañado" @selected(old('tipo') === 'dañado')>Producto dañado</option>
+                        <option value="vencido" @selected(old('tipo') === 'vencido')>Producto vencido</option>
+                        <option value="perdida" @selected(old('tipo') === 'perdida')>Pérdida</option>
+                        <option value="devolucion_proveedor" @selected(old('tipo') === 'devolucion_proveedor')>Devolución al proveedor</option>
+                        <option value="reserva" @selected(old('tipo') === 'reserva')>Reserva</option>
+                    </optgroup>
+                    <optgroup label="Ajustes (fijan cantidad)">
+                        <option value="ajuste_positivo" @selected(old('tipo') === 'ajuste_positivo')>Ajuste positivo</option>
+                        <option value="ajuste_negativo" @selected(old('tipo') === 'ajuste_negativo')>Ajuste negativo</option>
+                    </optgroup>
                 </x-admin.form-field>
                 <x-admin.form-field name="cantidad" type="number" label="Cantidad" :value="old('cantidad')" required icon="bi-123" />
                 <x-admin.form-field name="motivo" label="Motivo" :value="old('motivo')" required icon="bi-chat-left-text" />

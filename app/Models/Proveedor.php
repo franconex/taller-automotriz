@@ -19,12 +19,28 @@ class Proveedor extends Model
         'email',
         'direccion',
         'nit',
-        'tiempo_entrega_dias',
         'estado',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'estado' => 'boolean',
+        ];
+    }
 
     public function repuestos(): HasMany
     {
         return $this->hasMany(Repuesto::class);
+    }
+
+    public function cotizaciones(): HasMany
+    {
+        return $this->hasMany(Cotizacion::class);
+    }
+
+    public function ordenesCompra(): HasMany
+    {
+        return $this->hasMany(OrdenCompra::class);
     }
 }

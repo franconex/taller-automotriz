@@ -78,15 +78,41 @@ class MovimientoInventarioController extends AdminController
             $anterior = (int) $inventario->cantidad_actual;
             $cantidad = (int) $datos['cantidad'];
 
-            $nuevo = match ($datos['tipo']) {
-                'entrada' => $anterior + $cantidad,
-                'salida' => max(0, $anterior - $cantidad),
-                'ajuste' => $cantidad,
+            // Tipos que suman stock
+            $tiposEntrada = [
+                'entrada_inicial', 'entrada_compra', 'devolucion',
+                'ajuste_positivo', 'liberacion_reserva',
+            ];
+            // Tipos que restan stock
+            $tiposSalida = [
+                'salida_orden', 'consumo', 'dañado', 'vencido', 'perdida',
+                'devolucion_proveedor', 'reserva',
+            ];
+
+            $nuevo = match (true) {
+                in_array($datos['tipo'], $tiposEntrada) => $anterior + $cantidad,
+                in_array($datos['tipo'], $tiposSalida) => max(0, $anterior - $cantidad),
+                in_array($datos['tipo'], ['ajuste', 'ajuste_negativo']) => $cantidad,
+                default => $anterior,
             };
 
             $inventario->cantidad_actual = $nuevo;
             $inventario->fecha_actualizacion = now();
             $inventario->save();
+
+            // Actualizar costo promedio cuando es entrada
+            if (in_array($datos['tipo'], $tiposEntrada)) {
+                $costoActual = (float) ($inventario->costo_promedio ?? 0);
+                $nuevoCosto = (float) ($inventario->repuesto->costo_compra ?? 0);
+
+                if ($costoActual == 0) {
+                    $inventario->costo_promedio = $nuevoCosto;
+                } elseif ($nuevoCosto > 0) {
+                    $totalCantidad = $anterior + $cantidad;
+                    $inventario->costo_promedio = (($costoActual * $anterior) + ($nuevoCosto * $cantidad)) / max(1, $totalCantidad);
+                }
+                $inventario->save();
+            }
 
             MovimientoInventario::create([
                 'inventario_id' => $inventario->id,

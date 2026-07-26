@@ -24,9 +24,8 @@
         ['route' => 'admin.tipos-servicio.index', 'permission' => 'dashboard.ver', 'icon' => 'bi-tags',  'label' => 'Tipos de servicio'],
         ['route' => 'admin.servicios.index',      'permission' => 'dashboard.ver', 'icon' => 'bi-gear',  'label' => 'Servicios'],
         ['route' => 'admin.proveedores.index',    'permission' => 'inventario.ver','icon' => 'bi-truck', 'label' => 'Proveedores'],
-        ['route' => 'admin.repuestos.index',      'permission' => 'inventario.ver','icon' => 'bi-box-seam','label' => 'Repuestos'],
-        ['route' => 'admin.inventario.index',     'permission' => 'inventario.ver','icon' => 'bi-boxes', 'label' => 'Inventario por sucursal'],
-        ['route' => 'admin.movimientos-inventario.index', 'permission' => 'inventario.ver', 'icon' => 'bi-arrow-left-right', 'label' => 'Movimientos de inventario'],
+        ['route' => 'admin.inventario.index',     'permission' => 'inventario.ver','icon' => 'bi-boxes', 'label' => 'Inventario'],
+        ['route' => 'admin.movimientos-inventario.index', 'permission' => 'inventario.ver', 'icon' => 'bi-arrow-left-right', 'label' => 'Movimientos'],
     ];
 
     $finanzas = [
@@ -35,6 +34,11 @@
         ['route' => 'admin.comprobantes.index',   'permission' => 'pagos.ver',     'icon' => 'bi-receipt',       'label' => 'Comprobantes'],
         ['route' => 'admin.reportes.index',       'permission' => 'reportes.ver',  'icon' => 'bi-graph-up',      'label' => 'Reportes'],
         ['route' => 'admin.auditoria.index',      'permission' => 'auditoria.ver', 'icon' => 'bi-journal-text',  'label' => 'Auditoría'],
+    ];
+
+    $compras = [
+        ['route' => 'admin.solicitudes-compra.index', 'permission' => 'inventario.ver', 'icon' => 'bi-cart3', 'label' => 'Solicitudes de compra'],
+        ['route' => 'admin.ordenes-compra.index',     'permission' => 'inventario.ver', 'icon' => 'bi-file-earmark-check', 'label' => 'Órdenes de compra'],
     ];
 
     $sistema = [
@@ -96,6 +100,20 @@
         <div class="admin-sidebar__section">Servicios e inventario</div>
         <ul class="list-unstyled m-0">
             @foreach ($serviciosInventario as $item)
+                <x-admin.sidebar-item
+                    :routeName="$item['route']"
+                    :permission="$item['permission'] ?? null"
+                    :icon="$item['icon']"
+                    :label="$item['label']" />
+            @endforeach
+        </ul>
+    @endif
+
+    {{-- COMPRAS --}}
+    @if ($hasVisible($compras))
+        <div class="admin-sidebar__section">Compras</div>
+        <ul class="list-unstyled m-0">
+            @foreach ($compras as $item)
                 <x-admin.sidebar-item
                     :routeName="$item['route']"
                     :permission="$item['permission'] ?? null"

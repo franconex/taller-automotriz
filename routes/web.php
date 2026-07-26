@@ -5,12 +5,14 @@ use App\Http\Controllers\Admin\CitaController;
 use App\Http\Controllers\Admin\ClienteController;
 use App\Http\Controllers\Admin\ComprobanteController;
 use App\Http\Controllers\Admin\ConfiguracionController;
+use App\Http\Controllers\Admin\CotizacionController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EmpleadoController;
 use App\Http\Controllers\Admin\InventarioController;
 use App\Http\Controllers\Admin\MecanicoController;
 use App\Http\Controllers\Admin\MetodoPagoController;
 use App\Http\Controllers\Admin\MovimientoInventarioController;
+use App\Http\Controllers\Admin\OrdenCompraController;
 use App\Http\Controllers\Admin\OrdenTrabajoController;
 use App\Http\Controllers\Admin\PagoController;
 use App\Http\Controllers\Admin\ProveedorController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\Admin\ReporteController;
 use App\Http\Controllers\Admin\RepuestoController;
 use App\Http\Controllers\Admin\RolController;
 use App\Http\Controllers\Admin\ServicioController;
+use App\Http\Controllers\Admin\SolicitudCompraController;
 use App\Http\Controllers\Admin\SucursalController;
 use App\Http\Controllers\Admin\TipoServicioController;
 use App\Http\Controllers\Admin\UsuarioController;
@@ -118,6 +121,17 @@ Route::middleware('auth')->group(function () {
             Route::patch('ordenes/{orden}/cancelar', [OrdenTrabajoController::class, 'cancelar'])
                 ->name('ordenes.cancelar');
 
+            Route::get('ordenes/{orden}/repuestos', [OrdenTrabajoController::class, 'editRepuestos'])
+                ->name('ordenes.repuestos');
+            Route::get('ordenes/{orden}/repuestos-json', [OrdenTrabajoController::class, 'repuestosJson'])
+                ->name('ordenes.repuestos-json');
+            Route::post('ordenes/{orden}/detalles', [OrdenTrabajoController::class, 'agregarDetalle'])
+                ->name('ordenes.detalles.store');
+            Route::delete('ordenes/{orden}/detalles/{detalle}', [OrdenTrabajoController::class, 'eliminarDetalle'])
+                ->name('ordenes.detalles.destroy');
+            Route::get('ordenes/{orden}/sugerir-compra', [OrdenTrabajoController::class, 'sugerirCompra'])
+                ->name('ordenes.sugerir-compra');
+
             Route::resource('mecanicos', MecanicoController::class);
             Route::patch('mecanicos/{mecanico}/toggle', [MecanicoController::class, 'toggle'])
                 ->name('mecanicos.toggle');
@@ -134,13 +148,20 @@ Route::middleware('auth')->group(function () {
             Route::patch('proveedores/{proveedore}/toggle', [ProveedorController::class, 'toggle'])
                 ->name('proveedores.toggle');
 
-            Route::resource('repuestos', RepuestoController::class);
-            Route::patch('repuestos/{repuesto}/toggle', [RepuestoController::class, 'toggle'])
-                ->name('repuestos.toggle');
+            Route::get('repuestos/escaner/buscar', [RepuestoController::class, 'buscarPorEscaner'])
+                ->name('repuestos.escaner-buscar');
+            Route::get('repuestos/buscar-por-codigo', [RepuestoController::class, 'buscarPorEscaner'])
+                ->name('repuestos.buscar-por-codigo');
+            Route::resource('repuestos', RepuestoController::class)->except(['index', 'show']);
 
-            Route::resource('inventario', InventarioController::class);
-            Route::patch('inventario/{inventario}/toggle', [InventarioController::class, 'toggle'])
-                ->name('inventario.toggle');
+            Route::resource('inventario', InventarioController::class)->except(['create', 'store']);
+            Route::post('inventario/entrada-rapida', [InventarioController::class, 'entradaRapida'])
+                ->name('inventario.entrada-rapida');
+            Route::post('inventario/entrada', [InventarioController::class, 'registrarEntrada'])
+                ->name('inventario.entrada');
+
+            Route::post('inventario/crear-desde-escaner', [InventarioController::class, 'crearDesdeEscaner'])
+                ->name('inventario.crear-desde-escaner');
 
             Route::resource('movimientos-inventario', MovimientoInventarioController::class)
                 ->parameters(['movimientos-inventario' => 'movimiento'])
@@ -178,6 +199,29 @@ Route::middleware('auth')->group(function () {
                 ->name('auditoria.index');
             Route::get('auditoria/{auditoria}', [AuditoriaController::class, 'show'])
                 ->name('auditoria.show');
+
+            Route::resource('solicitudes-compra', SolicitudCompraController::class)
+                ->parameters(['solicitudes-compra' => 'solicitud']);
+            Route::patch('solicitudes-compra/{solicitud}/aprobar', [SolicitudCompraController::class, 'aprobar'])
+                ->name('solicitudes-compra.aprobar');
+            Route::patch('solicitudes-compra/{solicitud}/rechazar', [SolicitudCompraController::class, 'rechazar'])
+                ->name('solicitudes-compra.rechazar');
+
+            Route::resource('cotizaciones', CotizacionController::class)->except(['index', 'destroy']);
+            Route::patch('cotizaciones/{cotizacione}/seleccionar', [CotizacionController::class, 'seleccionar'])
+                ->name('cotizaciones.seleccionar');
+
+            Route::resource('ordenes-compra', OrdenCompraController::class)
+                ->parameters(['ordenes-compra' => 'orden'])
+                ->except(['create', 'store', 'edit', 'update', 'destroy']);
+            Route::patch('ordenes-compra/{orden}/enviar', [OrdenCompraController::class, 'marcarEnviada'])
+                ->name('ordenes-compra.enviar');
+            Route::get('ordenes-compra/{orden}/recibir', [OrdenCompraController::class, 'recibir'])
+                ->name('ordenes-compra.recibir');
+            Route::post('ordenes-compra/{orden}/procesar-recepcion', [OrdenCompraController::class, 'procesarRecepcion'])
+                ->name('ordenes-compra.procesar-recepcion');
+            Route::patch('ordenes-compra/{orden}/cancelar', [OrdenCompraController::class, 'cancelar'])
+                ->name('ordenes-compra.cancelar');
         });
 
         // Citas: módulo accesible para cualquier usuario con permiso citas.ver

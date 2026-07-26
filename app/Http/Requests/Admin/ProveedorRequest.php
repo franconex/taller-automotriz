@@ -15,12 +15,11 @@ class ProveedorRequest extends AdminFormRequest
                 'required', 'string', 'max:150',
                 Rule::unique('proveedores', 'nombre_empresa')->ignore($id)->whereNull('deleted_at'),
             ],
-            'contacto' => ['nullable', 'string', 'max:120'],
+            'contacto' => ['required', 'string', 'max:120'],
             'telefono' => ['required', 'string', 'max:20'],
-            'email' => ['nullable', 'email', 'max:100'],
+            'email' => ['required', 'email', 'max:100'],
             'nit' => ['nullable', 'string', 'max:30'],
-            'direccion' => ['nullable', 'string', 'max:255'],
-            'tiempo_entrega_dias' => ['nullable', 'integer', 'min:0'],
+            'direccion' => ['required', 'string', 'max:500'],
             'estado' => ['nullable', 'boolean'],
         ];
     }
@@ -34,7 +33,6 @@ class ProveedorRequest extends AdminFormRequest
             'email' => 'correo electrónico',
             'nit' => 'NIT',
             'direccion' => 'dirección',
-            'tiempo_entrega_dias' => 'tiempo de entrega',
             'estado' => 'estado',
         ];
     }

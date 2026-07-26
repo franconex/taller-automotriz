@@ -15,12 +15,18 @@ class RepuestoRequest extends AdminFormRequest
                 'required', 'string', 'max:50',
                 Rule::unique('repuestos', 'codigo')->ignore($id)->whereNull('deleted_at'),
             ],
+            'codigo_barras' => [
+                'nullable', 'string', 'max:50',
+                Rule::unique('repuestos', 'codigo_barras')->ignore($id)->whereNull('deleted_at'),
+            ],
+            'codigo_fabricante' => ['nullable', 'string', 'max:50'],
+            'tipo' => ['required', 'string', 'in:repuesto,herramienta'],
             'nombre' => ['required', 'string', 'max:150'],
+            'categoria' => ['nullable', 'string', 'max:100'],
+            'marca' => ['nullable', 'string', 'max:100'],
             'descripcion' => ['nullable', 'string', 'max:1000'],
-            'proveedor_id' => ['nullable', 'exists:proveedores,id'],
-            'costo_compra' => ['required', 'numeric', 'min:0'],
-            'precio_venta' => ['required', 'numeric', 'min:0'],
-            'stock_minimo' => ['nullable', 'integer', 'min:0'],
+            'costo_compra' => ['nullable', 'numeric', 'min:0'],
+            'precio_venta' => ['nullable', 'numeric', 'min:0'],
             'estado' => ['nullable', 'boolean'],
         ];
     }
@@ -29,12 +35,15 @@ class RepuestoRequest extends AdminFormRequest
     {
         return [
             'codigo' => 'código',
+            'codigo_barras' => 'código de barras',
+            'codigo_fabricante' => 'código del fabricante',
+            'tipo' => 'tipo',
             'nombre' => 'nombre',
+            'categoria' => 'categoría',
+            'marca' => 'marca',
             'descripcion' => 'descripción',
-            'proveedor_id' => 'proveedor',
-            'costo_compra' => 'costo',
+            'costo_compra' => 'precio de compra',
             'precio_venta' => 'precio de venta',
-            'stock_minimo' => 'stock mínimo',
             'estado' => 'estado',
         ];
     }

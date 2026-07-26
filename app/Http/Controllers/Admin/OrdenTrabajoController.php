@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Requests\Admin\OrdenTrabajoDetalleRequest;
 use App\Http\Requests\Admin\OrdenTrabajoRequest;
 use App\Models\Cliente;
+use App\Models\DetalleOrdenTrabajo;
 use App\Models\OrdenTrabajo;
+use App\Models\Repuesto;
 use App\Models\Sucursal;
 use App\Models\Vehiculo;
+use App\Services\OrdenTrabajoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class OrdenTrabajoController extends AdminController
@@ -73,7 +78,16 @@ class OrdenTrabajoController extends AdminController
 
     public function show(OrdenTrabajo $ordene): View
     {
-        $ordene->load(['cliente', 'vehiculo.modelo.marcaVehiculo', 'sucursal', 'usuarioRecepcion', 'cita', 'pagos.comprobante', 'detalles']);
+        $ordene->load([
+            'cliente',
+            'vehiculo.modelo.marcaVehiculo',
+            'sucursal',
+            'usuarioRecepcion',
+            'cita',
+            'pagos.comprobante',
+            'detalles.repuesto',
+            'detalles.servicio',
+        ]);
 
         return view('admin.ordenes.show', [
             'orden' => $ordene,
@@ -82,6 +96,8 @@ class OrdenTrabajoController extends AdminController
 
     public function edit(OrdenTrabajo $ordene): View
     {
+        $ordene->load(['detalles.repuesto', 'detalles.servicio']);
+
         $clientes = Cliente::orderBy('nombre_completo')->get();
         $vehiculos = Vehiculo::with('cliente')->orderBy('placa')->get();
         $sucursales = Sucursal::query()
@@ -162,5 +178,69 @@ class OrdenTrabajoController extends AdminController
         $ordene->save();
 
         return back()->with('success', 'La orden fue anulada correctamente.');
+    }
+
+    public function editRepuestos(OrdenTrabajo $ordene): View
+    {
+        $ordene->load(['detalles.repuesto', 'detalles.servicio']);
+
+        $repuestos = Repuesto::query()
+            ->select('repuestos.*')
+            ->leftJoin('inventarios', function ($join) use ($ordene) {
+                $join->on('repuestos.id', '=', 'inventarios.repuesto_id')
+                    ->where('inventarios.sucursal_id', '=', $ordene->sucursal_id);
+            })
+            ->selectRaw('COALESCE(inventarios.cantidad_actual, 0) as stock_actual')
+            ->where('repuestos.estado', true)
+            ->orderBy('repuestos.nombre')
+            ->get();
+
+        return view('admin.ordenes.repuestos', [
+            'orden' => $ordene,
+            'repuestos' => $repuestos,
+        ]);
+    }
+
+    public function agregarDetalle(OrdenTrabajoDetalleRequest $request, OrdenTrabajo $ordene, OrdenTrabajoService $service): RedirectResponse
+    {
+        try {
+            $service->agregarRepuesto($ordene, $request->validated());
+            return back()->with('success', 'Repuesto agregado a la orden correctamente.');
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function eliminarDetalle(OrdenTrabajo $ordene, DetalleOrdenTrabajo $detalle, OrdenTrabajoService $service): RedirectResponse
+    {
+        if ($detalle->orden_trabajo_id !== $ordene->id) {
+            abort(404);
+        }
+
+        $service->eliminarRepuesto($ordene, $detalle);
+
+        return back()->with('success', 'Repuesto eliminado de la orden y stock restaurado.');
+    }
+
+    public function repuestosJson(Request $request, OrdenTrabajo $ordene, OrdenTrabajoService $service)
+    {
+        $busqueda = $request->input('q', '');
+        $repuestos = $service->buscarRepuestosConStock($ordene, $busqueda);
+
+        return response()->json($repuestos);
+    }
+
+    public function sugerirCompra(OrdenTrabajo $ordene, OrdenTrabajoService $service)
+    {
+        $sugerencia = $service->sugerirSolicitudCompra($ordene);
+
+        if (! $sugerencia) {
+            return back()->with('info', 'No hay repuestos sin stock en esta orden.');
+        }
+
+        return redirect()->route('admin.solicitudes-compra.create', [
+            'repuestos' => array_column($sugerencia['productos'], 'repuesto_id'),
+            'orden_id' => $ordene->id,
+        ]);
     }
 }

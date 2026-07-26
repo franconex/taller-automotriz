@@ -101,6 +101,63 @@
         </div>
     </div>
 
+    <div class="admin-table-wrap mt-3">
+        <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h2 class="h6 fw-bold mb-0">Repuestos asignados</h2>
+            @if ($orden->estado !== 'anulada')
+                <a href="{{ route('admin.ordenes.repuestos', $orden) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                    Agregar repuesto
+                </a>
+            @endif
+        </div>
+        <div class="table-responsive">
+            <table class="admin-table" aria-label="Repuestos asignados a la orden">
+                <thead>
+                    <tr>
+                        <th>Repuesto</th>
+                        <th class="text-end">Cantidad</th>
+                        <th class="text-end">Precio unit.</th>
+                        <th class="text-end">Subtotal</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $detallesRepuestos = $orden->detalles->where('tipo', 'repuesto');
+                    @endphp
+                    @forelse ($detallesRepuestos as $detalle)
+                        @php
+                            $sinStock = str_contains((string) $detalle->observaciones, 'SIN STOCK');
+                        @endphp
+                        <tr>
+                            <td>
+                                <div class="cell-strong">{{ $detalle->repuesto->nombre ?? $detalle->descripcion }}</div>
+                                <div class="cell-muted small">{{ $detalle->repuesto->codigo ?? '' }}</div>
+                            </td>
+                            <td class="text-end">{{ (int) $detalle->cantidad }}</td>
+                            <td class="text-end">{{ number_format((float) $detalle->precio_unitario, 2, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format((float) $detalle->subtotal, 2, ',', '.') }}</td>
+                            <td>
+                                @if ($sinStock)
+                                    <x-admin.status-badge tone="danger" icon="bi-exclamation-triangle-fill" label="Sin stock" />
+                                @else
+                                    <x-admin.status-badge tone="success" icon="bi-check-circle-fill" label="Disponible" />
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center cell-muted py-3">
+                                No se han asignado repuestos a esta orden.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 @include('admin.pagos.partials.modal-tarjeta')
 @endsection
 

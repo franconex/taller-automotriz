@@ -1,20 +1,20 @@
 @extends('layouts.admin')
 
-@section('title', 'Nuevo repuesto')
-@section('navbar-title', 'Nuevo repuesto')
+@section('title', 'Nuevo producto')
+@section('navbar-title', 'Nuevo producto')
 
 @section('breadcrumb')
     <li><a href="{{ route('admin.dashboard') }}">Inicio</a></li>
-    <li><a href="{{ route('admin.repuestos.index') }}">Repuestos</a></li>
-    <li class="active" aria-current="page">Nuevo</li>
+    <li><a href="{{ route('admin.inventario.index') }}">Inventario</a></li>
+    <li class="active" aria-current="page">Nuevo producto</li>
 @endsection
 
 @section('content')
     <x-admin.page-header
-        title="Nuevo repuesto"
-        description="Registra un nuevo repuesto en el catálogo.">
+        title="Nuevo producto"
+        description="Registrá un repuesto o herramienta en el taller.">
         <x-slot:actions>
-            <a href="{{ route('admin.repuestos.index') }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ route('admin.inventario.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 Volver
             </a>
@@ -27,7 +27,7 @@
             @include('admin.repuestos._form', ['repuesto' => null])
 
             <div class="d-flex justify-content-end gap-2 mt-3">
-                <a href="{{ route('admin.repuestos.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                <a href="{{ route('admin.inventario.index') }}" class="btn btn-outline-secondary">Cancelar</a>
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check2" aria-hidden="true"></i>
                     Guardar repuesto
