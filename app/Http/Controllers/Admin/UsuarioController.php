@@ -14,6 +14,12 @@ use Illuminate\View\View;
 
 class UsuarioController extends AdminController
 {
+    public function __construct()
+    {
+        $this->middleware('permiso:usuarios.crear')->only(['create', 'store']);
+        $this->middleware('permiso:usuarios.editar')->only(['edit', 'update', 'restablecerPassword']);
+        $this->middleware('permiso:usuarios.desactivar')->only(['destroy', 'toggle']);
+    }
     public function index(Request $request): View
     {
         $query = User::query()->with(['rol', 'sucursal']);

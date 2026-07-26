@@ -61,7 +61,7 @@
                             <li>
                                 <a href="{{ route('admin.vehiculos.show', $vehiculo) }}">{{ $vehiculo->placa }}</a>
                                 <span class="cell-muted small">
-                                    — {{ optional($vehiculo->modelo->marca)->nombre }} {{ $vehiculo->modelo->nombre ?? '' }}
+                                    — {{ $vehiculo->modelo?->marca?->nombre ?? '' }} {{ $vehiculo->modelo?->nombre ?? '' }}
                                 </span>
                             </li>
                         @endforeach

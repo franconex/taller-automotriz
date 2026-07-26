@@ -10,6 +10,11 @@ use Illuminate\View\View;
 
 class SucursalController extends AdminController
 {
+    public function __construct()
+    {
+        $this->middleware('permiso:sucursales.crear')->only(['create', 'store']);
+        $this->middleware('permiso:sucursales.editar')->only(['edit', 'update', 'destroy', 'toggle']);
+    }
     public function index(Request $request): View
     {
         $query = Sucursal::query();

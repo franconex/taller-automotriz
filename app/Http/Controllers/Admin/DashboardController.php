@@ -144,6 +144,13 @@ class DashboardController extends AdminController
             ->limit(5)
             ->get(['id', 'nombre']);
 
+        $metricas = [
+            'ordenes_activas' => $ordenesActivas,
+            'citas_hoy' => $citasHoy,
+            'vehiculos_listos' => $vehiculosListos,
+            'pagos_pendientes' => $pagosPendientes,
+        ];
+
         $accesos = [
             ['route' => 'admin.clientes.create',  'perm' => 'clientes.crear',  'icon' => 'bi-person-vcard',   'titulo' => 'Registrar cliente',  'desc' => 'Agrega un cliente al sistema.'],
             ['route' => 'admin.vehiculos.create', 'perm' => 'vehiculos.crear', 'icon' => 'bi-car-front',      'titulo' => 'Registrar vehículo', 'desc' => 'Asocia un vehículo a un cliente.'],
@@ -152,14 +159,13 @@ class DashboardController extends AdminController
             ['route' => 'admin.pagos.create',     'perm' => 'pagos.registrar', 'icon' => 'bi-cash-coin',      'titulo' => 'Registrar pago',     'desc' => 'Registra un pago a una orden.'],
         ];
 
+        if ($usuario->tieneRol('Gerente')) {
+            return view('gerente.dashboard', compact('usuario', 'ordenesRecientes', 'alertasInventario', 'metricas'));
+        }
+
         return view('admin.dashboard', [
             'usuario' => $usuario,
-            'metricas' => [
-                'ordenes_activas' => $ordenesActivas,
-                'citas_hoy' => $citasHoy,
-                'vehiculos_listos' => $vehiculosListos,
-                'pagos_pendientes' => $pagosPendientes,
-            ],
+            'metricas' => $metricas,
             'alertas' => [
                 'stock_bajo' => $stockBajo,
                 'ordenes_atrasadas' => $ordenesAtrasadas,

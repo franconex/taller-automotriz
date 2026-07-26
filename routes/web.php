@@ -40,9 +40,8 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 
-    Route::get('/gerente/dashboard', function () {
-        return view('gerente.dashboard');
-    })->middleware('rol:Gerente')->name('gerente.dashboard');
+    Route::get('/gerente/dashboard', [DashboardController::class, 'index'])
+        ->middleware('rol:Gerente')->name('gerente.dashboard');
 
     Route::get('/recepcion/dashboard', function () {
         return view('recepcion.dashboard');
@@ -71,7 +70,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('admin')
-        ->middleware('rol:Administrador')
+        ->middleware('rol:Administrador,Gerente')
         ->name('admin.')
         ->group(function () {
 

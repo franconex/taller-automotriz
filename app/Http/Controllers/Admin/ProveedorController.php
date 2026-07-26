@@ -10,6 +10,10 @@ use Illuminate\View\View;
 
 class ProveedorController extends AdminController
 {
+    public function __construct()
+    {
+        $this->middleware('permiso:roles.editar');
+    }
     public function index(Request $request): View
     {
         $query = Proveedor::query()->withCount('repuestos');

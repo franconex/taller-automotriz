@@ -11,6 +11,10 @@ use Illuminate\View\View;
 
 class ServicioController extends AdminController
 {
+    public function __construct()
+    {
+        $this->middleware('permiso:roles.editar');
+    }
     public function index(Request $request): View
     {
         $query = Servicio::query()->with('tipoServicio');

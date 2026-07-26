@@ -9,6 +9,10 @@ use Illuminate\View\View;
 
 class MetodoPagoController extends AdminController
 {
+    public function __construct()
+    {
+        $this->middleware('permiso:roles.editar');
+    }
     private const FIJOS = ['Efectivo', 'QR', 'Tarjeta'];
 
     public function index(Request $request): View

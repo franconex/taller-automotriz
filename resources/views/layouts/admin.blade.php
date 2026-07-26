@@ -38,7 +38,11 @@
                 <img src="{{ asset('img/logo-modo-oscuro.png') }}" alt="Taller Pro">
             </div>
             <div class="admin-sidebar__nav-wrap">
-                @include('layouts.partials.sidebar-menu')
+                @if (Auth::user()->tieneRol('Gerente'))
+                    @include('layouts.partials.sidebar-gerente')
+                @else
+                    @include('layouts.partials.sidebar-menu')
+                @endif
             </div>
         </aside>
 
@@ -55,9 +59,13 @@
                 <div class="admin-mobile-drawer__brand">
                     <img src="{{ asset('img/logo-modo-oscuro.png') }}" alt="Taller Pro">
                 </div>
-                @include('layouts.partials.sidebar-menu')
-            </div>
-        </aside>
+                    @if (Auth::user()->tieneRol('Gerente'))
+                        @include('layouts.partials.sidebar-gerente')
+                    @else
+                        @include('layouts.partials.sidebar-menu')
+                    @endif
+                </div>
+            </aside>
 
         <div class="admin-content">
             <nav class="admin-navbar" aria-label="Barra superior">

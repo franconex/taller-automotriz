@@ -9,6 +9,10 @@ use Illuminate\View\View;
 
 class ComprobanteController extends AdminController
 {
+    public function __construct()
+    {
+        $this->middleware('permiso:roles.editar');
+    }
     public function index(Request $request): View
     {
         $query = Comprobante::query()->with(['pago.ordenTrabajo', 'cliente']);

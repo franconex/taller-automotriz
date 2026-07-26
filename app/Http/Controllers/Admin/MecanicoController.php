@@ -12,6 +12,10 @@ use Illuminate\View\View;
 
 class MecanicoController extends AdminController
 {
+    public function __construct()
+    {
+        $this->middleware('permiso:roles.editar');
+    }
     public function index(Request $request): View
     {
         $query = Mecanico::query()

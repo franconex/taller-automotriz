@@ -11,6 +11,11 @@ use Illuminate\View\View;
 
 class RolController extends AdminController
 {
+    public function __construct()
+    {
+        $this->middleware('permiso:roles.editar')->only(['create', 'store', 'edit', 'update', 'destroy', 'toggle']);
+        $this->middleware('permiso:permisos.asignar')->only(['permisos', 'actualizarPermisos']);
+    }
     public function index(Request $request): View
     {
         $query = Rol::query();

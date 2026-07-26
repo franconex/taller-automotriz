@@ -9,6 +9,10 @@ use Illuminate\View\View;
 
 class ConfiguracionController extends AdminController
 {
+    public function __construct()
+    {
+        $this->middleware('permiso:roles.editar');
+    }
     public function index(): View
     {
         $config = [

@@ -15,6 +15,10 @@ use Illuminate\View\View;
 
 class EmpleadoController extends AdminController
 {
+    public function __construct()
+    {
+        $this->middleware('permiso:roles.editar');
+    }
     public function index(Request $request): View
     {
         $query = Empleado::query()->with(['sucursal', 'user', 'rol']);
