@@ -88,7 +88,7 @@ class EmpleadoController extends AdminController
             return back()->withInput()->with('error', 'Error al registrar el empleado: '.$e->getMessage());
         }
 
-        return $this->redirigirConExito('empleados', 'registrado');
+        return $this->redirigirALista('admin.empleados.index', 'Empleado creado con éxito.');
     }
 
     public function show(Empleado $empleado): View

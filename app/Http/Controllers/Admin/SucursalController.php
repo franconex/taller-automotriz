@@ -42,7 +42,7 @@ class SucursalController extends AdminController
 
         Sucursal::create($datos);
 
-        return $this->redirigirConExito('sucursales', 'registrada');
+        return $this->redirigirALista('admin.sucursales.index', 'Sucursal creada con éxito.');
     }
 
     public function show(Sucursal $sucursale): View

@@ -67,7 +67,12 @@ class AdminController extends Controller
 
     protected function redirigirConExito(string $modulo, string $accion = 'guardado'): RedirectResponse
     {
-        return back()->with('success', "El registro de {$modulo} fue {$accion} correctamente.");
+        return back()->with('success', "{$modulo} {$accion} correctamente.");
+    }
+
+    protected function redirigirALista(string $route, string $mensaje): RedirectResponse
+    {
+        return redirect()->route($route)->with('success', $mensaje);
     }
 
     protected function redirigirConError(string $mensaje): RedirectResponse
@@ -100,7 +105,7 @@ class AdminController extends Controller
 
         $texto = $nuevoEstado ? 'activado' : 'desactivado';
 
-        return back()->with('success', "El registro de {$modulo} fue {$texto} correctamente.");
+        return back()->with('success', "{$modulo} {$texto} correctamente.");
     }
 
     protected function columnaEstado(Model $modelo): string

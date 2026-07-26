@@ -68,7 +68,7 @@ class OrdenTrabajoController extends AdminController
 
         OrdenTrabajo::create($datos);
 
-        return $this->redirigirConExito('órdenes de trabajo', 'creada');
+        return $this->redirigirALista('admin.ordenes.index', 'Orden de trabajo creada con éxito.');
     }
 
     public function show(OrdenTrabajo $ordene): View
@@ -131,7 +131,10 @@ class OrdenTrabajoController extends AdminController
     {
         $request->validate([
             'estado' => ['required', 'in:recibida,diagnostico,en_proceso,finalizada,entregada,anulada'],
-        ], [], ['estado' => 'estado']);
+        ], [
+            'required' => 'El campo :attribute es obligatorio.',
+            'in' => 'El :attribute seleccionado no es válido.',
+        ], ['estado' => 'estado']);
 
         $nuevoEstado = $request->input('estado');
         $cambios = [];

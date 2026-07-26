@@ -292,6 +292,39 @@
         </div>
     </div>
 
+    {{-- GRÁFICOS --}}
+    <section class="mb-4">
+        <h2 class="h6 text-uppercase fw-bold text-secondary mb-3" style="letter-spacing:.6px; font-size:.75rem;">
+            Gráficos
+        </h2>
+        <div class="row g-3">
+            <div class="col-12 col-lg-6 col-xl-3">
+                <div class="admin-table-wrap p-3">
+                    <h3 class="h6 fw-bold mb-2" style="font-size:.82rem;">Órdenes por estado</h3>
+                    <div style="height:180px;"><canvas id="chart-ordenes-estado"></canvas></div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6 col-xl-3">
+                <div class="admin-table-wrap p-3">
+                    <h3 class="h6 fw-bold mb-2" style="font-size:.82rem;">Ingresos últimos 6 meses</h3>
+                    <div style="height:180px;"><canvas id="chart-ingresos"></canvas></div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6 col-xl-3">
+                <div class="admin-table-wrap p-3">
+                    <h3 class="h6 fw-bold mb-2" style="font-size:.82rem;">Citas próximos 7 días</h3>
+                    <div style="height:180px;"><canvas id="chart-citas"></canvas></div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6 col-xl-3">
+                <div class="admin-table-wrap p-3">
+                    <h3 class="h6 fw-bold mb-2" style="font-size:.82rem;">Servicios más solicitados</h3>
+                    <div style="height:180px;"><canvas id="chart-servicios"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     {{-- ACCESOS RÁPIDOS --}}
     <section>
         <h2 class="h6 text-uppercase fw-bold text-secondary mb-3" style="letter-spacing:.6px; font-size:.75rem;">
@@ -316,3 +349,44 @@
         </div>
     </section>
 @endsection
+
+@push('styles')
+<style>
+#chart-ordenes-estado, #chart-ingresos, #chart-citas, #chart-servicios {
+    max-width: 100%;
+    max-height: 100%;
+}
+</style>
+@endpush
+
+@push('scripts')
+<script type="application/json" id="dashboard-chart-data">
+{
+    "ordenes_por_estado": [
+        @foreach ($graficos['ordenesPorEstado'] as $estado => $total)
+            {"estado": "{{ $estado }}", "total": {{ $total }}}
+            @if (! $loop->last),@endif
+        @endforeach
+    ],
+    "ingresos_mensuales": [
+        @foreach ($graficos['ingresosMensuales'] as $item)
+            {"mes": "{{ $item->mes }}", "total": {{ $item->total }}}
+            @if (! $loop->last),@endif
+        @endforeach
+    ],
+    "citas_proximas": [
+        @foreach ($graficos['citasProximas'] as $item)
+            {"fecha": "{{ $item->fecha }}", "total": {{ $item->total }}}
+            @if (! $loop->last),@endif
+        @endforeach
+    ],
+    "servicios_top": [
+        @foreach ($graficos['serviciosTop'] as $item)
+            {"nombre": "{{ addslashes($item->nombre) }}", "citas_count": {{ $item->citas_count }}}
+            @if (! $loop->last),@endif
+        @endforeach
+    ]
+}
+</script>
+<script type="module" src="{{ Vite::asset('resources/js/admin/dashboard-charts.js') }}"></script>
+@endpush

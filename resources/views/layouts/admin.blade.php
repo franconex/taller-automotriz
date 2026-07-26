@@ -20,7 +20,8 @@
         $usuario = Auth::user();
         $rolNombre = $usuario->rol->nombre ?? 'Sin rol';
         $empleado = $usuario->empleado;
-        $fotoPerfil = $empleado && $empleado->foto ? asset('storage/' . $empleado->foto) : null;
+        $usuario->loadMissing('perfil');
+        $fotoPerfil = $usuario->perfil?->foto_url;
         $partesNombre = array_filter(explode(' ', trim($usuario->nombre ?? '')));
         $iniciales = mb_strtoupper(
             collect($partesNombre)->take(2)->map(fn($p) => mb_substr($p, 0, 1))->implode('')

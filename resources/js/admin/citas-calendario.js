@@ -695,6 +695,149 @@ import interactionPlugin from '@fullcalendar/interaction';
     }
 
     /* ===========================================================
+       Quick create Cliente / Vehículo
+       =========================================================== */
+
+    function limpiarQuickForm(id) {
+        const form = document.getElementById(id);
+        if (!form) return;
+        form.reset();
+        form.classList.remove('was-validated');
+        form.querySelectorAll('.is-invalid').forEach((el) => el.classList.remove('is-invalid'));
+        const err = form.querySelector('.alert-danger');
+        if (err) { err.classList.add('d-none'); err.innerHTML = ''; }
+    }
+
+    function abrirQuickCliente() {
+        limpiarQuickForm('form-quick-cliente');
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-quick-cliente'));
+        modal.show();
+    }
+
+    async function enviarQuickCliente(e) {
+        e.preventDefault();
+        const form = document.getElementById('form-quick-cliente');
+        const data = Object.fromEntries(new FormData(form).entries());
+        const erroresEl = document.getElementById('quick-cliente-errores');
+        erroresEl.classList.add('d-none');
+        erroresEl.innerHTML = '';
+        form.querySelectorAll('.is-invalid').forEach((el) => el.classList.remove('is-invalid'));
+
+        try {
+            const res = await fetch(urlAcciones + '/quick-cliente', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrf,
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(data),
+            });
+            const json = await res.json();
+            if (!res.ok) {
+                if (json.errors && typeof json.errors === 'object') {
+                    Object.entries(json.errors).forEach(([field, msgs]) => {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (input) {
+                            input.classList.add('is-invalid');
+                            let fb = input.parentElement.querySelector('.invalid-feedback');
+                            if (!fb) { fb = document.createElement('div'); fb.className = 'invalid-feedback'; input.parentElement.appendChild(fb); }
+                            fb.textContent = Array.isArray(msgs) ? msgs.join(', ') : String(msgs);
+                        }
+                    });
+                    erroresEl.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i> Revisa los datos.';
+                    erroresEl.classList.remove('d-none');
+                } else {
+                    mostrarError(json.message || 'Error al guardar cliente.');
+                }
+                return;
+            }
+            const c = json.cliente;
+            const select = document.getElementById('form-cliente_id');
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.nombre_completo;
+            select.appendChild(opt);
+            select.value = c.id;
+            select.dispatchEvent(new Event('change'));
+            cerrarModal('modal-quick-cliente');
+            mostrarExito(json.message || 'Cliente registrado.');
+        } catch (err) {
+            mostrarError(err.message || 'Error de red.');
+        }
+    }
+
+    function abrirQuickVehiculo() {
+        const clienteId = document.getElementById('form-cliente_id')?.value;
+        if (!clienteId) {
+            mostrarError('Primero selecciona o agrega un cliente.');
+            return;
+        }
+        document.getElementById('quick-vehiculo-cliente_id').value = clienteId;
+        limpiarQuickForm('form-quick-vehiculo');
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-quick-vehiculo'));
+        modal.show();
+    }
+
+    async function enviarQuickVehiculo(e) {
+        e.preventDefault();
+        const form = document.getElementById('form-quick-vehiculo');
+        const data = Object.fromEntries(new FormData(form).entries());
+        const erroresEl = document.getElementById('quick-vehiculo-errores');
+        erroresEl.classList.add('d-none');
+        erroresEl.innerHTML = '';
+        form.querySelectorAll('.is-invalid').forEach((el) => el.classList.remove('is-invalid'));
+
+        try {
+            const res = await fetch(urlAcciones + '/quick-vehiculo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrf,
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(data),
+            });
+            const json = await res.json();
+            if (!res.ok) {
+                if (json.errors && typeof json.errors === 'object') {
+                    Object.entries(json.errors).forEach(([field, msgs]) => {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (input) {
+                            input.classList.add('is-invalid');
+                            let fb = input.parentElement.querySelector('.invalid-feedback');
+                            if (!fb) { fb = document.createElement('div'); fb.className = 'invalid-feedback'; input.parentElement.appendChild(fb); }
+                            fb.textContent = Array.isArray(msgs) ? msgs.join(', ') : String(msgs);
+                        }
+                    });
+                    erroresEl.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i> Revisa los datos.';
+                    erroresEl.classList.remove('d-none');
+                } else {
+                    mostrarError(json.message || 'Error al guardar vehículo.');
+                }
+                return;
+            }
+            const v = json.vehiculo;
+            const select = document.getElementById('form-vehiculo_id');
+            const opt = document.createElement('option');
+            opt.value = v.id;
+            opt.textContent = v.label;
+            opt.dataset.cliente = v.cliente_id;
+            select.appendChild(opt);
+            select.value = v.id;
+            cerrarModal('modal-quick-vehiculo');
+            mostrarExito(json.message || 'Vehículo registrado.');
+            actualizarVehiculos();
+        } catch (err) {
+            mostrarError(err.message || 'Error de red.');
+        }
+    }
+
+    /* ===========================================================
        Helpers UX
        =========================================================== */
 
@@ -769,5 +912,10 @@ import interactionPlugin from '@fullcalendar/interaction';
 
         document.getElementById('form-cliente_id')?.addEventListener('change', actualizarVehiculos);
         document.getElementById('formulario-cita')?.addEventListener('submit', enviarFormulario);
+
+        document.getElementById('btn-quick-cliente')?.addEventListener('click', abrirQuickCliente);
+        document.getElementById('form-quick-cliente')?.addEventListener('submit', enviarQuickCliente);
+        document.getElementById('btn-quick-vehiculo')?.addEventListener('click', abrirQuickVehiculo);
+        document.getElementById('form-quick-vehiculo')?.addEventListener('submit', enviarQuickVehiculo);
     });
 })();

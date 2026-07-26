@@ -38,7 +38,11 @@ class ConfiguracionController extends AdminController
             'zona_horaria' => ['nullable', 'string', 'max:50'],
             'moneda' => ['nullable', 'string', 'max:50'],
             'formato_fecha' => ['nullable', 'string', 'max:20'],
-        ], [], [
+        ], [
+            'string' => 'El campo :attribute debe ser texto.',
+            'max' => 'El campo :attribute no debe superar :max caracteres.',
+            'email' => 'El campo :attribute debe ser un correo válido.',
+        ], [
             'razon_social' => 'razón social',
         ]);
 

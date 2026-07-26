@@ -50,7 +50,10 @@ class ComprobanteController extends AdminController
             'nit_ci' => ['nullable', 'string', 'max:20'],
             'razon_social' => ['nullable', 'string', 'max:150'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
-        ], [], [
+        ], [
+            'string' => 'El campo :attribute debe ser texto.',
+            'max' => 'El campo :attribute no debe superar :max caracteres.',
+        ], [
             'nit_ci' => 'NIT/CI',
             'razon_social' => 'razón social',
         ]);

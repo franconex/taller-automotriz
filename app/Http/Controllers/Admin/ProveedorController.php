@@ -44,7 +44,7 @@ class ProveedorController extends AdminController
 
         Proveedor::create($datos);
 
-        return $this->redirigirConExito('proveedores', 'registrado');
+        return $this->redirigirALista('admin.proveedores.index', 'Proveedor creado con éxito.');
     }
 
     public function show(Proveedor $proveedore): View

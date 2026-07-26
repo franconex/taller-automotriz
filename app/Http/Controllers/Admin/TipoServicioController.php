@@ -38,7 +38,7 @@ class TipoServicioController extends AdminController
 
         TipoServicio::create($datos);
 
-        return $this->redirigirConExito('tipos de servicio', 'registrado');
+        return $this->redirigirALista('admin.tipos-servicio.index', 'Tipo de servicio creado con éxito.');
     }
 
     public function show(TipoServicio $tipo_servicio): View

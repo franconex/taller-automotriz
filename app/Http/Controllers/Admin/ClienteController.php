@@ -44,7 +44,7 @@ class ClienteController extends AdminController
 
         Cliente::create($datos);
 
-        return $this->redirigirConExito('clientes', 'registrado');
+        return $this->redirigirALista('admin.clientes.index', 'Cliente creado con éxito.');
     }
 
     public function show(Cliente $cliente): View

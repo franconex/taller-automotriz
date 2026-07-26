@@ -110,6 +110,40 @@ class DashboardController extends AdminController
             ->limit(8)
             ->get();
 
+        $ordenesPorEstado = (clone $ordenesBase)
+            ->select('estado', DB::raw('COUNT(*) as total'))
+            ->groupBy('estado')
+            ->orderBy('estado')
+            ->pluck('total', 'estado');
+
+        $ingresosMensuales = Pago::query()
+            ->where('estado', 'confirmado')
+            ->when($sucursalId, fn ($q) => $q->whereHas('ordenTrabajo', fn ($oq) => $oq->where('sucursal_id', $sucursalId)))
+            ->where('fecha_pago', '>=', now()->subMonths(6)->startOfMonth())
+            ->select(DB::raw("DATE_FORMAT(fecha_pago, '%Y-%m') as mes"), DB::raw('SUM(monto) as total'))
+            ->groupBy('mes')
+            ->orderBy('mes')
+            ->get();
+
+        $citasProximas = Cita::query()
+            ->when($sucursalId, fn ($q) => $q->where('sucursal_id', $sucursalId))
+            ->whereBetween('fecha', [now()->startOfDay(), now()->addDays(6)->endOfDay()])
+            ->whereNotIn('estado', ['cancelada', 'no_asistio'])
+            ->select('fecha', DB::raw('COUNT(*) as total'))
+            ->groupBy('fecha')
+            ->orderBy('fecha')
+            ->get();
+
+        $serviciosTop = \App\Models\Servicio::query()
+            ->where('estado', true)
+            ->withCount(['citas' => function ($q) {
+                $q->when($this->usuarioSucursalId(), fn ($sq) => $sq->where('sucursal_id', $this->usuarioSucursalId()));
+            }])
+            ->having('citas_count', '>', 0)
+            ->orderByDesc('citas_count')
+            ->limit(5)
+            ->get(['id', 'nombre']);
+
         $accesos = [
             ['route' => 'admin.clientes.create',  'perm' => 'clientes.crear',  'icon' => 'bi-person-vcard',   'titulo' => 'Registrar cliente',  'desc' => 'Agrega un cliente al sistema.'],
             ['route' => 'admin.vehiculos.create', 'perm' => 'vehiculos.crear', 'icon' => 'bi-car-front',      'titulo' => 'Registrar vehículo', 'desc' => 'Asocia un vehículo a un cliente.'],
@@ -133,6 +167,12 @@ class DashboardController extends AdminController
                 'usuarios_bloqueados' => $usuariosBloqueados,
                 'mecanicos_disponibles' => $mecanicosDisponibles,
                 'mecanicos_ocupados' => $mecanicosOcupados,
+            ],
+            'graficos' => [
+                'ordenesPorEstado' => $ordenesPorEstado,
+                'ingresosMensuales' => $ingresosMensuales,
+                'citasProximas' => $citasProximas,
+                'serviciosTop' => $serviciosTop,
             ],
             'ordenesRecientes' => $ordenesRecientes,
             'citasDelDia' => $citasDelDia,

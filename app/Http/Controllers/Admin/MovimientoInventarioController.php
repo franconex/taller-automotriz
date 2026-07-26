@@ -101,7 +101,7 @@ class MovimientoInventarioController extends AdminController
             ]);
         });
 
-        return $this->redirigirConExito('movimientos de inventario', 'registrado');
+        return $this->redirigirALista('admin.movimientos-inventario.index', 'Movimiento de inventario registrado con éxito.');
     }
 
     public function show(MovimientoInventario $movimiento): View

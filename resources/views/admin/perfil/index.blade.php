@@ -15,7 +15,7 @@
 
     @php $empleado = $usuario->empleado; @endphp
 
-    <form method="POST" action="{{ route('admin.perfil.update') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('admin.perfil.update') }}" id="form-perfil">
         @csrf
         @method('PUT')
 
@@ -24,10 +24,10 @@
             <div class="col-12 col-lg-4">
                 <div class="admin-table-wrap p-4 text-center">
                     <h2 class="h6 fw-bold mb-3">Foto de perfil</h2>
-                    <div class="mb-3">
-                        @if ($empleado && $empleado->foto)
-                            <img src="{{ asset('storage/' . $empleado->foto) }}"
-                                 alt="Foto de {{ $empleado->nombre_completo }}"
+                    <div class="mb-3" id="foto-preview">
+                        @if ($usuario->perfil && $usuario->perfil->foto_url)
+                            <img src="{{ $usuario->perfil->foto_url }}"
+                                 alt="Foto de {{ $empleado->nombre_completo ?? $usuario->nombre }}"
                                  class="rounded-circle"
                                  style="width:150px;height:150px;object-fit:cover;">
                         @else
@@ -37,15 +37,21 @@
                             </span>
                         @endif
                     </div>
-                    <x-admin.form-field
-                        name="foto"
-                        type="file"
-                        label="Cambiar foto"
-                        accept="image/jpeg,image/png,image/webp" />
-                    @if ($empleado && $empleado->foto)
+                    <div class="mb-3">
+                        <label for="field-foto" class="form-label d-block">Cambiar foto</label>
+                        <input type="file"
+                               name="foto"
+                               id="field-foto"
+                               class="form-control"
+                               accept="image/jpeg,image/png,image/webp">
+                        <div class="form-text mt-1">JPG, PNG o WebP. Máximo 10 MB.</div>
+                        <div class="invalid-feedback d-none" id="foto-error"></div>
+                        <div class="small text-success d-none" id="foto-ok"></div>
+                    </div>
+                    @if ($usuario->perfil && $usuario->perfil->foto)
                         <div class="mt-2">
                             <label class="small text-muted">
-                                <input type="checkbox" name="eliminar_foto" value="1">
+                                <input type="checkbox" name="eliminar_foto" value="1" id="eliminar-foto-check">
                                 Eliminar foto actual
                             </label>
                         </div>
@@ -87,6 +93,10 @@
                         <i class="bi bi-key me-1" aria-hidden="true"></i>
                         Credenciales de acceso
                     </h2>
+                    <dl class="admin-meta mb-3">
+                        <dt>Correo electrónico</dt>
+                        <dd class="text-break">{{ $usuario->email ?? ($empleado->email ?? '—') }}</dd>
+                    </dl>
                     <x-admin.form-field
                         name="username"
                         label="Nombre de usuario"
@@ -121,3 +131,73 @@
         </div>
     </form>
 @endsection
+
+@push('scripts')
+<script>
+document.getElementById('field-foto')?.addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    const errorEl = document.getElementById('foto-error');
+    const okEl = document.getElementById('foto-ok');
+    const preview = document.getElementById('foto-preview');
+    if (!file) return;
+    okEl.classList.add('d-none');
+    errorEl.classList.add('d-none');
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type)) {
+        errorEl.textContent = 'Solo se permiten JPG, PNG o WebP.';
+        errorEl.classList.remove('d-none');
+        this.value = '';
+        return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+        errorEl.textContent = 'La imagen no debe superar los 10 MB.';
+        errorEl.classList.remove('d-none');
+        this.value = '';
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+        const img = new Image();
+        img.onload = async function () {
+            const MAX = 200;
+            let w = img.width, h = img.height;
+            if (w > MAX || h > MAX) {
+                const ratio = Math.min(MAX / w, MAX / h);
+                w = Math.round(w * ratio);
+                h = Math.round(h * ratio);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUri = canvas.toDataURL('image/jpeg', 0.6);
+            preview.innerHTML = `<img src="${dataUri}" alt="Vista previa" class="rounded-circle" style="width:150px;height:150px;object-fit:cover;">`;
+            okEl.textContent = 'Guardando foto...';
+            okEl.classList.remove('d-none');
+            try {
+                const res = await fetch('{{ route('admin.perfil.foto') }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                    body: JSON.stringify({ foto: dataUri }),
+                });
+                const r = await res.json();
+                if (r.ok) {
+                    okEl.textContent = 'Foto guardada. Actualizando...';
+                    window.location.reload();
+                } else {
+                    errorEl.textContent = r.message || 'Error al guardar la foto.';
+                    errorEl.classList.remove('d-none');
+                    okEl.classList.add('d-none');
+                }
+            } catch (err) {
+                errorEl.textContent = 'Error de conexión al guardar la foto.';
+                errorEl.classList.remove('d-none');
+                okEl.classList.add('d-none');
+            }
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+</script>
+@endpush

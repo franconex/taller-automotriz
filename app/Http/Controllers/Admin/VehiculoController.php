@@ -53,7 +53,7 @@ class VehiculoController extends AdminController
 
         Vehiculo::create($datos);
 
-        return $this->redirigirConExito('vehículos', 'registrado');
+        return $this->redirigirALista('admin.vehiculos.index', 'Vehículo creado con éxito.');
     }
 
     public function show(Vehiculo $vehiculo): View

@@ -7,6 +7,7 @@ use App\Models\Auditoria;
 use App\Models\Cita;
 use App\Models\Cliente;
 use App\Models\Mecanico;
+use App\Models\ModeloVehiculo;
 use App\Models\OrdenTrabajo;
 use App\Models\Servicio;
 use App\Models\Sucursal;
@@ -62,6 +63,11 @@ class CitaController extends AdminController
             ->sortBy(fn ($m) => $m->empleado->nombre_completo)
             ->values();
 
+        $modelos = ModeloVehiculo::with('marcaVehiculo')
+            ->where('estado', true)
+            ->orderBy('nombre')
+            ->get();
+
         $sucursales = $this->sucursalesParaSelect();
 
         $puedeCrear      = $request->user()?->tienePermiso('citas.crear') ?? false;
@@ -78,6 +84,7 @@ class CitaController extends AdminController
             'vehiculos'          => $vehiculos,
             'servicios'          => $servicios,
             'mecanicos'          => $mecanicos,
+            'modelos'            => $modelos,
             'sucursales'         => $sucursales,
             'mostrarFiltroSucursal' => $sucursales->count() > 1,
             'estados'            => Cita::ESTADOS,
@@ -102,6 +109,13 @@ class CitaController extends AdminController
             'servicio_id'  => ['nullable', 'integer', Rule::exists('servicios', 'id')],
             'mecanico_id'  => ['nullable', 'integer', Rule::exists('mecanicos', 'id')],
             'estado'       => ['nullable', 'in:pendiente,confirmada,atendida,cancelada,no_asistio'],
+        ], [
+            'required' => 'El campo :attribute es obligatorio.',
+            'date' => 'El campo :attribute debe ser una fecha válida.',
+            'after_or_equal' => 'El campo :attribute debe ser una fecha posterior o igual a :date.',
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'exists' => 'El :attribute seleccionado no es válido.',
+            'in' => 'El :attribute seleccionado no es válido.',
         ]);
 
         $start = Carbon::parse($validated['start'])->toDateString();
@@ -185,7 +199,7 @@ class CitaController extends AdminController
             return response()->json(['ok' => true, 'cita' => $cita->load('cliente', 'vehiculo', 'servicio', 'mecanico.empleado')], 201);
         }
 
-        return $this->redirigirConExito('citas', 'registrada');
+        return $this->redirigirALista('admin.citas.index', 'Cita creada con éxito.');
     }
 
     public function show(Cita $cita): JsonResponse
@@ -288,7 +302,17 @@ class CitaController extends AdminController
             'mecanico_id'           => ['nullable', 'exists:mecanicos,id'],
             'sucursal_id'           => ['required', 'exists:sucursales,id'],
             'motivo_reprogramacion' => ['required', 'string', 'min:3', 'max:1000'],
-        ], [], [
+        ], [
+            'required' => 'El campo :attribute es obligatorio.',
+            'date' => 'El campo :attribute debe ser una fecha válida.',
+            'date_format' => 'El campo :attribute no coincide con el formato :format.',
+            'after' => 'El campo :attribute debe ser una hora posterior a :date.',
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'min' => 'El campo :attribute debe tener al menos :min.',
+            'max' => 'El campo :attribute no debe superar :max.',
+            'string' => 'El campo :attribute debe ser texto.',
+            'exists' => 'El :attribute seleccionado no es válido.',
+        ], [
             'motivo_reprogramacion' => 'motivo de reprogramación',
         ]);
 
@@ -353,7 +377,12 @@ class CitaController extends AdminController
         $request->merge(['__accion' => 'cancelar']);
         $datos = $request->validate([
             'cancelado_motivo' => ['required', 'string', 'min:3', 'max:1000'],
-        ], [], [
+        ], [
+            'required' => 'El campo :attribute es obligatorio.',
+            'string' => 'El campo :attribute debe ser texto.',
+            'min' => 'El campo :attribute debe tener al menos :min caracteres.',
+            'max' => 'El campo :attribute no debe superar :max caracteres.',
+        ], [
             'cancelado_motivo' => 'motivo de cancelación',
         ]);
 
@@ -525,6 +554,79 @@ class CitaController extends AdminController
         });
 
         return response()->json(['citas' => $data]);
+    }
+
+    /* =========================================================
+       QUICK CREATE (cliente / vehículo desde el modal de cita)
+       ========================================================= */
+
+    public function quickCliente(Request $request): JsonResponse
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'nombre_completo' => ['required', 'string', 'max:150'],
+            'ci'              => ['nullable', 'string', 'max:20', \Illuminate\Validation\Rule::unique('clientes', 'ci')->whereNull('deleted_at')],
+            'telefono'        => ['required', 'string', 'max:20'],
+            'email'           => ['nullable', 'email', 'max:100'],
+        ], [], [
+            'nombre_completo' => 'nombre completo',
+            'ci'              => 'cédula de identidad',
+            'telefono'        => 'teléfono',
+            'email'           => 'correo electrónico',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $datos = $validator->validated();
+        $datos['estado'] = true;
+        $datos['fecha_registro'] = now();
+
+        $cliente = Cliente::create($datos);
+
+        return response()->json([
+            'ok'      => true,
+            'message' => 'Cliente registrado.',
+            'cliente' => ['id' => $cliente->id, 'nombre_completo' => $cliente->nombre_completo],
+        ]);
+    }
+
+    public function quickVehiculo(Request $request): JsonResponse
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'cliente_id'        => ['required', 'exists:clientes,id'],
+            'modelo_vehiculo_id' => ['required', 'exists:modelos_vehiculos,id'],
+            'placa'             => ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('vehiculos', 'placa')->whereNull('deleted_at')],
+            'color'             => ['nullable', 'string', 'max:50'],
+            'anio'              => ['nullable', 'integer', 'min:1900', 'max:' . (date('Y') + 1)],
+        ], [], [
+            'cliente_id'        => 'cliente',
+            'modelo_vehiculo_id' => 'modelo',
+            'placa'             => 'placa',
+            'color'             => 'color',
+            'anio'              => 'año',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $datos = $validator->validated();
+        $datos['estado'] = true;
+        $datos['kilometraje_actual'] = 0;
+
+        $vehiculo = Vehiculo::create($datos);
+        $vehiculo->load('cliente');
+
+        return response()->json([
+            'ok'      => true,
+            'message' => 'Vehículo registrado.',
+            'vehiculo' => [
+                'id'         => $vehiculo->id,
+                'cliente_id' => $vehiculo->cliente_id,
+                'label'      => $vehiculo->placa . ' — ' . ($vehiculo->cliente?->nombre_completo ?? ''),
+            ],
+        ]);
     }
 
     /* =========================================================

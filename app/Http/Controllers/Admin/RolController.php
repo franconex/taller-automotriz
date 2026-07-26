@@ -42,7 +42,7 @@ class RolController extends AdminController
 
         Rol::create($datos);
 
-        return $this->redirigirConExito('roles', 'registrado');
+        return $this->redirigirALista('admin.roles.index', 'Rol creado con éxito.');
     }
 
     public function edit(Rol $role): View

@@ -11,6 +11,7 @@ export default defineConfig({
                 'resources/css/admin/citas.css',
                 'resources/js/app.js',
                 'resources/js/admin.js',
+                'resources/js/admin/dashboard-charts.js',
                 'resources/js/admin/citas-calendario.js',
             ],
             refresh: true,

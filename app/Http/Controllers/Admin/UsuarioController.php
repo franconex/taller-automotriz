@@ -77,7 +77,7 @@ class UsuarioController extends AdminController
 
         User::create($datos);
 
-        return $this->redirigirConExito('usuarios', 'registrado');
+        return $this->redirigirALista('admin.usuarios.index', 'Usuario creado con éxito.');
     }
 
     public function show(User $usuario): View
@@ -179,8 +179,11 @@ class UsuarioController extends AdminController
     {
         $request->validate([
             'password' => ['required', 'string', 'min:6', 'confirmed'],
-        ], [], [
-            'password' => 'contraseña',
+        ], [
+            'required' => 'La contraseña es obligatoria.',
+            'string' => 'La contraseña debe ser texto.',
+            'min' => 'La contraseña debe tener al menos :min caracteres.',
+            'confirmed' => 'La confirmación de la contraseña no coincide.',
         ]);
 
         $usuario->password = Hash::make($request->input('password'));

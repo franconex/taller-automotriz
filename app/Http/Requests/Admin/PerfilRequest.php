@@ -15,7 +15,6 @@ class PerfilRequest extends AdminFormRequest
                 'required', 'string', 'max:50',
                 Rule::unique('users', 'username')->ignore($user->id)->whereNull('deleted_at'),
             ],
-            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ];
     }
 
@@ -23,7 +22,6 @@ class PerfilRequest extends AdminFormRequest
     {
         return [
             'username' => 'nombre de usuario',
-            'foto' => 'foto de perfil',
         ];
     }
 }

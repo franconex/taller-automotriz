@@ -45,7 +45,7 @@ class ServicioController extends AdminController
 
         Servicio::create($datos);
 
-        return $this->redirigirConExito('servicios', 'registrado');
+        return $this->redirigirALista('admin.servicios.index', 'Servicio creado con éxito.');
     }
 
     public function show(Servicio $servicio): View

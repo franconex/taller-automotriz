@@ -57,7 +57,10 @@ class InventarioController extends AdminController
     {
         $request->validate([
             'cantidad_reservada' => ['nullable', 'integer', 'min:0'],
-        ], [], [
+        ], [
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'min' => 'El campo :attribute debe ser al menos :min.',
+        ], [
             'cantidad_reservada' => 'cantidad reservada',
         ]);
 

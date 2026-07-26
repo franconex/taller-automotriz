@@ -55,7 +55,7 @@ class MecanicoController extends AdminController
     {
         Mecanico::create($request->validated());
 
-        return $this->redirigirConExito('mecánicos', 'registrado');
+        return $this->redirigirALista('admin.mecanicos.index', 'Mecánico creado con éxito.');
     }
 
     public function show(Mecanico $mecanico): View

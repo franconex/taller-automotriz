@@ -70,6 +70,12 @@ class MetodoPagoController extends AdminController
             'nombre' => ['required', 'string', 'max:50', \Illuminate\Validation\Rule::unique('metodos_pago', 'nombre')->ignore($metodoPago->id)],
             'descripcion' => ['nullable', 'string', 'max:255'],
             'estado' => ['nullable', 'boolean'],
+        ], [
+            'required' => 'El campo :attribute es obligatorio.',
+            'string' => 'El campo :attribute debe ser texto.',
+            'max' => 'El campo :attribute no debe superar :max caracteres.',
+            'unique' => 'El :attribute ya está registrado.',
+            'boolean' => 'El campo :attribute debe ser verdadero o falso.',
         ]);
 
         $datos['estado'] = (bool) ($datos['estado'] ?? false);

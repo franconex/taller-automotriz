@@ -684,6 +684,65 @@
     text-decoration: underline;
 }
 
+/* =========== Modal formulario cita =========== */
+#modal-formulario-cita .modal-dialog {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    max-width: 900px;
+}
+
+#modal-formulario-cita .modal-body {
+    padding: 1rem 1.25rem;
+}
+
+#modal-formulario-cita .form-label {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: .2rem;
+}
+
+#modal-formulario-cita .form-label .required {
+    color: var(--citas-rojo);
+}
+
+#modal-formulario-cita .form-control,
+#modal-formulario-cita .form-select {
+    border-radius: var(--citas-borde-radio-sm);
+    font-size: .85rem;
+    border-color: var(--citas-borde);
+    padding: .3rem .55rem;
+}
+
+#modal-formulario-cita .form-control:focus,
+#modal-formulario-cita .form-select:focus {
+    border-color: var(--citas-rojo);
+    box-shadow: 0 0 0 3px rgba(227, 30, 36, .15);
+}
+
+#modal-formulario-cita .invalid-feedback {
+    font-size: .75rem;
+}
+
+#modal-formulario-cita .form-text {
+    font-size: .7rem;
+    color: var(--citas-gris);
+    line-height: 1;
+}
+
+#modal-formulario-cita .input-group .btn {
+    padding: .3rem .5rem;
+    font-size: .8rem;
+}
+
+#modal-formulario-cita .form-check-input {
+    margin-top: 0;
+}
+
+#modal-formulario-cita .modal-footer {
+    padding: .75rem 1.25rem;
+}
+
 /* =========== Modal genérico =========== */
 .modal-content {
     border: 1px solid var(--citas-borde);

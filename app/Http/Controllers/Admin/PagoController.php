@@ -69,7 +69,7 @@ class PagoController extends AdminController
 
         Pago::create($datos);
 
-        return $this->redirigirConExito('pagos', 'registrado');
+        return $this->redirigirALista('admin.pagos.index', 'Pago registrado con éxito.');
     }
 
     public function show(Pago $pago): View

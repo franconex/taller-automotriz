@@ -50,7 +50,7 @@ class RepuestoController extends AdminController
 
         Repuesto::create($datos);
 
-        return $this->redirigirConExito('repuestos', 'registrado');
+        return $this->redirigirALista('admin.repuestos.index', 'Repuesto creado con éxito.');
     }
 
     public function show(Repuesto $repuesto): View
