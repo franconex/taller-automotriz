@@ -29,6 +29,7 @@
                 'aria-label',
                 collapsed ? 'Desplegar menú' : 'Plegar menú'
             );
+            toggleSidebarTooltips(collapsed);
         };
 
         toggle.addEventListener('click', function () {
@@ -39,6 +40,36 @@
         });
 
         apply();
+
+        apply();
+    }
+
+    /* ---------------------------------------------------------
+       Sidebar tooltips: enable when collapsed, disable when expanded
+       --------------------------------------------------------- */
+    let sidebarTooltips = [];
+
+    function toggleSidebarTooltips(enable) {
+        destroySidebarTooltips();
+        if (!enable) return;
+
+        const links = document.querySelectorAll('#adminSidebar .admin-sidebar__link');
+        links.forEach(function (el) {
+            const label = el.getAttribute('data-tp-label');
+            if (!label) return;
+            const instance = new bootstrap.Tooltip(el, {
+                placement: 'right',
+                customClass: 'admin-tooltip',
+                title: label,
+                trigger: 'hover focus',
+            });
+            sidebarTooltips.push(instance);
+        });
+    }
+
+    function destroySidebarTooltips() {
+        sidebarTooltips.forEach(function (instance) { instance.dispose(); });
+        sidebarTooltips = [];
     }
 
     /* =========================================================
