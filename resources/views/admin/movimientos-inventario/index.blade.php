@@ -25,11 +25,12 @@
         search-name="q"
         search-placeholder="Buscar por repuesto o motivo">
         <x-slot:filters>
-            <select name="tipo" class="form-select" style="max-width:160px;" onchange="this.form.submit()">
+            <select name="tipo" class="form-select" style="max-width:180px;" onchange="this.form.submit()">
                 <option value="">Todos los tipos</option>
                 <option value="entrada" @selected(request('tipo') === 'entrada')>Entrada</option>
                 <option value="salida"  @selected(request('tipo') === 'salida')>Salida</option>
                 <option value="ajuste"  @selected(request('tipo') === 'ajuste')>Ajuste</option>
+                <option value="transferencia" @selected(request('tipo') === 'transferencia')>Transferencia</option>
             </select>
             <select name="sucursal_id" class="form-select" style="max-width:200px;" onchange="this.form.submit()">
                 <option value="">Todas las sucursales</option>
@@ -82,15 +83,20 @@
                                         'entrada' => 'success',
                                         'salida' => 'warning',
                                         'ajuste' => 'info',
+                                        'transferencia' => 'primary',
                                         default => 'neutral',
                                     }"
                                     :icon="match($m->tipo) {
                                         'entrada' => 'bi-plus-circle-fill',
                                         'salida' => 'bi-dash-circle-fill',
                                         'ajuste' => 'bi-arrow-left-right',
+                                        'transferencia' => 'bi-arrow-left-right',
                                         default => 'bi-circle',
                                     }"
-                                    :label="ucfirst($m->tipo)" />
+                                    :label="match($m->tipo) {
+                                        'transferencia' => 'Transferencia',
+                                        default => ucfirst($m->tipo),
+                                    }" />
                             </td>
                             <td class="d-none d-lg-table-cell text-end cell-strong">{{ $m->cantidad }}</td>
                             <td class="d-none d-lg-table-cell text-end cell-muted">
@@ -103,6 +109,12 @@
                                        title="Ver detalle"
                                        aria-label="Ver detalle">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </a>
+                                    <a href="{{ route('admin.movimientos-inventario.route', $m) }}"
+                                       class="btn-icon"
+                                       title="Ver ruta"
+                                       aria-label="Ver ruta">
+                                        <i class="bi bi-map" aria-hidden="true"></i>
                                     </a>
                                     <form method="POST"
                                           action="{{ route('admin.movimientos-inventario.destroy', $m) }}"

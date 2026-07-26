@@ -111,11 +111,11 @@ Route::middleware('auth')->group(function () {
             // (citas movido fuera del grupo admin, ver bloque más abajo)
 
             Route::resource('ordenes', OrdenTrabajoController::class);
-            Route::patch('ordenes/{orden}/toggle', [OrdenTrabajoController::class, 'toggle'])
+            Route::patch('ordenes/{ordene}/toggle', [OrdenTrabajoController::class, 'toggle'])
                 ->name('ordenes.toggle');
-            Route::patch('ordenes/{orden}/estado', [OrdenTrabajoController::class, 'cambiarEstadoOrden'])
+            Route::patch('ordenes/{ordene}/estado', [OrdenTrabajoController::class, 'cambiarEstadoOrden'])
                 ->name('ordenes.cambiar-estado');
-            Route::patch('ordenes/{orden}/cancelar', [OrdenTrabajoController::class, 'cancelar'])
+            Route::patch('ordenes/{ordene}/cancelar', [OrdenTrabajoController::class, 'cancelar'])
                 ->name('ordenes.cancelar');
 
             Route::resource('mecanicos', MecanicoController::class);
@@ -145,6 +145,8 @@ Route::middleware('auth')->group(function () {
             Route::resource('movimientos-inventario', MovimientoInventarioController::class)
                 ->parameters(['movimientos-inventario' => 'movimiento'])
                 ->except(['edit', 'update']);
+            Route::get('movimientos-inventario/{movimiento}/route', [MovimientoInventarioController::class, 'route'])
+                ->name('movimientos-inventario.route');
 
             Route::resource('metodos-pago', MetodoPagoController::class)
                 ->parameters(['metodos-pago' => 'metodoPago'])

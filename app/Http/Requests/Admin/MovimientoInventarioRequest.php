@@ -6,14 +6,24 @@ class MovimientoInventarioRequest extends AdminFormRequest
 {
     public function rules(): array
     {
+        $tipo = $this->input('tipo');
+
         return [
             'inventario_id' => ['nullable', 'exists:inventarios,id'],
-            'sucursal_id' => ['required', 'exists:sucursales,id'],
+            'sucursal_id' => $tipo === 'transferencia'
+                ? ['nullable', 'exists:sucursales,id']
+                : ['required', 'exists:sucursales,id'],
             'repuesto_id' => ['required', 'exists:repuestos,id'],
-            'tipo' => ['required', 'in:entrada,salida,ajuste'],
+            'tipo' => ['required', 'in:entrada,salida,ajuste,transferencia'],
             'cantidad' => ['required', 'integer', 'min:1'],
             'motivo' => ['required', 'string', 'max:255'],
             'orden_trabajo_id' => ['nullable', 'exists:ordenes_trabajo,id'],
+            'sucursal_origen_id' => $tipo === 'transferencia'
+                ? ['required', 'exists:sucursales,id']
+                : ['nullable', 'exists:sucursales,id'],
+            'sucursal_destino_id' => $tipo === 'transferencia'
+                ? ['required', 'exists:sucursales,id', 'different:sucursal_origen_id']
+                : ['nullable', 'exists:sucursales,id'],
         ];
     }
 
@@ -26,6 +36,8 @@ class MovimientoInventarioRequest extends AdminFormRequest
             'cantidad' => 'cantidad',
             'motivo' => 'motivo',
             'orden_trabajo_id' => 'orden de trabajo',
+            'sucursal_origen_id' => 'sucursal origen',
+            'sucursal_destino_id' => 'sucursal destino',
         ];
     }
 }

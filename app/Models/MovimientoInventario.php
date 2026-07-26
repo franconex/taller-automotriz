@@ -11,6 +11,8 @@ class MovimientoInventario extends Model
 
     protected $fillable = [
         'inventario_id',
+        'sucursal_origen_id',
+        'sucursal_destino_id',
         'usuario_id',
         'orden_trabajo_id',
         'tipo',
@@ -31,6 +33,16 @@ class MovimientoInventario extends Model
     public function inventario(): BelongsTo
     {
         return $this->belongsTo(Inventario::class);
+    }
+
+    public function sucursalOrigen(): BelongsTo
+    {
+        return $this->belongsTo(Sucursal::class, 'sucursal_origen_id');
+    }
+
+    public function sucursalDestino(): BelongsTo
+    {
+        return $this->belongsTo(Sucursal::class, 'sucursal_destino_id');
     }
 
     public function usuario(): BelongsTo
