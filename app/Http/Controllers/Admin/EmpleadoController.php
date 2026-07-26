@@ -10,14 +10,16 @@ use App\Models\Rol;
 use App\Models\Sucursal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
-class EmpleadoController extends AdminController
+class EmpleadoController extends AdminController implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware('permiso:roles.editar');
+        return [new Middleware('permiso:roles.editar')];
     }
     public function index(Request $request): View
     {

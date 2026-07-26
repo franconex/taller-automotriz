@@ -163,6 +163,14 @@ class DashboardController extends AdminController
             return view('gerente.dashboard', compact('usuario', 'ordenesRecientes', 'alertasInventario', 'metricas'));
         }
 
+        if ($usuario->tieneRol('Recepcionista')) {
+            return view('recepcion.dashboard', compact('usuario', 'citasDelDia', 'metricas'));
+        }
+
+        if ($usuario->tieneRol('Mecánico')) {
+            return view('mecanico.dashboard', compact('usuario', 'ordenesRecientes', 'metricas'));
+        }
+
         return view('admin.dashboard', [
             'usuario' => $usuario,
             'metricas' => $metricas,

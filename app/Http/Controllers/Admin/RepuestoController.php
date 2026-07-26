@@ -7,13 +7,15 @@ use App\Models\Proveedor;
 use App\Models\Repuesto;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
-class RepuestoController extends AdminController
+class RepuestoController extends AdminController implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware('permiso:roles.editar');
+        return [new Middleware('permiso:roles.editar')];
     }
     public function index(Request $request): View
     {

@@ -40,6 +40,10 @@
             <div class="admin-sidebar__nav-wrap">
                 @if (Auth::user()->tieneRol('Gerente'))
                     @include('layouts.partials.sidebar-gerente')
+                @elseif (Auth::user()->tieneRol('Recepcionista'))
+                    @include('layouts.partials.sidebar-recepcionista')
+                @elseif (Auth::user()->tieneRol('Mecánico'))
+                    @include('layouts.partials.sidebar-mecanico')
                 @else
                     @include('layouts.partials.sidebar-menu')
                 @endif
@@ -61,6 +65,10 @@
                 </div>
                     @if (Auth::user()->tieneRol('Gerente'))
                         @include('layouts.partials.sidebar-gerente')
+                    @elseif (Auth::user()->tieneRol('Recepcionista'))
+                        @include('layouts.partials.sidebar-recepcionista')
+                    @elseif (Auth::user()->tieneRol('Mecánico'))
+                        @include('layouts.partials.sidebar-mecanico')
                     @else
                         @include('layouts.partials.sidebar-menu')
                     @endif

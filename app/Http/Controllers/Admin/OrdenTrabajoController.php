@@ -9,10 +9,22 @@ use App\Models\Sucursal;
 use App\Models\Vehiculo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
-class OrdenTrabajoController extends AdminController
+class OrdenTrabajoController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permiso:ordenes.crear', only: ['create', 'store']),
+            new Middleware('permiso:ordenes.editar', only: ['edit', 'update']),
+            new Middleware('permiso:ordenes.actualizar_estado', only: ['toggle', 'cambiarEstadoOrden']),
+            new Middleware('permiso:ordenes.cancelar', only: ['cancelar']),
+            new Middleware('permiso:roles.editar', only: ['destroy']),
+        ];
+    }
     public function index(Request $request): View
     {
         $query = OrdenTrabajo::query()->with(['cliente', 'vehiculo', 'sucursal']);

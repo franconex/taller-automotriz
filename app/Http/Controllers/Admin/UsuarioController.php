@@ -9,16 +9,20 @@ use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
-class UsuarioController extends AdminController
+class UsuarioController extends AdminController implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware('permiso:usuarios.crear')->only(['create', 'store']);
-        $this->middleware('permiso:usuarios.editar')->only(['edit', 'update', 'restablecerPassword']);
-        $this->middleware('permiso:usuarios.desactivar')->only(['destroy', 'toggle']);
+        return [
+            new Middleware('permiso:usuarios.crear', only: ['create', 'store']),
+            new Middleware('permiso:usuarios.editar', only: ['edit', 'update', 'restablecerPassword']),
+            new Middleware('permiso:usuarios.desactivar', only: ['destroy', 'toggle']),
+        ];
     }
     public function index(Request $request): View
     {

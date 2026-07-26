@@ -7,10 +7,19 @@ use App\Models\Repuesto;
 use App\Models\Sucursal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
-class InventarioController extends AdminController
+class InventarioController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permiso:inventario.ajustar', only: ['edit', 'update', 'toggle']),
+            new Middleware('permiso:roles.editar', only: ['destroy']),
+        ];
+    }
     public function index(Request $request): View
     {
         $query = Inventario::query()

@@ -43,13 +43,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/gerente/dashboard', [DashboardController::class, 'index'])
         ->middleware('rol:Gerente')->name('gerente.dashboard');
 
-    Route::get('/recepcion/dashboard', function () {
-        return view('recepcion.dashboard');
-    })->middleware('rol:Recepcionista')->name('recepcion.dashboard');
+    Route::get('/recepcion/dashboard', [DashboardController::class, 'index'])
+        ->middleware('rol:Recepcionista')->name('recepcion.dashboard');
 
-    Route::get('/mecanico/dashboard', function () {
-        return view('mecanico.dashboard');
-    })->middleware('rol:Mecánico')->name('mecanico.dashboard');
+    Route::get('/mecanico/dashboard', [DashboardController::class, 'index'])
+        ->middleware('rol:Mecánico')->name('mecanico.dashboard');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'index'])->name('perfil.index');
@@ -70,7 +68,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('admin')
-        ->middleware('rol:Administrador,Gerente')
+        ->middleware('rol:Administrador,Gerente,Recepcionista,Mecánico')
         ->name('admin.')
         ->group(function () {
 

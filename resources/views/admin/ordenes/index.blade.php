@@ -13,10 +13,12 @@
         title="Órdenes de trabajo"
         description="Órdenes de servicio emitidas, en proceso, finalizadas o entregadas.">
         <x-slot:actions>
+            @if (Auth::user()->tienePermiso('ordenes.crear'))
             <a href="{{ route('admin.ordenes.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
                 Nueva orden
             </a>
+            @endif
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -48,8 +50,8 @@
             icon="bi-clipboard-check"
             title="Aún no hay órdenes de trabajo"
             message="Emite la primera orden de trabajo para iniciar el flujo operativo."
-            :action-label="'Nueva orden'"
-            :action-href="route('admin.ordenes.create')" />
+            :action-label="Auth::user()->tienePermiso('ordenes.crear') ? 'Nueva orden' : null"
+            :action-href="Auth::user()->tienePermiso('ordenes.crear') ? route('admin.ordenes.create') : null" />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de órdenes de trabajo">

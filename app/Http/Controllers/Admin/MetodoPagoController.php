@@ -5,13 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Models\MetodoPago;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
-class MetodoPagoController extends AdminController
+class MetodoPagoController extends AdminController implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware('permiso:roles.editar');
+        return [new Middleware('permiso:roles.editar')];
     }
     private const FIJOS = ['Efectivo', 'QR', 'Tarjeta'];
 
