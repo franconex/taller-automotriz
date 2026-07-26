@@ -16,29 +16,25 @@
     <p class="small text-muted mb-3">Si el cliente tiene un vehículo, puedes registrarlo aquí mismo.</p>
     <div class="row g-3">
         <div class="col-md-6">
-            <label class="form-label" for="vehiculo_modelo_id">Modelo <span class="required">*</span></label>
-            <select name="vehiculo_modelo_id" id="vehiculo_modelo_id" class="form-select">
-                <option value="">— Sin vehículo —</option>
-                @foreach ($modelos as $m)
-                    <option value="{{ $m->id }}" @selected(old('vehiculo_modelo_id') == $m->id)>{{ $m->marcaVehiculo->nombre ?? '' }} {{ $m->nombre }}</option>
-                @endforeach
-            </select>
-            @error('vehiculo_modelo_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+            <x-admin.form-field name="vehiculo_marca" label="Marca" icon="bi-building" />
+        </div>
+        <div class="col-md-6">
+            <x-admin.form-field name="vehiculo_modelo" label="Modelo" icon="bi-car-front" />
         </div>
         <div class="col-md-6">
             <x-admin.form-field name="vehiculo_placa" label="Placa" icon="bi-upc-scan" />
         </div>
-        <div class="col-md-4">
-            <x-admin.form-field name="vehiculo_anio" label="Año" type="number" help="Opcional" />
+        <div class="col-md-3">
+            <x-admin.form-field name="vehiculo_anio" label="Año" type="number" />
         </div>
-        <div class="col-md-4">
-            <x-admin.form-field name="vehiculo_color" label="Color" help="Opcional" />
+        <div class="col-md-3">
+            <x-admin.form-field name="vehiculo_color" label="Color" />
         </div>
-        <div class="col-md-4">
-            <label class="form-label" for="vehiculo_foto">Foto del vehículo</label>
+        <div class="col-md-6">
+            <label class="form-label" for="vehiculo_foto">Foto</label>
             <div class="input-group">
                 <input type="file" name="vehiculo_foto" id="vehiculo_foto" class="form-control" accept="image/*" capture="environment">
-                <button type="button" class="btn btn-outline-secondary" id="btn-camara-cliente-vehiculo" title="Tomar foto con la cámara">
+                <button type="button" class="btn btn-outline-secondary" id="btn-camara-cliente-vehiculo" title="Cámara">
                     <i class="bi bi-camera"></i>
                 </button>
             </div>
@@ -161,3 +157,4 @@ document.getElementById('vehiculo_foto')?.addEventListener('change', function (e
 });
 </script>
 @endpush
+

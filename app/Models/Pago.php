@@ -51,3 +51,4 @@ class Pago extends Model
         return $this->hasOne(Comprobante::class);
     }
 }
+

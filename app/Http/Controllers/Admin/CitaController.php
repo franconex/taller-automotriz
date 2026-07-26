@@ -63,7 +63,7 @@ class CitaController extends AdminController
             ->sortBy(fn ($m) => $m->empleado->nombre_completo)
             ->values();
 
-        $modelos = ModeloVehiculo::with('marcaVehiculo')
+        $modelos = ModeloVehiculo::with('marca', 'tipoVehiculo')
             ->where('estado', true)
             ->orderBy('nombre')
             ->get();
@@ -594,17 +594,19 @@ class CitaController extends AdminController
     public function quickVehiculo(Request $request): JsonResponse
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'cliente_id'        => ['required', 'exists:clientes,id'],
-            'modelo_vehiculo_id' => ['required', 'exists:modelos_vehiculos,id'],
-            'placa'             => ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('vehiculos', 'placa')->whereNull('deleted_at')],
-            'color'             => ['nullable', 'string', 'max:50'],
-            'anio'              => ['nullable', 'integer', 'min:1900', 'max:' . (date('Y') + 1)],
+            'cliente_id' => ['required', 'exists:clientes,id'],
+            'marca'      => ['required', 'string', 'max:100'],
+            'modelo'     => ['required', 'string', 'max:100'],
+            'placa'      => ['required', 'string', 'max:20', \Illuminate\Validation\Rule::unique('vehiculos', 'placa')->whereNull('deleted_at')],
+            'color'      => ['nullable', 'string', 'max:50'],
+            'anio'       => ['nullable', 'integer', 'min:1900', 'max:' . (date('Y') + 1)],
         ], [], [
-            'cliente_id'        => 'cliente',
-            'modelo_vehiculo_id' => 'modelo',
-            'placa'             => 'placa',
-            'color'             => 'color',
-            'anio'              => 'año',
+            'cliente_id' => 'cliente',
+            'marca'      => 'marca',
+            'modelo'     => 'modelo',
+            'placa'      => 'placa',
+            'color'      => 'color',
+            'anio'       => 'año',
         ]);
 
         if ($validator->fails()) {

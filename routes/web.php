@@ -56,6 +56,18 @@ Route::middleware('auth')->group(function () {
         Route::get('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'index'])->name('perfil.index');
         Route::put('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'update'])->name('perfil.update');
         Route::post('perfil/foto', [\App\Http\Controllers\Admin\PerfilController::class, 'guardarFoto'])->name('perfil.foto');
+        Route::get('modelos-json', function () {
+            return \App\Models\ModeloVehiculo::with('marca', 'tipoVehiculo')
+                ->where('estado', true)
+                ->orderBy('nombre')
+                ->get()
+                ->map(fn ($m) => [
+                    'id' => (string) $m->id,
+                    'marca' => $m->marca->nombre ?? '',
+                    'nombre' => $m->nombre,
+                    'tipo_vehiculo_id' => $m->tipo_vehiculo_id ? (string) $m->tipo_vehiculo_id : null,
+                ]);
+        })->name('modelos.json');
     });
 
     Route::prefix('admin')
@@ -144,6 +156,7 @@ Route::middleware('auth')->group(function () {
             Route::resource('pagos', PagoController::class);
             Route::patch('pagos/{pago}/toggle', [PagoController::class, 'toggle'])
                 ->name('pagos.toggle');
+            Route::post('pagos/stripe/cobrar', [\App\Http\Controllers\Admin\PagoStripeController::class, 'cobrar'])->middleware('permiso:pagos.registrar')->name('pagos.stripe.cobrar');
             Route::patch('pagos/{pago}/anular', [PagoController::class, 'anular'])
                 ->name('pagos.anular');
 
@@ -206,3 +219,4 @@ Route::middleware('auth')->group(function () {
                 ->name('citas.convertir-orden');
         });
 });
+

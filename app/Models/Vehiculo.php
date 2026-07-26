@@ -34,7 +34,16 @@ class Vehiculo extends Model
         return $this->belongsTo(ModeloVehiculo::class, 'modelo_vehiculo_id');
     }
 
-    public function citas(): HasMany
+        public function tipoVehiculo(): BelongsTo
+    {
+        return $this->belongsTo(TipoVehiculo::class);
+    }
+
+    public function tipoUso(): BelongsTo
+    {
+        return $this->belongsTo(TipoUso::class);
+    }
+public function citas(): HasMany
     {
         return $this->hasMany(Cita::class);
     }
@@ -44,3 +53,5 @@ class Vehiculo extends Model
         return $this->hasMany(OrdenTrabajo::class);
     }
 }
+
+

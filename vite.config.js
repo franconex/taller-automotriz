@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/admin.js',
                 'resources/js/admin/dashboard-charts.js',
+                'resources/js/admin/pago-stripe.js',
                 'resources/js/admin/citas-calendario.js',
             ],
             refresh: true,

@@ -12,7 +12,7 @@
 @section('content')
     <x-admin.page-header
         :title="$vehiculo->placa"
-        :description="$vehiculo->modelo ? (optional($vehiculo->modelo->marca)->nombre ?? '') . ' ' . $vehiculo->modelo->nombre : ''">
+        :description="($vehiculo->marca ?? '') . ' ' . ($vehiculo->modelo ?? '')">
         <x-slot:actions>
             <a href="{{ route('admin.vehiculos.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
@@ -31,8 +31,8 @@
                 <h2 class="h6 fw-bold mb-3">Datos del vehículo</h2>
                 <dl class="admin-meta">
                     <dt>Placa</dt><dd>{{ $vehiculo->placa }}</dd>
-                    <dt>Marca</dt><dd>{{ optional(optional($vehiculo->modelo)->marca)->nombre ?? '—' }}</dd>
-                    <dt>Modelo</dt><dd>{{ $vehiculo->modelo->nombre ?? '—' }}</dd>
+                    <dt>Marca</dt><dd>{{ $vehiculo->marca ?? '—' }}</dd>
+                    <dt>Modelo</dt><dd>{{ $vehiculo->modelo ?? '—' }}</dd>
                     <dt>Año</dt><dd>{{ $vehiculo->anio ?? '—' }}</dd>
                     <dt>Color</dt><dd>{{ $vehiculo->color ?? '—' }}</dd>
                     <dt>N° chasis</dt><dd>{{ $vehiculo->numero_chasis ?? '—' }}</dd>
@@ -64,3 +64,4 @@
         </div>
     </div>
 @endsection
+

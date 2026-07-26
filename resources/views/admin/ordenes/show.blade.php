@@ -7,6 +7,8 @@
     <li><a href="{{ route('admin.dashboard') }}">Inicio</a></li>
     <li><a href="{{ route('admin.ordenes.index') }}">Órdenes de trabajo</a></li>
     <li class="active" aria-current="page">{{ $orden->numero_orden }}</li>
+
+@include('admin.pagos.partials.modal-tarjeta')
 @endsection
 
 @section('content')
@@ -98,4 +100,8 @@
             </div>
         </div>
     </div>
+
+@include('admin.pagos.partials.modal-tarjeta')
 @endsection
+
+

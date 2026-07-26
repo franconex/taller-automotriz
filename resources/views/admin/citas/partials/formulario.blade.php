@@ -227,14 +227,14 @@
                 <div class="modal-body">
                     <div id="quick-vehiculo-errores" class="alert alert-danger d-none" role="alert"></div>
                     <div class="row g-3">
-                        <div class="col-12">
+                        <div class="col-md-6">
+                            <label class="form-label" for="quick-vehiculo-marca">Marca <span class="required">*</span></label>
+                            <input type="text" name="marca" id="quick-vehiculo-marca" class="form-control" required maxlength="100">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label" for="quick-vehiculo-modelo">Modelo <span class="required">*</span></label>
-                            <select name="modelo_vehiculo_id" id="quick-vehiculo-modelo" class="form-select" required>
-                                <option value="">— Selecciona un modelo —</option>
-                                @foreach ($modelos as $m)
-                                    <option value="{{ $m->id }}">{{ $m->marcaVehiculo->nombre ?? '' }} {{ $m->nombre }}</option>
-                                @endforeach
-                            </select>
+                            <input type="text" name="modelo" id="quick-vehiculo-modelo" class="form-control" required maxlength="100">
                             <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-6">
@@ -242,12 +242,12 @@
                             <input type="text" name="placa" id="quick-vehiculo-placa" class="form-control" required maxlength="20">
                             <div class="invalid-feedback"></div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label class="form-label" for="quick-vehiculo-color">Color</label>
                             <input type="text" name="color" id="quick-vehiculo-color" class="form-control" maxlength="50">
                             <div class="invalid-feedback"></div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label class="form-label" for="quick-vehiculo-anio">Año</label>
                             <input type="number" name="anio" id="quick-vehiculo-anio" class="form-control" min="1900" max="{{ date('Y') + 1 }}">
                             <div class="invalid-feedback"></div>

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\Admin\VehiculoRequest;
 use App\Models\Cliente;
 use App\Models\ModeloVehiculo;
+use App\Models\TipoVehiculo;
+use App\Models\TipoUso;
 use App\Models\Vehiculo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,14 +36,9 @@ class VehiculoController extends AdminController
     public function create(): View
     {
         $clientes = Cliente::orderBy('nombre_completo')->get();
-        $modelos = ModeloVehiculo::with('marcaVehiculo')
-            ->where('estado', true)
-            ->orderBy('nombre')
-            ->get();
 
         return view('admin.vehiculos.create', [
             'clientes' => $clientes,
-            'modelos' => $modelos,
             'vehiculo' => new \App\Models\Vehiculo(),
         ]);
     }
@@ -70,15 +67,10 @@ class VehiculoController extends AdminController
     public function edit(Vehiculo $vehiculo): View
     {
         $clientes = Cliente::orderBy('nombre_completo')->get();
-        $modelos = ModeloVehiculo::with('marcaVehiculo')
-            ->where('estado', true)
-            ->orderBy('nombre')
-            ->get();
 
         return view('admin.vehiculos.edit', [
             'vehiculo' => $vehiculo,
             'clientes' => $clientes,
-            'modelos' => $modelos,
         ]);
     }
 
@@ -109,3 +101,5 @@ class VehiculoController extends AdminController
         return $this->cambiarEstado($request, $vehiculo, 'vehículos');
     }
 }
+
+

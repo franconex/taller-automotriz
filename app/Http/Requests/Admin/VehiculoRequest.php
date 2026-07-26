@@ -12,7 +12,8 @@ class VehiculoRequest extends AdminFormRequest
 
         return [
             'cliente_id' => ['required', 'exists:clientes,id'],
-            'modelo_vehiculo_id' => ['required', 'exists:modelos_vehiculos,id'],
+            'marca' => ['required', 'string', 'max:100'],
+            'modelo' => ['required', 'string', 'max:100'],
             'placa' => [
                 'required', 'string', 'max:20',
                 Rule::unique('vehiculos', 'placa')->ignore($id)->whereNull('deleted_at'),
@@ -33,7 +34,8 @@ class VehiculoRequest extends AdminFormRequest
     {
         return [
             'cliente_id' => 'cliente',
-            'modelo_vehiculo_id' => 'modelo',
+            'marca' => 'marca',
+            'modelo' => 'modelo',
             'placa' => 'placa',
             'anio' => 'año',
             'color' => 'color',
