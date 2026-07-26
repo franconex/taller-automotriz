@@ -8,6 +8,7 @@ use App\Models\ModeloVehiculo;
 use App\Models\Vehiculo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class VehiculoController extends AdminController
@@ -50,6 +51,7 @@ class VehiculoController extends AdminController
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? true);
         $datos['kilometraje_actual'] = $datos['kilometraje_actual'] ?? 0;
+        $datos['foto'] = $request->input('vehiculo_foto_base64');
 
         Vehiculo::create($datos);
 
@@ -84,6 +86,7 @@ class VehiculoController extends AdminController
     {
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? false);
+        $datos['foto'] = $request->input('vehiculo_foto_base64');
 
         $vehiculo->update($datos);
 

@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\Admin\ClienteRequest;
 use App\Models\Cliente;
+use App\Models\ModeloVehiculo;
+use App\Models\Vehiculo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ClienteController extends AdminController
@@ -31,8 +34,14 @@ class ClienteController extends AdminController
 
     public function create(): View
     {
+        $modelos = ModeloVehiculo::with('marcaVehiculo')
+            ->where('estado', true)
+            ->orderBy('nombre')
+            ->get();
+
         return view('admin.clientes.create', [
             'cliente' => new \App\Models\Cliente(),
+            'modelos' => $modelos,
         ]);
     }
 
@@ -42,7 +51,39 @@ class ClienteController extends AdminController
         $datos['estado'] = (bool) ($datos['estado'] ?? true);
         $datos['fecha_registro'] = now();
 
-        Cliente::create($datos);
+        $cliente = DB::transaction(function () use ($request, $datos) {
+            $cliente = Cliente::create($datos);
+
+            if ($request->filled('vehiculo_placa')) {
+                $errores = [];
+                if (! $request->filled('vehiculo_modelo_id')) {
+                    $errores['vehiculo_modelo_id'] = 'El modelo del vehículo es obligatorio.';
+                }
+                if (Vehiculo::where('placa', $request->input('vehiculo_placa'))->exists()) {
+                    $errores['vehiculo_placa'] = 'La placa ya está registrada.';
+                }
+                if ($errores) {
+                    return back()->withInput()->withErrors($errores);
+                }
+
+                $vehiculo = Vehiculo::create([
+                    'cliente_id'        => $cliente->id,
+                    'modelo_vehiculo_id' => $request->input('vehiculo_modelo_id'),
+                    'placa'             => $request->input('vehiculo_placa'),
+                    'anio'              => $request->input('vehiculo_anio'),
+                    'color'             => $request->input('vehiculo_color'),
+                    'foto'              => $request->input('vehiculo_foto_base64'),
+                    'kilometraje_actual' => 0,
+                    'estado'            => true,
+                ]);
+            }
+
+            return $cliente;
+        });
+
+        if ($cliente instanceof \Illuminate\Http\RedirectResponse) {
+            return $cliente;
+        }
 
         return $this->redirigirALista('admin.clientes.index', 'Cliente creado con éxito.');
     }
@@ -58,8 +99,14 @@ class ClienteController extends AdminController
 
     public function edit(Cliente $cliente): View
     {
+        $modelos = ModeloVehiculo::with('marcaVehiculo')
+            ->where('estado', true)
+            ->orderBy('nombre')
+            ->get();
+
         return view('admin.clientes.edit', [
             'cliente' => $cliente,
+            'modelos' => $modelos,
         ]);
     }
 

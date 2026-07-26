@@ -3,30 +3,7 @@
 @section('title', 'Dashboard')
 @section('navbar-title', 'Dashboard')
 
-@section('breadcrumb')
-    <li class="active" aria-current="page">Dashboard</li>
-@endsection
-
 @section('content')
-    @php
-        $saludo = match (true) {
-            now()->hour < 12 => 'Buenos días',
-            now()->hour < 19 => 'Buenas tardes',
-            default => 'Buenas noches',
-        };
-    @endphp
-
-    <x-admin.page-header
-        :title="$saludo . ', ' . ($usuario->nombre ?? 'Administrador')"
-        :description="now()->translatedFormat('l d \\de F, Y') . ' — ' . ($usuario->sucursal->nombre ?? 'Sin sucursal') . ' · ' . ($usuario->rol->nombre ?? 'Sin rol')">
-        <x-slot:actions>
-            <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm" aria-label="Actualizar">
-                <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
-                <span class="d-none d-sm-inline">Actualizar</span>
-            </a>
-        </x-slot:actions>
-    </x-admin.page-header>
-
     {{-- INDICADORES PRINCIPALES --}}
     <section class="admin-stats" aria-label="Indicadores principales">
         <a href="{{ route('admin.ordenes.index') }}" class="admin-stats__item admin-stats__item--link text-decoration-none">
@@ -215,115 +192,43 @@
     </div>
 
     <div class="row g-3 mb-4">
-        {{-- ALERTAS DE INVENTARIO --}}
-        <div class="col-12 col-xl-6">
-            <div class="admin-table-wrap">
-                <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
-                    <h2 class="h6 fw-bold mb-0">Alertas de inventario</h2>
-                    <a href="{{ route('admin.inventario.index') }}" class="cell-muted small">Ver inventario</a>
-                </div>
-                @if ($alertasInventario->isEmpty())
-                    <x-admin.empty-state icon="bi-box-seam" title="Sin alertas" message="No hay repuestos con stock bajo." />
-                @else
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Repuesto</th>
-                                <th class="d-none d-md-table-cell">Sucursal</th>
-                                <th class="text-end">Stock</th>
-                                <th class="text-end d-none d-md-table-cell">Mínimo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($alertasInventario as $it)
-                                <tr>
-                                    <td>
-                                        <div class="cell-strong">{{ $it->repuesto->nombre ?? '—' }}</div>
-                                        <div class="cell-muted small">{{ $it->repuesto->codigo ?? '' }}</div>
-                                    </td>
-                                    <td class="d-none d-md-table-cell cell-muted">{{ $it->sucursal->nombre ?? '—' }}</td>
-                                    <td class="text-end">
-                                        <x-admin.status-badge
-                                            :tone="$it->cantidad_actual <= 0 ? 'danger' : 'warning'"
-                                            :icon="$it->cantidad_actual <= 0 ? 'bi-x-circle-fill' : 'bi-exclamation-triangle-fill'"
-                                            :label="$it->cantidad_actual" />
-                                    </td>
-                                    <td class="text-end cell-muted d-none d-md-table-cell">{{ $it->repuesto->stock_minimo ?? 0 }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endif
-            </div>
-        </div>
-
-        {{-- ACTIVIDAD RECIENTE --}}
-        <div class="col-12 col-xl-6">
-            <div class="admin-table-wrap">
-                <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
-                    <h2 class="h6 fw-bold mb-0">Actividad reciente</h2>
-                    <a href="{{ route('admin.auditoria.index') }}" class="cell-muted small">Ver auditoría</a>
-                </div>
-                @if ($actividadReciente->isEmpty())
-                    <x-admin.empty-state icon="bi-journal-text" title="Sin actividad" message="Aún no se registran acciones en el sistema." />
-                @else
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Usuario</th>
-                                <th class="d-none d-md-table-cell">Acción</th>
-                                <th class="d-none d-md-table-cell">Módulo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($actividadReciente as $a)
-                                <tr>
-                                    <td class="cell-muted small">{{ $a->fecha_accion?->format('d/m/Y H:i') ?? '—' }}</td>
-                                    <td class="cell-strong">{{ $a->usuario->nombre ?? '—' }}</td>
-                                    <td class="d-none d-md-table-cell">{{ ucfirst($a->accion) }}</td>
-                                    <td class="d-none d-md-table-cell cell-muted">{{ ucfirst($a->modulo) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endif
-            </div>
-        </div>
     </div>
 
     {{-- GRÁFICOS --}}
-    <section class="mb-4">
-        <h2 class="h6 text-uppercase fw-bold text-secondary mb-3" style="letter-spacing:.6px; font-size:.75rem;">
-            Gráficos
-        </h2>
-        <div class="row g-3">
-            <div class="col-12 col-lg-6 col-xl-3">
-                <div class="admin-table-wrap p-3">
-                    <h3 class="h6 fw-bold mb-2" style="font-size:.82rem;">Órdenes por estado</h3>
-                    <div style="height:180px;"><canvas id="chart-ordenes-estado"></canvas></div>
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-xl-6">
+            <div class="admin-table-wrap">
+                <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h2 class="h6 fw-bold mb-0">Órdenes por estado</h2>
                 </div>
-            </div>
-            <div class="col-12 col-lg-6 col-xl-3">
-                <div class="admin-table-wrap p-3">
-                    <h3 class="h6 fw-bold mb-2" style="font-size:.82rem;">Ingresos últimos 6 meses</h3>
-                    <div style="height:180px;"><canvas id="chart-ingresos"></canvas></div>
-                </div>
-            </div>
-            <div class="col-12 col-lg-6 col-xl-3">
-                <div class="admin-table-wrap p-3">
-                    <h3 class="h6 fw-bold mb-2" style="font-size:.82rem;">Citas próximos 7 días</h3>
-                    <div style="height:180px;"><canvas id="chart-citas"></canvas></div>
-                </div>
-            </div>
-            <div class="col-12 col-lg-6 col-xl-3">
-                <div class="admin-table-wrap p-3">
-                    <h3 class="h6 fw-bold mb-2" style="font-size:.82rem;">Servicios más solicitados</h3>
-                    <div style="height:180px;"><canvas id="chart-servicios"></canvas></div>
-                </div>
+                <div class="p-3" style="height:220px;"><canvas id="chart-ordenes-estado"></canvas></div>
             </div>
         </div>
-    </section>
+        <div class="col-12 col-xl-6">
+            <div class="admin-table-wrap">
+                <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h2 class="h6 fw-bold mb-0">Ingresos últimos 6 meses</h2>
+                </div>
+                <div class="p-3" style="height:220px;"><canvas id="chart-ingresos"></canvas></div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-6">
+            <div class="admin-table-wrap">
+                <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h2 class="h6 fw-bold mb-0">Citas próximos 7 días</h2>
+                </div>
+                <div class="p-3" style="height:220px;"><canvas id="chart-citas"></canvas></div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-6">
+            <div class="admin-table-wrap">
+                <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h2 class="h6 fw-bold mb-0">Servicios más solicitados</h2>
+                </div>
+                <div class="p-3" style="height:220px;"><canvas id="chart-servicios"></canvas></div>
+            </div>
+        </div>
+    </div>
 
     {{-- ACCESOS RÁPIDOS --}}
     <section>

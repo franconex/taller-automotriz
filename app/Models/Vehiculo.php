@@ -20,6 +20,7 @@ class Vehiculo extends Model
         'numero_chasis',
         'kilometraje_actual',
         'observaciones',
+        'foto',
         'estado',
     ];
 
