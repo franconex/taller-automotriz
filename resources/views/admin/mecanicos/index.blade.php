@@ -116,22 +116,15 @@
                                             <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
                                         </button>
                                     </form>
-                                    <form id="delete-mecanico-{{ $m->id }}"
-                                          method="POST"
+                                    <form method="POST"
                                           action="{{ route('admin.mecanicos.destroy', $m) }}"
                                           class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button"
+                                        <button type="submit"
                                                 class="btn-icon btn-icon--danger"
                                                 title="Eliminar"
-                                                aria-label="Eliminar"
-                                                data-tp-confirm
-                                                data-tp-confirm-title="¿Eliminar mecánico?"
-                                                data-tp-confirm-message="Se desvinculará al mecánico del sistema."
-                                                data-tp-confirm-text="Eliminar"
-                                                data-tp-form-id="delete-mecanico-{{ $m->id }}"
-                                                data-tp-confirm-icon="warning">
+                                                aria-label="Eliminar">
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>

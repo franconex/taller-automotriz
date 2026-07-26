@@ -99,22 +99,15 @@
                                             <i class="bi {{ $s->estado ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
                                         </button>
                                     </form>
-                                    <form id="delete-servicio-{{ $s->id }}"
-                                          method="POST"
+                                    <form method="POST"
                                           action="{{ route('admin.servicios.destroy', $s) }}"
                                           class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button"
+                                        <button type="submit"
                                                 class="btn-icon btn-icon--danger"
                                                 title="Eliminar"
-                                                aria-label="Eliminar {{ $s->nombre }}"
-                                                data-tp-confirm
-                                                data-tp-confirm-title="¿Eliminar servicio?"
-                                                data-tp-confirm-message="Se eliminará {{ $s->nombre }}. Esta acción no se puede deshacer."
-                                                data-tp-confirm-text="Eliminar"
-                                                data-tp-form-id="delete-servicio-{{ $s->id }}"
-                                                data-tp-confirm-icon="warning">
+                                                aria-label="Eliminar {{ $s->nombre }}">
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>

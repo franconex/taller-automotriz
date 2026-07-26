@@ -13,16 +13,19 @@ class InventarioController extends AdminController
 {
     public function index(Request $request): View
     {
-        $query = Inventario::query()->with(['repuesto', 'sucursal']);
+        $query = Inventario::query()
+            ->select('inventarios.*')
+            ->join('repuestos', 'inventarios.repuesto_id', '=', 'repuestos.id')
+            ->with(['repuesto', 'sucursal']);
 
-        $this->scopeSucursal($query, 'sucursal_id');
-        $this->aplicarFiltros($request, $query, ['sucursal_id']);
+        $this->scopeSucursal($query, 'inventarios.sucursal_id');
+        $this->aplicarFiltros($request, $query, ['inventarios.sucursal_id']);
         $this->aplicarBusqueda($query, $request, [
-            'repuesto.nombre',
-            'repuesto.codigo',
+            'repuestos.nombre',
+            'repuestos.codigo',
         ]);
 
-        $items = $query->orderBy('repuesto.nombre')->paginate(15)->withQueryString();
+        $items = $query->orderBy('repuestos.nombre')->paginate(15)->withQueryString();
 
         $sucursales = Sucursal::query()
             ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))

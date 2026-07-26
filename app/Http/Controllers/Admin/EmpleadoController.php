@@ -171,15 +171,31 @@ class EmpleadoController extends AdminController
 
     public function destroy(Empleado $empleado): RedirectResponse
     {
-        $empleado->estado = false;
-        $empleado->save();
+        $mecanico = $empleado->mecanico;
 
-        if ($empleado->user()->exists()) {
-            $empleado->user->estado = 'inactivo';
-            $empleado->user->save();
+        if ($mecanico) {
+            $asignacionesActivas = $mecanico->asignaciones()
+                ->whereIn('estado', ['pendiente', 'en_proceso'])
+                ->count();
+
+            if ($asignacionesActivas > 0) {
+                return back()->with('error', 'No se puede eliminar al empleado porque tiene asignaciones de trabajo activas como mecánico. Finalice o reasigne las tareas pendientes antes de eliminar.');
+            }
         }
 
-        return back()->with('success', 'El empleado fue dado de baja correctamente. Su cuenta de acceso fue desactivada.');
+        DB::transaction(function () use ($empleado) {
+            if ($empleado->user()->exists()) {
+                $empleado->user->delete();
+            }
+
+            if ($empleado->mecanico()->exists()) {
+                $empleado->mecanico->delete();
+            }
+
+            $empleado->delete();
+        });
+
+        return back()->with('success', 'El empleado y sus cuentas de acceso fueron eliminados correctamente.');
     }
 
     public function toggle(Request $request, Empleado $empleado): RedirectResponse

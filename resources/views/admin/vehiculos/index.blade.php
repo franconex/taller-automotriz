@@ -104,22 +104,15 @@
                                             <i class="bi {{ $v->estado ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
                                         </button>
                                     </form>
-                                    <form id="delete-vehiculo-{{ $v->id }}"
-                                          method="POST"
+                                    <form method="POST"
                                           action="{{ route('admin.vehiculos.destroy', $v) }}"
                                           class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button"
+                                        <button type="submit"
                                                 class="btn-icon btn-icon--danger"
                                                 title="Eliminar"
-                                                aria-label="Eliminar {{ $v->placa }}"
-                                                data-tp-confirm
-                                                data-tp-confirm-title="¿Eliminar vehículo?"
-                                                data-tp-confirm-message="Se eliminará el vehículo con placa {{ $v->placa }}. Esta acción no se puede deshacer."
-                                                data-tp-confirm-text="Eliminar"
-                                                data-tp-form-id="delete-vehiculo-{{ $v->id }}"
-                                                data-tp-confirm-icon="warning">
+                                                aria-label="Eliminar {{ $v->placa }}">
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>

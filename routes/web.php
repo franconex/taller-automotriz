@@ -82,8 +82,7 @@ Route::middleware('auth')->group(function () {
             Route::patch('sucursales/{sucursale}/toggle', [SucursalController::class, 'toggle'])
                 ->name('sucursales.toggle');
 
-            Route::resource('empleados', EmpleadoController::class)
-                ->except(['destroy']);
+            Route::resource('empleados', EmpleadoController::class);
             Route::patch('empleados/{empleado}/toggle', [EmpleadoController::class, 'toggle'])
                 ->name('empleados.toggle');
 

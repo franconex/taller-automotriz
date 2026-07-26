@@ -102,12 +102,7 @@
                                             <button type="submit"
                                                     class="btn-icon btn-icon--danger"
                                                     title="Anular"
-                                                    aria-label="Anular"
-                                                    data-tp-confirm
-                                                    data-tp-confirm-title="¿Anular pago?"
-                                                    data-tp-confirm-message="El pago será anulado. Esta acción no se puede deshacer."
-                                                    data-tp-confirm-text="Anular"
-                                                    data-tp-confirm-icon="warning">
+                                                    aria-label="Anular">
                                                 <i class="bi bi-x-circle" aria-hidden="true"></i>
                                             </button>
                                         </form>

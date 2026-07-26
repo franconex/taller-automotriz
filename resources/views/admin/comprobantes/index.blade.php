@@ -84,12 +84,7 @@
                                             <button type="submit"
                                                     class="btn-icon btn-icon--danger"
                                                     title="Anular"
-                                                    aria-label="Anular"
-                                                    data-tp-confirm
-                                                    data-tp-confirm-title="¿Anular comprobante?"
-                                                    data-tp-confirm-message="El comprobante {{ $c->numero }} será anulado."
-                                                    data-tp-confirm-text="Anular"
-                                                    data-tp-confirm-icon="warning">
+                                                    aria-label="Anular">
                                                 <i class="bi bi-x-circle" aria-hidden="true"></i>
                                             </button>
                                         </form>
