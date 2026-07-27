@@ -63,6 +63,7 @@
                                     @php $esEfectivo = strcasecmp($m->nombre, 'Efectivo') === 0; @endphp
 
                                     @if (! $esEfectivo)
+                                        @if (Auth::user()->tienePermiso('metodos-pago.editar'))
                                         <a href="{{ route('admin.metodos-pago.edit', $m) }}"
                                            class="btn-icon btn-icon--primary"
                                            title="Editar"
@@ -81,6 +82,7 @@
                                                 <i class="bi {{ $m->estado ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
                                             </button>
                                         </form>
+                                        @endif
                                     @else
                                         <span class="cell-muted small" title="Método fijo" aria-label="Efectivo no editable">
                                             <i class="bi bi-lock" aria-hidden="true"></i>

@@ -13,10 +13,12 @@
         title="Empleados"
         description="Gestiona la información personal y laboral de los trabajadores.">
         <x-slot:actions>
+            @if (Auth::user()->tienePermiso('empleados.crear'))
             <a href="{{ route('admin.empleados.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
                 Nuevo empleado
             </a>
+            @endif
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -50,8 +52,11 @@
             icon="bi-people"
             title="Aún no hay empleados registrados"
             message="Registra el primer empleado para comenzar a conformar tu equipo."
+            @if (Auth::user()->tienePermiso('empleados.crear'))
             :action-label="'Nuevo empleado'"
-            :action-href="route('admin.empleados.create')" />
+            :action-href="route('admin.empleados.create')"
+            @endif
+            />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de empleados">
@@ -112,6 +117,7 @@
                                        aria-label="Ver detalles de {{ $emp->nombre_completo }}">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
                                     </a>
+                                    @if (Auth::user()->tienePermiso('empleados.editar'))
                                     <a href="{{ route('admin.empleados.edit', $emp) }}"
                                        class="btn-icon btn-icon--primary"
                                        title="Editar"
@@ -142,6 +148,7 @@
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

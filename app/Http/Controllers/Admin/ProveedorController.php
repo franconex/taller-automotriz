@@ -14,7 +14,11 @@ class ProveedorController extends AdminController implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [new Middleware('permiso:roles.editar')];
+        return [
+            new Middleware('permiso:proveedores.ver', only: ['index', 'show']),
+            new Middleware('permiso:proveedores.crear', only: ['create', 'store']),
+            new Middleware('permiso:proveedores.editar', only: ['edit', 'update', 'destroy', 'toggle']),
+        ];
     }
     public function index(Request $request): View
     {

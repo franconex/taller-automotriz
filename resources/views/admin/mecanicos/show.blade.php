@@ -18,10 +18,12 @@
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 Volver
             </a>
+            @if (Auth::user()->tienePermiso('mecanicos.editar'))
             <a href="{{ route('admin.mecanicos.edit', $mecanico) }}" class="btn btn-primary btn-sm">
                 <i class="bi bi-pencil-square" aria-hidden="true"></i>
                 Editar
             </a>
+            @endif
         </x-slot:actions>
     </x-admin.page-header>
 

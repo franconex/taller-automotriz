@@ -13,10 +13,12 @@
         title="Tipos de servicio"
         description="Categorías principales bajo las cuales se agrupan los servicios del taller.">
         <x-slot:actions>
+            @if (Auth::user()->tienePermiso('tipos-servicio.crear'))
             <a href="{{ route('admin.tipos-servicio.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
                 Nuevo tipo
             </a>
+            @endif
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -38,8 +40,11 @@
             icon="bi-tags"
             title="Aún no hay tipos de servicio"
             message="Crea categorías como 'Mantenimiento', 'Diagnóstico' o 'Reparación'."
+            @if (Auth::user()->tienePermiso('tipos-servicio.crear'))
             :action-label="'Nuevo tipo'"
-            :action-href="route('admin.tipos-servicio.create')" />
+            :action-href="route('admin.tipos-servicio.create')"
+            @endif
+            />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de tipos de servicio">
@@ -66,6 +71,7 @@
                             </td>
                             <td>
                                 <div class="row-actions">
+                                    @if (Auth::user()->tienePermiso('tipos-servicio.editar'))
                                     <a href="{{ route('admin.tipos-servicio.edit', $t) }}"
                                        class="btn-icon btn-icon--primary"
                                        title="Editar"
@@ -96,6 +102,7 @@
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

@@ -99,7 +99,6 @@ class MovimientoInventarioController extends AdminController
                 in_array($datos['tipo'], ['ajuste', 'ajuste_negativo']) => $cantidad,
                 default => $anterior,
             };
-            };
 
             if ($datos['tipo'] === 'transferencia' && ! empty($datos['sucursal_destino_id'])) {
                 $invDestino = Inventario::firstOrCreate(

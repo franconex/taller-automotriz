@@ -19,7 +19,11 @@ class EmpleadoController extends AdminController implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [new Middleware('permiso:roles.editar')];
+        return [
+            new Middleware('permiso:empleados.ver', only: ['index', 'show']),
+            new Middleware('permiso:empleados.crear', only: ['create', 'store']),
+            new Middleware('permiso:empleados.editar', only: ['edit', 'update', 'destroy', 'toggle']),
+        ];
     }
     public function index(Request $request): View
     {

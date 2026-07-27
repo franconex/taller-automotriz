@@ -14,6 +14,7 @@
         description="Ajustes generales del sistema y datos de la organización.">
     </x-admin.page-header>
 
+    @if (Auth::user()->tienePermiso('configuracion.editar'))
     <form method="POST" action="{{ route('admin.configuracion.update') }}">
         @csrf
         @method('PUT')
@@ -111,4 +112,9 @@
             </button>
         </div>
     </form>
+    @else
+    <div class="admin-table-wrap p-4">
+        <p class="cell-muted mb-0">Solo lectura — no tienes permisos para modificar la configuración.</p>
+    </div>
+    @endif
 @endsection

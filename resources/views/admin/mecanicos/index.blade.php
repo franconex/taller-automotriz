@@ -13,10 +13,12 @@
         title="Mecánicos"
         description="Personal técnico disponible para asignación de órdenes de trabajo.">
         <x-slot:actions>
+            @if (Auth::user()->tienePermiso('mecanicos.crear'))
             <a href="{{ route('admin.mecanicos.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
                 Nuevo mecánico
             </a>
+            @endif
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -39,8 +41,11 @@
             icon="bi-tools"
             title="Aún no hay mecánicos registrados"
             message="Asigna el primer mecánico para iniciar las operaciones técnicas."
+            @if (Auth::user()->tienePermiso('mecanicos.crear'))
             :action-label="'Nuevo mecánico'"
-            :action-href="route('admin.mecanicos.create')" />
+            :action-href="route('admin.mecanicos.create')"
+            @endif
+            />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de mecánicos">
@@ -98,6 +103,7 @@
                                        aria-label="Ver detalles">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
                                     </a>
+                                    @if (Auth::user()->tienePermiso('mecanicos.editar'))
                                     <a href="{{ route('admin.mecanicos.edit', $m) }}"
                                        class="btn-icon btn-icon--primary"
                                        title="Editar"
@@ -128,6 +134,7 @@
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

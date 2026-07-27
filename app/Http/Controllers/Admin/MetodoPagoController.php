@@ -13,7 +13,10 @@ class MetodoPagoController extends AdminController implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [new Middleware('permiso:roles.editar')];
+        return [
+            new Middleware('permiso:metodos-pago.ver', only: ['index', 'show']),
+            new Middleware('permiso:metodos-pago.editar', only: ['edit', 'update', 'destroy', 'toggle']),
+        ];
     }
     private const FIJOS = ['Efectivo', 'QR', 'Tarjeta'];
 

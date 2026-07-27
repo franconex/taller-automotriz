@@ -20,7 +20,7 @@
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 Volver
             </a>
-            @if (! $esEfectivo)
+            @if (! $esEfectivo && Auth::user()->tienePermiso('metodos-pago.editar'))
                 <a href="{{ route('admin.metodos-pago.edit', $metodo) }}" class="btn btn-primary btn-sm">
                     <i class="bi bi-pencil-square" aria-hidden="true"></i>
                     Editar

@@ -14,7 +14,11 @@ class TipoServicioController extends AdminController implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [new Middleware('permiso:roles.editar')];
+        return [
+            new Middleware('permiso:tipos-servicio.ver', only: ['index', 'show']),
+            new Middleware('permiso:tipos-servicio.crear', only: ['create', 'store']),
+            new Middleware('permiso:tipos-servicio.editar', only: ['edit', 'update', 'destroy', 'toggle']),
+        ];
     }
     public function index(Request $request): View
     {

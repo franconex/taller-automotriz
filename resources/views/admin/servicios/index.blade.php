@@ -13,10 +13,12 @@
         title="Servicios"
         description="Servicios del taller: precio base y duración estimada.">
         <x-slot:actions>
-            <a href="{{ route('admin.servicios.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                Nuevo servicio
-            </a>
+            @if (Auth::user()->tienePermiso('servicios.crear'))
+                <a href="{{ route('admin.servicios.create') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                    Nuevo servicio
+                </a>
+            @endif
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -44,8 +46,11 @@
             icon="bi-gear"
             title="Aún no hay servicios definidos"
             message="Crea el catálogo de servicios ofrecidos por el taller."
-            :action-label="'Nuevo servicio'"
-            :action-href="route('admin.servicios.create')" />
+            @if (Auth::user()->tienePermiso('servicios.crear'))
+                :action-label="'Nuevo servicio'"
+                :action-href="route('admin.servicios.create')"
+            @endif
+            />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de servicios">
@@ -81,6 +86,7 @@
                             </td>
                             <td>
                                 <div class="row-actions">
+                                    @if (Auth::user()->tienePermiso('servicios.editar'))
                                     <a href="{{ route('admin.servicios.edit', $s) }}"
                                        class="btn-icon btn-icon--primary"
                                        title="Editar"
@@ -111,6 +117,7 @@
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

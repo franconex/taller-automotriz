@@ -13,7 +13,10 @@ class ConfiguracionController extends AdminController implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [new Middleware('permiso:roles.editar')];
+        return [
+            new Middleware('permiso:configuracion.ver', only: ['index']),
+            new Middleware('permiso:configuracion.editar', only: ['update']),
+        ];
     }
     public function index(): View
     {

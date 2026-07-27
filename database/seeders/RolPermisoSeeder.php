@@ -50,6 +50,31 @@ class RolPermisoSeeder extends Seeder
                 'pagos.anular',
                 'reportes.ver',
                 'auditoria.ver',
+                'servicios.ver',
+                'servicios.crear',
+                'servicios.editar',
+                'tipos-servicio.ver',
+                'tipos-servicio.crear',
+                'tipos-servicio.editar',
+                'proveedores.ver',
+                'proveedores.crear',
+                'proveedores.editar',
+                'repuestos.ver',
+                'repuestos.crear',
+                'repuestos.editar',
+                'empleados.ver',
+                'empleados.crear',
+                'empleados.editar',
+                'mecanicos.ver',
+                'mecanicos.crear',
+                'mecanicos.editar',
+                'configuracion.ver',
+                'configuracion.editar',
+                'metodos-pago.ver',
+                'metodos-pago.editar',
+                'comprobantes.ver',
+                'comprobantes.editar',
+                'precios.ver',
             ])->pluck('id')
         );
 
@@ -73,16 +98,31 @@ class RolPermisoSeeder extends Seeder
                 'inventario.ver',
                 'pagos.ver',
                 'pagos.registrar',
+                'servicios.ver',
+                'tipos-servicio.ver',
+                'proveedores.ver',
+                'repuestos.ver',
+                'mecanicos.ver',
+                'metodos-pago.ver',
+                'comprobantes.ver',
             ])->pluck('id')
         );
 
-        // Mecánico: solo asignaciones, diagnóstico, servicios y repuestos
+        // Mecánico: solo asignaciones, diagnóstico, servicios y repuestos (solo lectura)
         $mecanico->permisos()->sync(
             Permiso::whereIn('codigo', [
                 'dashboard.ver',
                 'ordenes.ver',
                 'ordenes.actualizar_estado',
                 'inventario.ver',
+                'servicios.ver',
+                'tipos-servicio.ver',
+                'proveedores.ver',
+                'repuestos.ver',
+                'empleados.ver',
+                'mecanicos.ver',
+                'metodos-pago.ver',
+                'comprobantes.ver',
             ])->pluck('id')
         );
     }

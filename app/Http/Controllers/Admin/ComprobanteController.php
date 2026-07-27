@@ -13,7 +13,10 @@ class ComprobanteController extends AdminController implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [new Middleware('permiso:roles.editar')];
+        return [
+            new Middleware('permiso:comprobantes.ver', only: ['index', 'show']),
+            new Middleware('permiso:comprobantes.editar', only: ['edit', 'update', 'destroy', 'anular']),
+        ];
     }
     public function index(Request $request): View
     {

@@ -13,10 +13,12 @@
         title="Proveedores"
         description="Empresas que suministran repuestos al taller.">
         <x-slot:actions>
+            @if (Auth::user()->tienePermiso('proveedores.crear'))
             <a href="{{ route('admin.proveedores.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
                 Nuevo proveedor
             </a>
+            @endif
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -38,8 +40,11 @@
             icon="bi-truck"
             title="Aún no hay proveedores"
             message="Registra el primer proveedor para gestionar compras."
+            @if (Auth::user()->tienePermiso('proveedores.crear'))
             :action-label="'Nuevo proveedor'"
-            :action-href="route('admin.proveedores.create')" />
+            :action-href="route('admin.proveedores.create')"
+            @endif
+            />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de proveedores">
@@ -79,6 +84,7 @@
                                        aria-label="Ver detalles">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
                                     </a>
+                                    @if (Auth::user()->tienePermiso('proveedores.editar'))
                                     <a href="{{ route('admin.proveedores.edit', $p) }}"
                                        class="btn-icon btn-icon--primary"
                                        title="Editar"
@@ -109,6 +115,7 @@
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

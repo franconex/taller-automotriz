@@ -19,7 +19,11 @@ class RepuestoController extends AdminController implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [new Middleware('permiso:roles.editar')];
+        return [
+            new Middleware('permiso:repuestos.ver', only: ['index', 'buscarPorEscaner']),
+            new Middleware('permiso:repuestos.crear', only: ['create', 'store']),
+            new Middleware('permiso:repuestos.editar', only: ['edit', 'update', 'destroy']),
+        ];
     }
     public function index(Request $request): View
     {

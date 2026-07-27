@@ -7,7 +7,7 @@
 
     $organizacion = [
         ['route' => 'admin.sucursales.index', 'permission' => 'sucursales.ver', 'icon' => 'bi-building',     'label' => 'Sucursales'],
-        ['route' => 'admin.empleados.index',  'permission' => 'usuarios.ver',   'icon' => 'bi-people',       'label' => 'Empleados'],
+        ['route' => 'admin.empleados.index',  'permission' => 'empleados.ver', 'icon' => 'bi-people',       'label' => 'Empleados'],
         ['route' => 'admin.usuarios.index',   'permission' => 'usuarios.ver',   'icon' => 'bi-person-badge', 'label' => 'Usuarios'],
         ['route' => 'admin.roles.index',      'permission' => 'roles.ver',      'icon' => 'bi-shield-lock',  'label' => 'Roles y permisos'],
     ];
@@ -17,21 +17,21 @@
         ['route' => 'admin.vehiculos.index', 'permission' => 'vehiculos.ver', 'icon' => 'bi-car-front',      'label' => 'Vehículos'],
         ['route' => 'admin.citas.index',     'permission' => 'citas.ver',     'icon' => 'bi-calendar-check', 'label' => 'Citas'],
         ['route' => 'admin.ordenes.index',   'permission' => 'ordenes.ver',   'icon' => 'bi-clipboard-check','label' => 'Órdenes de trabajo'],
-        ['route' => 'admin.mecanicos.index', 'permission' => 'usuarios.ver',  'icon' => 'bi-tools',         'label' => 'Mecánicos'],
+        ['route' => 'admin.mecanicos.index', 'permission' => 'mecanicos.ver', 'icon' => 'bi-tools',         'label' => 'Mecánicos'],
     ];
 
     $serviciosInventario = [
-        ['route' => 'admin.tipos-servicio.index', 'permission' => 'dashboard.ver', 'icon' => 'bi-tags',  'label' => 'Tipos de servicio'],
-        ['route' => 'admin.servicios.index',      'permission' => 'dashboard.ver', 'icon' => 'bi-gear',  'label' => 'Servicios'],
-        ['route' => 'admin.proveedores.index',    'permission' => 'inventario.ver','icon' => 'bi-truck', 'label' => 'Proveedores'],
+        ['route' => 'admin.tipos-servicio.index', 'permission' => 'tipos-servicio.ver', 'icon' => 'bi-tags', 'label' => 'Tipos de servicio'],
+        ['route' => 'admin.servicios.index',      'permission' => 'servicios.ver',      'icon' => 'bi-gear',  'label' => 'Servicios'],
+        ['route' => 'admin.proveedores.index',    'permission' => 'proveedores.ver',    'icon' => 'bi-truck', 'label' => 'Proveedores'],
         ['route' => 'admin.inventario.index',     'permission' => 'inventario.ver','icon' => 'bi-boxes', 'label' => 'Inventario'],
         ['route' => 'admin.movimientos-inventario.index', 'permission' => 'inventario.ver', 'icon' => 'bi-arrow-left-right', 'label' => 'Movimientos'],
     ];
 
     $finanzas = [
-        ['route' => 'admin.metodos-pago.index',   'permission' => 'pagos.ver',     'icon' => 'bi-credit-card',   'label' => 'Métodos de pago'],
+        ['route' => 'admin.metodos-pago.index',   'permission' => 'metodos-pago.ver', 'icon' => 'bi-credit-card', 'label' => 'Métodos de pago'],
         ['route' => 'admin.pagos.index',          'permission' => 'pagos.ver',     'icon' => 'bi-cash-coin',     'label' => 'Pagos'],
-        ['route' => 'admin.comprobantes.index',   'permission' => 'pagos.ver',     'icon' => 'bi-receipt',       'label' => 'Comprobantes'],
+        ['route' => 'admin.comprobantes.index',   'permission' => 'comprobantes.ver', 'icon' => 'bi-receipt',    'label' => 'Comprobantes'],
         ['route' => 'admin.reportes.index',       'permission' => 'reportes.ver',  'icon' => 'bi-graph-up',      'label' => 'Reportes'],
         ['route' => 'admin.auditoria.index',      'permission' => 'auditoria.ver', 'icon' => 'bi-journal-text',  'label' => 'Auditoría'],
     ];
@@ -42,7 +42,7 @@
     ];
 
     $sistema = [
-        ['route' => 'admin.configuracion.index', 'permission' => 'dashboard.ver', 'icon' => 'bi-sliders', 'label' => 'Configuración'],
+        ['route' => 'admin.configuracion.index', 'permission' => 'configuracion.ver', 'icon' => 'bi-sliders', 'label' => 'Configuración'],
     ];
 
     $hasVisible = function (array $list): bool {

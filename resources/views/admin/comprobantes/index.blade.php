@@ -69,6 +69,7 @@
                                        aria-label="Ver">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
                                     </a>
+                                    @if (Auth::user()->tienePermiso('comprobantes.editar'))
                                     <a href="{{ route('admin.comprobantes.edit', $c) }}"
                                        class="btn-icon btn-icon--primary"
                                        title="Editar"
@@ -88,6 +89,7 @@
                                                 <i class="bi bi-x-circle" aria-hidden="true"></i>
                                             </button>
                                         </form>
+                                    @endif
                                     @endif
                                 </div>
                             </td>

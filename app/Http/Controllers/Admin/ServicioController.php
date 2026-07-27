@@ -15,7 +15,11 @@ class ServicioController extends AdminController implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [new Middleware('permiso:roles.editar')];
+        return [
+            new Middleware('permiso:servicios.ver', only: ['index', 'show']),
+            new Middleware('permiso:servicios.crear', only: ['create', 'store']),
+            new Middleware('permiso:servicios.editar', only: ['edit', 'update', 'destroy', 'toggle']),
+        ];
     }
     public function index(Request $request): View
     {
