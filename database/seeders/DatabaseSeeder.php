@@ -14,7 +14,6 @@ class DatabaseSeeder extends Seeder
             RolPermisoSeeder::class,
             MetodoPagoSeeder::class,
             UserSeeder::class,
-            TestDataSeeder::class,
         ]);
     }
 }
