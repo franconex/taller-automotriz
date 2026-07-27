@@ -2,13 +2,39 @@
     use Illuminate\Support\Facades\Route;
     use Illuminate\Support\Facades\Auth;
 
-    // Identificamos de forma segura si el usuario autenticado tiene el rol de Mecánico
-    $esMecanico = Auth::check() && Auth::user()->rol->nombre === 'Mecánico';
+    $user = Auth::user();
+    $rolActual = $user?->rol?->nombre ?? '';
 
-    $items = [
-        ['route' => 'admin.dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
-    ];
+    $esMecanico = ($rolActual === 'Mecánico');
+    $esGerente  = ($rolActual === 'Gerente');
+    $esAdmin    = ($rolActual === 'Administrador');
 
+    // Función para verificar si un ítem individual es accesible por el usuario actual
+    $canSeeItem = function (array $item) use ($user): bool {
+        // 1. Validar que la ruta exista
+        if (!Route::has($item['route'])) {
+            return false;
+        }
+
+        // 2. Validar permiso específico si el ítem lo requiere
+        if (!empty($item['permission'])) {
+            return $user && $user->tienePermiso($item['permission']);
+        }
+
+        return true;
+    };
+
+    // Función para verificar si una sección completa tiene al menos un ítem visible
+    $hasVisibleItems = function (array $list) use ($canSeeItem): bool {
+        foreach ($list as $item) {
+            if ($canSeeItem($item)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    // Estructuras de menús
     $mecanicoOp = [
         ['route' => 'mecanico.dashboard',   'permission' => null, 'icon' => 'bi-speedometer2', 'label' => 'Panel Mecánico'],
         ['route' => 'mecanico.mis_ordenes', 'permission' => null, 'icon' => 'bi-tools',        'label' => 'Mis Órdenes'],
@@ -26,7 +52,7 @@
         ['route' => 'admin.vehiculos.index', 'permission' => 'vehiculos.ver', 'icon' => 'bi-car-front',      'label' => 'Vehículos'],
         ['route' => 'admin.citas.index',     'permission' => 'citas.ver',     'icon' => 'bi-calendar-check', 'label' => 'Citas'],
         ['route' => 'admin.ordenes.index',   'permission' => 'ordenes.ver',   'icon' => 'bi-clipboard-check','label' => 'Órdenes de trabajo'],
-        ['route' => 'admin.mecanicos.index', 'permission' => 'usuarios.ver',  'icon' => 'bi-tools',         'label' => 'Mecánicos'],
+        ['route' => 'admin.mecanicos.index', 'permission' => 'usuarios.ver',  'icon' => 'bi-tools',          'label' => 'Mecánicos'],
     ];
 
     $serviciosInventario = [
@@ -49,38 +75,27 @@
     $sistema = [
         ['route' => 'admin.configuracion.index', 'permission' => 'dashboard.ver', 'icon' => 'bi-sliders', 'label' => 'Configuración'],
     ];
-
-    $hasVisible = function (array $list): bool {
-        foreach ($list as $item) {
-            $routeExists = Route::has($item['route']);
-            $hasPermission = empty($item['permission']) || Auth::user()->tienePermiso($item['permission']);
-            if ($routeExists && $hasPermission) {
-                return true;
-            }
-        }
-        return false;
-    };
 @endphp
 
 <nav class="admin-sidebar__nav" aria-label="Menú principal">
     
-    {{-- PRINCIPAL: Se oculta completamente si el usuario es Mecánico --}}
+    {{-- PRINCIPAL --}}
     @if (!$esMecanico)
         <div class="admin-sidebar__section">Principal</div>
         <ul class="list-unstyled m-0">
             <x-admin.sidebar-item
-                routeName="admin.dashboard"
+                :routeName="($esGerente && Route::has('gerente.dashboard')) ? 'gerente.dashboard' : 'admin.dashboard'"
                 icon="bi-speedometer2"
                 label="Dashboard" />
         </ul>
     @endif
 
-    {{-- MÓDULO MECÁNICO: Se muestra SOLO si el usuario es Mecánico --}}
+    {{-- MÓDULO MECÁNICO --}}
     @if ($esMecanico && Route::has('mecanico.dashboard'))
         <div class="admin-sidebar__section">MECÁNICO</div>
         <ul class="list-unstyled m-0">
             @foreach ($mecanicoOp as $item)
-                @if(Route::has($item['route']))
+                @if ($canSeeItem($item))
                     <x-admin.sidebar-item
                         :routeName="$item['route']"
                         :permission="$item['permission']"
@@ -91,74 +106,85 @@
         </ul>
     @endif
 
-    {{-- EL RESTO DEL MENÚ: Se bloquea totalmente para el Mecánico --}}
+    {{-- RESTO DEL MENÚ --}}
     @if (!$esMecanico)
-        {{-- ORGANIZACIÓN --}}
-        @if ($hasVisible($organizacion))
+        
+        {{-- ORGANIZACIÓN (Exclusivo Administrador) --}}
+        @if ($esAdmin && $hasVisibleItems($organizacion))
             <div class="admin-sidebar__section">Organización</div>
             <ul class="list-unstyled m-0">
                 @foreach ($organizacion as $item)
-                    <x-admin.sidebar-item
-                        :routeName="$item['route']"
-                        :permission="$item['permission'] ?? null"
-                        :icon="$item['icon']"
-                        :label="$item['label']" />
+                    @if ($canSeeItem($item))
+                        <x-admin.sidebar-item
+                            :routeName="$item['route']"
+                            :permission="$item['permission'] ?? null"
+                            :icon="$item['icon']"
+                            :label="$item['label']" />
+                    @endif
                 @endforeach
             </ul>
         @endif
 
-        {{-- ATENCIÓN Y OPERACIÓN --}}
-        @if ($hasVisible($atencion))
+        {{-- ATENCIÓN Y OPERACIÓN (Filtrado por permiso) --}}
+        @if ($hasVisibleItems($atencion))
             <div class="admin-sidebar__section">Atención y operación</div>
             <ul class="list-unstyled m-0">
                 @foreach ($atencion as $item)
-                    <x-admin.sidebar-item
-                        :routeName="$item['route']"
-                        :permission="$item['permission'] ?? null"
-                        :icon="$item['icon']"
-                        :label="$item['label']" />
+                    @if ($canSeeItem($item))
+                        <x-admin.sidebar-item
+                            :routeName="$item['route']"
+                            :permission="$item['permission'] ?? null"
+                            :icon="$item['icon']"
+                            :label="$item['label']" />
+                    @endif
                 @endforeach
             </ul>
         @endif
 
-        {{-- SERVICIOS E INVENTARIO --}}
-        @if ($hasVisible($serviciosInventario))
+        {{-- SERVICIOS E INVENTARIO (Filtrado por permiso) --}}
+        @if ($hasVisibleItems($serviciosInventario))
             <div class="admin-sidebar__section">Servicios e inventario</div>
             <ul class="list-unstyled m-0">
                 @foreach ($serviciosInventario as $item)
-                    <x-admin.sidebar-item
-                        :routeName="$item['route']"
-                        :permission="$item['permission'] ?? null"
-                        :icon="$item['icon']"
-                        :label="$item['label']" />
+                    @if ($canSeeItem($item))
+                        <x-admin.sidebar-item
+                            :routeName="$item['route']"
+                            :permission="$item['permission'] ?? null"
+                            :icon="$item['icon']"
+                            :label="$item['label']" />
+                    @endif
                 @endforeach
             </ul>
         @endif
 
-        {{-- FINANZAS Y CONTROL --}}
-        @if ($hasVisible($finanzas))
+        {{-- FINANZAS Y CONTROL (Filtrado por permiso) --}}
+        @if ($hasVisibleItems($finanzas))
             <div class="admin-sidebar__section">Finanzas y control</div>
             <ul class="list-unstyled m-0">
                 @foreach ($finanzas as $item)
-                    <x-admin.sidebar-item
-                        :routeName="$item['route']"
-                        :permission="$item['permission'] ?? null"
-                        :icon="$item['icon']"
-                        :label="$item['label']" />
+                    @if ($canSeeItem($item))
+                        <x-admin.sidebar-item
+                            :routeName="$item['route']"
+                            :permission="$item['permission'] ?? null"
+                            :icon="$item['icon']"
+                            :label="$item['label']" />
+                    @endif
                 @endforeach
             </ul>
         @endif
 
-        {{-- SISTEMA --}}
-        @if ($hasVisible($sistema))
+        {{-- SISTEMA (Exclusivo Administrador) --}}
+        @if ($esAdmin && $hasVisibleItems($sistema))
             <div class="admin-sidebar__section">Sistema</div>
             <ul class="list-unstyled m-0">
                 @foreach ($sistema as $item)
-                    <x-admin.sidebar-item
-                        :routeName="$item['route']"
-                        :permission="$item['permission'] ?? null"
-                        :icon="$item['icon']"
-                        :label="$item['label']" />
+                    @if ($canSeeItem($item))
+                        <x-admin.sidebar-item
+                            :routeName="$item['route']"
+                            :permission="$item['permission'] ?? null"
+                            :icon="$item['icon']"
+                            :label="$item['label']" />
+                    @endif
                 @endforeach
             </ul>
         @endif

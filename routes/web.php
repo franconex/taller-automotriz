@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 
+    // Dashboards por Roles
     Route::get('/gerente/dashboard', function () {
         return view('gerente.dashboard');
     })->middleware('rol:Gerente')->name('gerente.dashboard');
@@ -52,7 +53,7 @@ Route::middleware('auth')->group(function () {
         return view('mecanico.dashboard');
     })->middleware('rol:Mecánico')->name('mecanico.dashboard');
 
-    // rutas operativas del mecanico - diana-
+    // Rutas operativas del mecanico
     Route::middleware('rol:Mecánico')->group(function () {
         Route::get('/mis-ordenes', [MecanicoController::class, 'misOrdenes'])->name('mecanico.mis_ordenes');
         Route::get('/mis-ordenes/{id}', [MecanicoController::class, 'atenderOrden'])->name('mecanico.atender');
@@ -60,10 +61,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/mis-ordenes/{id}/repuestos', [MecanicoController::class, 'registrarRepuesto'])->name('mecanico.repuestos');
     });
 
+    // Perfil general
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'index'])->name('perfil.index');
         Route::put('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'update'])->name('perfil.update');
     });
+
+
+    // RUTAS EXCLUSIVAS DEL ADMINISTRADOR
 
     Route::prefix('admin')
         ->middleware('rol:Administrador')
@@ -140,6 +145,21 @@ Route::middleware('auth')->group(function () {
                 ->parameters(['movimientos-inventario' => 'movimiento'])
                 ->except(['edit', 'update']);
 
+            Route::get('configuracion', [ConfiguracionController::class, 'index'])
+                ->name('configuracion.index');
+            Route::put('configuracion', [ConfiguracionController::class, 'update'])
+                ->name('configuracion.update');
+        });
+
+
+    // RUTAS COMPARTIDAS (ADMIN Y GERENTE) BASADAS EN PERMISOS
+
+
+    // Módulo de Pagos y Autorizaciones
+    Route::middleware('permiso:pagos.ver')
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
             Route::resource('metodos-pago', MetodoPagoController::class)
                 ->parameters(['metodos-pago' => 'metodoPago'])
                 ->except(['create', 'store', 'destroy']);
@@ -156,28 +176,36 @@ Route::middleware('auth')->group(function () {
                 ->except(['create', 'store']);
             Route::patch('comprobantes/{comprobante}/anular', [ComprobanteController::class, 'anular'])
                 ->name('comprobantes.anular');
+        });
 
-            Route::get('configuracion', [ConfiguracionController::class, 'index'])
-                ->name('configuracion.index');
-            Route::put('configuracion', [ConfiguracionController::class, 'update'])
-                ->name('configuracion.update');
-
+    // Módulo de Reportes
+    Route::middleware('permiso:reportes.ver')
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
             Route::get('reportes', [ReporteController::class, 'index'])
                 ->name('reportes.index');
             Route::get('reportes/{tipo}', [ReporteController::class, 'mostrar'])
                 ->name('reportes.mostrar');
+        });
 
+    // Módulo de Auditoría
+    Route::middleware('permiso:auditoria.ver')
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
             Route::get('auditoria', [AuditoriaController::class, 'index'])
                 ->name('auditoria.index');
             Route::get('auditoria/{auditoria}', [AuditoriaController::class, 'show'])
                 ->name('auditoria.show');
         });
 
-        // Citas: módulo accesible para cualquier usuario con permiso citas.ver
-        Route::middleware('permiso:citas.ver')
-            ->prefix('admin')
-            ->name('admin.')
-            ->group(function () {
+    // RUTAS COMPARTIDAS PARA CITAS
+
+    Route::middleware('permiso:citas.ver')
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
             Route::get('citas/eventos', [CitaController::class, 'eventos'])->name('citas.eventos');
             Route::get('citas/tabla-dia', [CitaController::class, 'tablaDia'])->name('citas.tabla-dia');
             Route::get('citas/proximas', [CitaController::class, 'proximas'])->name('citas.proximas');
