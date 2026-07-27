@@ -31,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return match ($user->rol->nombre) {
                     'Administrador' => route('admin.dashboard'),
                     'Gerente'      => route('admin.dashboard'),
-                    'Recepcionista' => route('admin.dashboard'),
+                    'Recepcionista' => route('admin.citas.index'),
                     'Mecánico'     => route('admin.dashboard'),
                     default => route('admin.dashboard'),
                 };

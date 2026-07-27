@@ -63,6 +63,7 @@
     <ul class="list-unstyled m-0">
         <x-admin.sidebar-item
             routeName="admin.dashboard"
+            permission="dashboard.ver"
             icon="bi-speedometer2"
             label="Dashboard" />
     </ul>

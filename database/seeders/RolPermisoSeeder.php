@@ -81,7 +81,6 @@ class RolPermisoSeeder extends Seeder
         // Recepcionista: clientes, vehículos, citas, órdenes (crear), pagos (registrar)
         $recepcionista->permisos()->sync(
             Permiso::whereIn('codigo', [
-                'dashboard.ver',
                 'clientes.ver',
                 'clientes.crear',
                 'clientes.editar',
