@@ -373,11 +373,6 @@
 
 #calendario-citas .fc-timegrid-event {
     border-radius: 6px;
-    border: none !important;
-}
-
-#calendario-citas .fc-timegrid-event-harness > a {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
 }
 
 #calendario-citas .fc-event {
@@ -385,7 +380,11 @@
 }
 
 #calendario-citas .fc-timegrid-event .fc-event-main {
-    overflow: hidden;
+    overflow: visible;
+}
+
+#calendario-citas .fc-daygrid-event-harness {
+    margin: 0 2px;
 }
 
 /* ============ TARJETAS DE EVENTO (citas) ============ */

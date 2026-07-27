@@ -150,27 +150,26 @@ import interactionPlugin from '@fullcalendar/interaction';
                     if (viewType === 'timeGridWeek' || viewType === 'timeGridDay') {
                         const el = info.el;
                         el.style.background = color;
-                        el.style.borderColor = color;
+                        el.style.border = 'none';
+                        el.style.borderLeft = '3px solid rgba(255,255,255,0.5)';
                         el.style.color = '#fff';
                         el.style.fontSize = '0.72rem';
-                        el.style.padding = '2px 4px';
+                        el.style.padding = '3px 5px';
                         el.style.fontWeight = '500';
-                        el.style.overflow = 'hidden';
+                        el.style.borderRadius = '6px';
+                        el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
 
                         var extra = '';
                         if (vehiculo) extra += '<div style="font-size:0.65rem;opacity:0.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escape(vehiculo) + '</div>';
-                        if (servicio) extra += '<div style="font-size:0.62rem;opacity:0.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escape(servicio) + '</div>';
+                        if (servicio) extra += '<div style="font-size:0.6rem;opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escape(servicio) + '</div>';
 
-                        const mainEl = info.el.querySelector('.fc-event-main');
-                        if (mainEl) {
-                            mainEl.innerHTML =
-                                '<div style="font-weight:600;font-size:0.7rem;">' + escape(hTexto) + '</div>' +
-                                '<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escape(cliente) + '</div>' +
-                                extra;
-                        }
+                        el.innerHTML =
+                            '<div style="font-weight:600;font-size:0.65rem;opacity:0.9;">' + escape(hTexto) + '</div>' +
+                            '<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escape(cliente) + '</div>' +
+                            extra;
                     } else if (viewType === 'dayGridMonth') {
                         info.el.innerHTML =
-                            '<div style="display:flex;align-items:center;gap:4px;font-size:0.72rem;">' +
+                            '<div style="display:flex;align-items:center;gap:4px;padding:1px 4px;font-size:0.72rem;">' +
                                 '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
                                 '<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escape(cliente) + '</span>' +
                             '</div>';
