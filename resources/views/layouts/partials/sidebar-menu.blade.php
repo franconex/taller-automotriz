@@ -20,6 +20,8 @@
         ['route' => 'admin.mecanicos.index', 'permission' => 'mecanicos.ver', 'icon' => 'bi-tools',         'label' => 'Mecánicos'],
     ];
 
+
+
     $serviciosInventario = [
         ['route' => 'admin.tipos-servicio.index', 'permission' => 'tipos-servicio.ver', 'icon' => 'bi-tags', 'label' => 'Tipos de servicio'],
         ['route' => 'admin.servicios.index',      'permission' => 'servicios.ver',      'icon' => 'bi-gear',  'label' => 'Servicios'],
@@ -43,7 +45,6 @@
 
     $sistema = [
         ['route' => 'admin.solicitudes-permiso.index', 'permission' => 'solicitudes-permiso.ver', 'icon' => 'bi-shield-exclamation', 'label' => 'Solicitudes de permiso'],
-        ['route' => 'admin.configuracion.index',       'permission' => 'configuracion.ver',       'icon' => 'bi-sliders',           'label' => 'Configuración'],
     ];
 
     $hasVisible = function (array $list): bool {
@@ -94,6 +95,16 @@
                     :icon="$item['icon']"
                     :label="$item['label']" />
             @endforeach
+            @if (Auth::user()->tieneRol('Mecánico'))
+            <li>
+                <a href="{{ route('admin.ordenes.index') }}?mecanico=1"
+                   class="admin-sidebar__link {{ request('mecanico') ? 'active' : '' }}"
+                   data-tp-label="Mis órdenes">
+                    <i class="bi bi-wrench" aria-hidden="true"></i>
+                    <span class="admin-sidebar__text">Mis órdenes</span>
+                </a>
+            </li>
+            @endif
         </ul>
     @endif
 

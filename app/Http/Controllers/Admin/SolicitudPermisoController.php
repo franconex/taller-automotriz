@@ -52,6 +52,7 @@ class SolicitudPermisoController extends AdminController implements HasMiddlewar
         $idsYaAsignados = $user->rol->permisos()->pluck('permisos.id');
 
         $permisosDisponibles = Permiso::whereNotIn('id', $idsYaAsignados)
+            ->where('modulo', '!=', 'configuracion')
             ->orderBy('modulo')
             ->orderBy('nombre')
             ->get()

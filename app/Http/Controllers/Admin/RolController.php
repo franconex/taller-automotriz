@@ -89,7 +89,11 @@ class RolController extends AdminController implements HasMiddleware
 
     public function permisos(Rol $role): View
     {
-        $permisos = Permiso::orderBy('modulo')->orderBy('nombre')->get()->groupBy('modulo');
+        $permisos = Permiso::where('modulo', '!=', 'configuracion')
+            ->orderBy('modulo')
+            ->orderBy('nombre')
+            ->get()
+            ->groupBy('modulo');
         $asignados = $role->permisos()->pluck('permisos.id')->toArray();
 
         return view('admin.roles.permisos', [

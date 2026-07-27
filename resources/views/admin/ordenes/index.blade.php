@@ -11,9 +11,9 @@
 @section('content')
     <x-admin.page-header
         title="Órdenes de trabajo"
-        description="Órdenes de servicio emitidas, en proceso, finalizadas o entregadas.">
+        :description="$esMecanico ? 'Tus órdenes asignadas' : 'Órdenes de servicio emitidas, en proceso, finalizadas o entregadas.'">
         <x-slot:actions>
-            @if (Auth::user()->tienePermiso('ordenes.crear'))
+            @if (!$esMecanico && Auth::user()->tienePermiso('ordenes.crear'))
             <a href="{{ route('admin.ordenes.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
                 Nueva orden
@@ -29,29 +29,32 @@
         <x-slot:filters>
             <select name="estado" class="form-select" style="max-width:200px;" onchange="this.form.submit()">
                 <option value="">Todos los estados</option>
-                <option value="recibida"    @selected(request('estado') === 'recibida')>Recibida</option>
-                <option value="diagnostico"@selected(request('estado') === 'diagnostico')>En diagnóstico</option>
+                <option value="recibida" @selected(request('estado') === 'recibida')>Recibida</option>
+                <option value="diagnostico" @selected(request('estado') === 'diagnostico')>En diagnóstico</option>
                 <option value="en_proceso" @selected(request('estado') === 'en_proceso')>En proceso</option>
+                <option value="esperando_repuestos" @selected(request('estado') === 'esperando_repuestos')>Esperando repuestos</option>
                 <option value="finalizada" @selected(request('estado') === 'finalizada')>Finalizada</option>
-                <option value="entregada"  @selected(request('estado') === 'entregada')>Entregada</option>
-                <option value="anulada"    @selected(request('estado') === 'anulada')>Anulada</option>
+                <option value="entregada" @selected(request('estado') === 'entregada')>Entregada</option>
+                <option value="anulada" @selected(request('estado') === 'anulada')>Anulada</option>
             </select>
-            <select name="sucursal_id" class="form-select" style="max-width:200px;" onchange="this.form.submit()">
-                <option value="">Todas las sucursales</option>
-                @foreach (($sucursales ?? collect()) as $s)
-                    <option value="{{ $s->id }}" @selected((string) request('sucursal_id') === (string) $s->id)>{{ $s->nombre }}</option>
-                @endforeach
-            </select>
+            @if (!$esMecanico)
+                <select name="mecanico_id" class="form-select" style="max-width:200px;" onchange="this.form.submit()">
+                    <option value="">Todos los mecánicos</option>
+                    @foreach (($mecanicos ?? collect()) as $m)
+                        <option value="{{ $m->id }}" @selected((string) request('mecanico_id') === (string) $m->id)>{{ $m->empleado->nombre_completo ?? 'Mecánico #' . $m->id }}</option>
+                    @endforeach
+                </select>
+            @endif
         </x-slot:filters>
     </x-admin.filters>
 
-    @if ($ordenes->isEmpty() && ! request()->has('q') && ! request()->has('estado') && ! request()->has('sucursal_id'))
+    @if ($ordenes->isEmpty() && ! request()->has('q') && ! request()->has('estado') && ! request()->has('sucursal_id') && ! request()->has('mecanico_id'))
         <x-admin.empty-state
             icon="bi-clipboard-check"
-            title="Aún no hay órdenes de trabajo"
-            message="Emite la primera orden de trabajo para iniciar el flujo operativo."
-            :action-label="Auth::user()->tienePermiso('ordenes.crear') ? 'Nueva orden' : null"
-            :action-href="Auth::user()->tienePermiso('ordenes.crear') ? route('admin.ordenes.create') : null" />
+            :title="$esMecanico ? 'No tienes órdenes asignadas' : 'Aún no hay órdenes de trabajo'"
+            :message="$esMecanico ? 'Cuando el recepcionista te asigne una orden, aparecerá aquí.' : 'Emite la primera orden de trabajo para iniciar el flujo operativo.'"
+            :action-label="(!$esMecanico && Auth::user()->tienePermiso('ordenes.crear')) ? 'Nueva orden' : null"
+            :action-href="(!$esMecanico && Auth::user()->tienePermiso('ordenes.crear')) ? route('admin.ordenes.create') : null" />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de órdenes de trabajo">
@@ -59,14 +62,19 @@
                     <tr>
                         <th>N° de orden</th>
                         <th>Cliente / Vehículo</th>
+                        @if (!$esMecanico)
+                        <th class="d-none d-md-table-cell">Mecánico</th>
+                        @endif
                         <th class="d-none d-md-table-cell">Emisión</th>
-                        <th class="d-none d-lg-table-cell text-end">Total</th>
                         <th>Estado</th>
                         <th class="col-actions">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($ordenes as $o)
+                        @php
+                            $asignacion = $o->asignaciones->first();
+                        @endphp
                         <tr>
                             <td>
                                 <div class="cell-strong">{{ $o->numero_orden }}</div>
@@ -76,11 +84,13 @@
                                 <div class="cell-strong">{{ $o->cliente->nombre_completo ?? '—' }}</div>
                                 <div class="cell-muted small">{{ $o->vehiculo->placa ?? '—' }}</div>
                             </td>
+                            @if (!$esMecanico)
+                            <td class="d-none d-md-table-cell cell-muted">
+                                {{ $asignacion?->mecanico?->empleado?->nombre_completo ?? '—' }}
+                            </td>
+                            @endif
                             <td class="d-none d-md-table-cell cell-muted">
                                 {{ $o->fecha_emision?->format('d/m/Y H:i') ?? '—' }}
-                            </td>
-                            <td class="d-none d-lg-table-cell text-end cell-strong">
-                                {{ number_format((float) $o->total_general, 2, ',', '.') }}
                             </td>
                             <td>
                                 <x-admin.status-badge
@@ -112,38 +122,39 @@
                                        aria-label="Ver detalle">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
                                     </a>
+                                    @if ($esMecanico && $asignacion)
+                                    <a href="{{ route('admin.ordenes.show', $o) }}" class="btn-icon btn-icon--primary" title="Gestionar">
+                                        <i class="bi bi-gear" aria-hidden="true"></i>
+                                    </a>
+                                    @endif
+                                    @if (!$esMecanico && Auth::user()->tienePermiso('ordenes.editar'))
                                     <a href="{{ route('admin.ordenes.edit', $o) }}"
                                        class="btn-icon btn-icon--primary"
                                        title="Editar"
                                        aria-label="Editar">
                                         <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                     </a>
-                                    <a href="{{ route('admin.pagos.create', ['orden_id' => $o->id]) }}"
-                                       class="btn-icon btn-icon--primary"
-                                       title="Registrar pago"
-                                       aria-label="Registrar pago">
-                                        <i class="bi bi-cash-coin" aria-hidden="true"></i>
-                                    </a>
-                                    @if ($o->estado !== 'anulada')
-                                        <form method="POST"
-                                              action="{{ route('admin.ordenes.cancelar', $o) }}"
-                                              class="d-inline">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit"
-                                                    class="btn-icon btn-icon--danger"
-                                                    title="Anular"
-                                                    aria-label="Anular">
-                                                <i class="bi bi-x-circle" aria-hidden="true"></i>
-                                            </button>
-                                        </form>
+                                    @endif
+                                    @if (!$esMecanico && $o->estado !== 'anulada')
+                                    <form method="POST"
+                                          action="{{ route('admin.ordenes.cancelar', $o) }}"
+                                          class="d-inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit"
+                                                class="btn-icon btn-icon--danger"
+                                                title="Anular"
+                                                aria-label="Anular">
+                                            <i class="bi bi-x-circle" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
                                     @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="p-0">
+                            <td colspan="{{ $esMecanico ? 5 : 6 }}" class="p-0">
                                 <x-admin.empty-state icon="bi-search" title="Sin resultados" message="No se encontraron órdenes con los filtros aplicados." />
                             </td>
                         </tr>

@@ -118,8 +118,18 @@ Route::middleware('auth')->group(function () {
                 ->name('ordenes.toggle');
             Route::patch('ordenes/{ordene}/estado', [OrdenTrabajoController::class, 'cambiarEstadoOrden'])
                 ->name('ordenes.cambiar-estado');
+            Route::patch('ordenes/{ordene}/mi-estado', [OrdenTrabajoController::class, 'actualizarMiEstado'])
+                ->name('ordenes.actualizar-mi-estado');
             Route::patch('ordenes/{ordene}/cancelar', [OrdenTrabajoController::class, 'cancelar'])
                 ->name('ordenes.cancelar');
+            Route::post('ordenes/{ordene}/observacion', [OrdenTrabajoController::class, 'agregarObservacionMecanico'])
+                ->name('ordenes.observacion');
+            Route::post('ordenes/{ordene}/foto', [OrdenTrabajoController::class, 'subirFoto'])
+                ->name('ordenes.foto');
+            Route::post('ordenes/{ordene}/servicio-mecanico', [OrdenTrabajoController::class, 'agregarServicioMecanico'])
+                ->name('ordenes.servicio-mecanico');
+            Route::post('ordenes/{ordene}/finalizar', [OrdenTrabajoController::class, 'finalizarTrabajo'])
+                ->name('ordenes.finalizar');
 
             Route::get('ordenes/{orden}/repuestos', [OrdenTrabajoController::class, 'editRepuestos'])
                 ->name('ordenes.repuestos');

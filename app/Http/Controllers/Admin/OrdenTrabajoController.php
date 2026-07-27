@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\Admin\OrdenTrabajoDetalleRequest;
 use App\Http\Requests\Admin\OrdenTrabajoRequest;
+use App\Models\AsignacionTrabajo;
 use App\Models\Cliente;
 use App\Models\DetalleOrdenTrabajo;
+use App\Models\Mecanico;
 use App\Models\OrdenTrabajo;
 use App\Models\Repuesto;
 use App\Models\Sucursal;
@@ -13,7 +15,8 @@ use App\Models\Vehiculo;
 use App\Services\OrdenTrabajoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
@@ -25,17 +28,32 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
         return [
             new Middleware('permiso:ordenes.crear', only: ['create', 'store']),
             new Middleware('permiso:ordenes.editar', only: ['edit', 'update']),
-            new Middleware('permiso:ordenes.actualizar_estado', only: ['toggle', 'cambiarEstadoOrden']),
+            new Middleware('permiso:ordenes.actualizar_estado', only: ['toggle', 'cambiarEstadoOrden', 'actualizarMiEstado', 'agregarObservacionMecanico', 'subirFoto', 'agregarServicioMecanico', 'finalizarTrabajo']),
             new Middleware('permiso:ordenes.cancelar', only: ['cancelar']),
             new Middleware('permiso:roles.editar', only: ['destroy']),
         ];
     }
+
     public function index(Request $request): View
     {
-        $query = OrdenTrabajo::query()->with(['cliente', 'vehiculo', 'sucursal']);
+        $user = Auth::user();
+        $mecanicoAsignadoId = $this->mecanicoDelUsuario();
+        $esMecanicoRuta = $request->query('mecanico') || $user->tieneRol('Mecánico');
 
-        $this->scopeSucursal($query, 'sucursal_id');
-        $this->aplicarFiltros($request, $query, ['estado', 'sucursal_id']);
+        $query = OrdenTrabajo::query()
+            ->with(['cliente', 'vehiculo', 'sucursal', 'asignaciones.mecanico.empleado']);
+
+        if ($mecanicoAsignadoId) {
+            $query->whereHas('asignaciones', fn ($q) => $q->where('mecanico_id', $mecanicoAsignadoId));
+        } elseif ($esMecanicoRuta) {
+            $asignaciones = AsignacionTrabajo::whereIn('estado', ['pendiente', 'en_proceso', 'esperando_repuestos', 'finalizado'])
+                ->pluck('orden_trabajo_id');
+            $query->whereIn('id', $asignaciones);
+        } else {
+            $this->scopeSucursal($query, 'sucursal_id');
+        }
+
+        $this->aplicarFiltros($request, $query, ['estado', 'sucursal_id', 'mecanico_id']);
         $this->aplicarBusqueda($query, $request, [
             'numero_orden',
             'descripcion_problema',
@@ -50,9 +68,19 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             ->orderBy('nombre')
             ->get();
 
+        $mecanicos = Mecanico::with('empleado')
+            ->whereHas('empleado', fn ($q) => $q->where('sucursal_id', $this->usuarioSucursalId() ?: optional($user->sucursal)->id))
+            ->orderBy('disponibilidad')
+            ->get();
+
+        $esMecanico = $esMecanicoRuta && $user->tienePermiso('ordenes.actualizar_estado');
+
         return view('admin.ordenes.index', [
             'ordenes' => $ordenes,
             'sucursales' => $sucursales,
+            'mecanicos' => $mecanicos,
+            'esMecanico' => $esMecanico,
+            'mecanicoAsignadoId' => $mecanicoAsignadoId,
         ]);
     }
 
@@ -64,11 +92,13 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
             ->orderBy('nombre')
             ->get();
+        $mecanicos = $this->mecanicosDisponibles();
 
         return view('admin.ordenes.create', [
             'clientes' => $clientes,
             'vehiculos' => $vehiculos,
             'sucursales' => $sucursales,
+            'mecanicos' => $mecanicos,
             'orden' => new \App\Models\OrdenTrabajo(),
         ]);
     }
@@ -78,11 +108,19 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
         $datos = $request->validated();
         $datos['numero_orden'] = $datos['numero_orden'] ?? 'OT-' . str_pad((string) (OrdenTrabajo::max('id') + 1), 6, '0', STR_PAD_LEFT);
         $datos['fecha_emision'] = now();
-        $datos['usuario_recepcion_id'] = auth()->id();
+        $datos['usuario_recepcion_id'] = Auth::id();
         $datos['estado'] = $datos['estado'] ?? 'recibida';
         $datos['descuento'] = $datos['descuento'] ?? 0;
 
-        OrdenTrabajo::create($datos);
+        $mecanicoId = $request->input('mecanico_id');
+
+        DB::transaction(function () use ($datos, $mecanicoId) {
+            $orden = OrdenTrabajo::create($datos);
+
+            if ($mecanicoId) {
+                $this->crearAsignacion($orden->id, (int) $mecanicoId, $datos['descripcion_problema'] ?? 'Trabajo asignado');
+            }
+        });
 
         return $this->redirigirALista('admin.ordenes.index', 'Orden de trabajo creada con éxito.');
     }
@@ -94,20 +132,23 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             'vehiculo.modelo.marcaVehiculo',
             'sucursal',
             'usuarioRecepcion',
+            'asignaciones.mecanico.empleado',
             'cita',
             'pagos.comprobante',
             'detalles.repuesto',
             'detalles.servicio',
+            'fotos',
         ]);
 
         return view('admin.ordenes.show', [
             'orden' => $ordene,
+            'mecanicoAsignadoId' => $this->mecanicoDelUsuario(),
         ]);
     }
 
     public function edit(OrdenTrabajo $ordene): View
     {
-        $ordene->load(['detalles.repuesto', 'detalles.servicio']);
+        $ordene->load(['detalles.repuesto', 'detalles.servicio', 'asignaciones.mecanico.empleado']);
 
         $clientes = Cliente::orderBy('nombre_completo')->get();
         $vehiculos = Vehiculo::with('cliente')->orderBy('placa')->get();
@@ -115,19 +156,29 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
             ->orderBy('nombre')
             ->get();
+        $mecanicos = $this->mecanicosDisponibles(null, $ordene->id);
 
         return view('admin.ordenes.edit', [
             'orden' => $ordene,
             'clientes' => $clientes,
             'vehiculos' => $vehiculos,
             'sucursales' => $sucursales,
+            'mecanicos' => $mecanicos,
         ]);
     }
 
     public function update(OrdenTrabajoRequest $request, OrdenTrabajo $ordene): RedirectResponse
     {
         $datos = $request->validated();
-        $ordene->update($datos);
+        $mecanicoId = $request->input('mecanico_id');
+
+        DB::transaction(function () use ($datos, $mecanicoId, $ordene) {
+            $ordene->update($datos);
+
+            if ($mecanicoId !== null && $mecanicoId !== '') {
+                $this->reemplazarAsignacion($ordene->id, (int) $mecanicoId, $datos['descripcion_problema'] ?? 'Trabajo asignado');
+            }
+        });
 
         return $this->redirigirConExito('órdenes de trabajo', 'actualizada');
     }
@@ -181,6 +232,60 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
         $ordene->save();
 
         return back()->with('success', "La orden fue actualizada a {$nuevoEstado}.");
+    }
+
+    public function actualizarMiEstado(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        $asignacion = $ordene->asignaciones->first();
+        if (!$asignacion) {
+            return back()->with('error', 'Esta orden no tiene un mecánico asignado.');
+        }
+
+        $mecanicoId = $asignacion->mecanico_id;
+
+        $validados = $request->validate([
+            'estado_asignacion' => ['required', 'in:pendiente,en_proceso,esperando_repuestos,finalizado'],
+        ]);
+
+        $progresion = ['pendiente', 'en_proceso', 'esperando_repuestos', 'finalizado'];
+        $idxActual = array_search($asignacion->estado, $progresion);
+        $idxNuevo = array_search($validados['estado_asignacion'], $progresion);
+
+        if ($idxNuevo < $idxActual) {
+            return back()->with('error', 'No puedes retroceder a un estado anterior.');
+        }
+
+        DB::transaction(function () use ($asignacion, $validados, $mecanicoId) {
+            $datosAsig = ['estado' => $validados['estado_asignacion']];
+            $datosOrd = [];
+
+            if ($validados['estado_asignacion'] === 'en_proceso' && !$asignacion->fecha_inicio) {
+                $datosAsig['fecha_inicio'] = now();
+                $datosOrd['fecha_inicio'] = now();
+            }
+            if ($validados['estado_asignacion'] === 'finalizado') {
+                $datosAsig['fecha_finalizacion'] = now();
+                $datosOrd['fecha_fin'] = now();
+            }
+            $asignacion->update($datosAsig);
+
+            $mapEstados = [
+                'pendiente' => 'recibida',
+                'en_proceso' => 'en_proceso',
+                'esperando_repuestos' => 'diagnostico',
+                'finalizado' => 'finalizada',
+            ];
+            $datosOrd['estado'] = $mapEstados[$validados['estado_asignacion']];
+            $asignacion->ordenTrabajo->update($datosOrd);
+
+            if ($validados['estado_asignacion'] === 'finalizado') {
+                Mecanico::where('id', $mecanicoId)->update(['disponibilidad' => 'disponible']);
+            } elseif ($validados['estado_asignacion'] === 'en_proceso') {
+                Mecanico::where('id', $mecanicoId)->update(['disponibilidad' => 'ocupado']);
+            }
+        });
+
+        return back()->with('success', 'Estado actualizado.');
     }
 
     public function cancelar(Request $request, OrdenTrabajo $ordene): RedirectResponse
@@ -241,6 +346,138 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
         return response()->json($repuestos);
     }
 
+    public function agregarObservacionMecanico(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        $asignacion = $ordene->asignaciones->first();
+        if (!$asignacion) {
+            return back()->with('error', 'No puedes modificar esta orden.');
+        }
+
+        $validados = $request->validate([
+            'observaciones' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $nueva = now()->format('d/m/Y H:i') . " - [Mecánico] " . $validados['observaciones'];
+        $previas = $ordene->observaciones;
+        $ordene->update([
+            'observaciones' => $previas ? $previas . "\n" . $nueva : $nueva,
+        ]);
+
+        $obsAsig = $asignacion->observaciones;
+        $asignacion->update([
+            'observaciones' => $obsAsig ? $obsAsig . "\n" . $nueva : $nueva,
+        ]);
+
+        return back()->with('success', 'Observación agregada correctamente.');
+    }
+
+    public function subirFoto(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        $asignacion = $ordene->asignaciones->first();
+        if (!$asignacion) {
+            return back()->with('error', 'No puedes modificar esta orden.');
+        }
+
+        $validados = $request->validate([
+            'foto' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+            'descripcion' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $archivo = $request->file('foto');
+        $nombreOriginal = $archivo->getClientOriginalName();
+        $ruta = $archivo->store('ordenes-fotos/' . $ordene->id, 'public');
+
+        $ordene->fotos()->create([
+            'usuario_id' => Auth::id(),
+            'ruta' => $ruta,
+            'nombre_original' => $nombreOriginal,
+            'tipo' => $archivo->getClientMimeType(),
+            'descripcion' => $validados['descripcion'] ?? null,
+        ]);
+
+        return back()->with('success', 'Foto subida correctamente.');
+    }
+
+    public function agregarServicioMecanico(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        if (!$ordene->asignaciones->first()) {
+            return back()->with('error', 'No puedes modificar esta orden.');
+        }
+
+        $validados = $request->validate([
+            'descripcion_servicio' => ['required', 'string', 'max:500'],
+            'costo_servicio' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $servicio = \App\Models\Servicio::firstOrCreate(
+            ['nombre' => $validados['descripcion_servicio']],
+            ['precio' => $validados['costo_servicio'], 'estado' => true]
+        );
+
+        $detalle = $ordene->detalles()->create([
+            'tipo' => 'servicio',
+            'servicio_id' => $servicio->id,
+            'descripcion' => $validados['descripcion_servicio'],
+            'cantidad' => 1,
+            'precio_unitario' => $validados['costo_servicio'],
+            'subtotal' => $validados['costo_servicio'],
+        ]);
+
+        $ordene->subtotal_servicios = ($ordene->subtotal_servicios ?? 0) + $validados['costo_servicio'];
+        $ordene->total_general = ($ordene->subtotal_servicios ?? 0) + ($ordene->subtotal_repuestos ?? 0) - ($ordene->descuento ?? 0);
+        $ordene->save();
+
+        return back()->with('success', 'Servicio agregado a la orden.');
+    }
+
+    public function finalizarTrabajo(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        $asignacion = $ordene->asignaciones->first();
+        if (!$asignacion || $asignacion->estado === 'finalizado') {
+            return back()->with('error', 'No puedes finalizar esta orden.');
+        }
+
+        $validados = $request->validate([
+            'nota_final' => ['nullable', 'string', 'max:2000'],
+            'foto_final' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:10240'],
+        ]);
+
+        DB::transaction(function () use ($ordene, $asignacion, $validados) {
+            $asignacion->update([
+                'estado' => 'finalizado',
+                'fecha_finalizacion' => now(),
+            ]);
+
+            $ordene->update([
+                'estado' => 'finalizada',
+                'fecha_fin' => now(),
+            ]);
+
+            Mecanico::where('id', $asignacion->mecanico_id)->update(['disponibilidad' => 'disponible']);
+
+            if (!empty($validados['nota_final'])) {
+                $nueva = now()->format('d/m/Y H:i') . " - [Finalización] " . $validados['nota_final'];
+                $ordene->update([
+                    'observaciones' => $ordene->observaciones ? $ordene->observaciones . "\n" . $nueva : $nueva,
+                ]);
+            }
+
+            if ($request->hasFile('foto_final')) {
+                $archivo = $request->file('foto_final');
+                $ruta = $archivo->store('ordenes-fotos/' . $ordene->id, 'public');
+                $ordene->fotos()->create([
+                    'usuario_id' => Auth::id(),
+                    'ruta' => $ruta,
+                    'nombre_original' => $archivo->getClientOriginalName(),
+                    'tipo' => $archivo->getClientMimeType(),
+                    'descripcion' => 'Foto final - ' . now()->format('d/m/Y H:i'),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Trabajo finalizado correctamente. Ya estás disponible para nuevas asignaciones.');
+    }
+
     public function sugerirCompra(OrdenTrabajo $ordene, OrdenTrabajoService $service)
     {
         $sugerencia = $service->sugerirSolicitudCompra($ordene);
@@ -253,5 +490,63 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             'repuestos' => array_column($sugerencia['productos'], 'repuesto_id'),
             'orden_id' => $ordene->id,
         ]);
+    }
+
+    private function mecanicoDelUsuario(): ?int
+    {
+        $user = Auth::user();
+        if (!$user) return null;
+        if ($user->empleado_id) {
+            $mecanico = Mecanico::where('empleado_id', $user->empleado_id)->first();
+            if ($mecanico) return $mecanico->id;
+        }
+        if ($user->tieneRol('Mecánico')) {
+            $mecanico = Mecanico::whereHas('empleado', fn ($q) => $q->where('email', $user->email))->first();
+            if ($mecanico) return $mecanico->id;
+        }
+        return null;
+    }
+
+    private function mecanicosDisponibles(?int $sucursalId = null, ?int $exceptoOrdenId = null)
+    {
+        $sucursalId = $sucursalId ?: $this->usuarioSucursalId();
+
+        return Mecanico::with('empleado')
+            ->whereHas('empleado', fn ($q) => $q->where('sucursal_id', $sucursalId))
+            ->where(function ($q) use ($exceptoOrdenId) {
+                $q->where('disponibilidad', 'disponible');
+                if ($exceptoOrdenId) {
+                    $q->orWhereHas('asignaciones', fn ($aq) => $aq->where('orden_trabajo_id', $exceptoOrdenId));
+                }
+            })
+            ->get()
+            ->sortBy('empleado.nombre_completo')
+            ->values();
+    }
+
+    private function crearAsignacion(int $ordenId, int $mecanicoId, string $actividad): void
+    {
+        AsignacionTrabajo::create([
+            'orden_trabajo_id' => $ordenId,
+            'mecanico_id' => $mecanicoId,
+            'usuario_asignador_id' => Auth::id(),
+            'actividad_asignada' => $actividad,
+            'fecha_asignacion' => now(),
+            'estado' => 'pendiente',
+        ]);
+
+        Mecanico::where('id', $mecanicoId)->update(['disponibilidad' => 'ocupado']);
+    }
+
+    private function reemplazarAsignacion(int $ordenId, int $mecanicoId, string $actividad): void
+    {
+        $asignacionesAnteriores = AsignacionTrabajo::where('orden_trabajo_id', $ordenId)->get();
+
+        foreach ($asignacionesAnteriores as $a) {
+            $a->delete();
+            Mecanico::where('id', $a->mecanico_id)->update(['disponibilidad' => 'disponible']);
+        }
+
+        $this->crearAsignacion($ordenId, $mecanicoId, $actividad);
     }
 }

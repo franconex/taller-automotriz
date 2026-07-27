@@ -80,54 +80,31 @@ class RolPermisoSeeder extends Seeder
             ])->pluck('id')
         );
 
-        // Recepcionista: clientes, vehículos, citas, órdenes (crear), pagos (registrar)
+        // Recepcionista
         $recepcionista->permisos()->sync(
             Permiso::whereIn('codigo', [
-                'clientes.ver',
-                'clientes.crear',
-                'clientes.editar',
-                'vehiculos.ver',
-                'vehiculos.crear',
-                'vehiculos.editar',
-                'citas.ver',
-                'citas.crear',
-                'citas.editar',
-                'citas.cancelar',
-                'ordenes.ver',
-                'ordenes.crear',
-                'ordenes.editar',
+                'clientes.ver', 'clientes.crear', 'clientes.editar',
+                'vehiculos.ver', 'vehiculos.crear', 'vehiculos.editar',
+                'citas.ver', 'citas.crear', 'citas.editar', 'citas.cancelar',
+                'ordenes.ver', 'ordenes.crear', 'ordenes.editar',
                 'inventario.ver',
-                'pagos.ver',
-                'pagos.registrar',
-                'servicios.ver',
-                'tipos-servicio.ver',
-                'proveedores.ver',
-                'repuestos.ver',
-                'mecanicos.ver',
-                'metodos-pago.ver',
-                'comprobantes.ver',
-                'solicitudes-permiso.ver',
-                'solicitudes-permiso.crear',
+                'pagos.ver', 'pagos.registrar',
+                'servicios.ver', 'tipos-servicio.ver', 'proveedores.ver',
+                'repuestos.ver', 'mecanicos.ver',
+                'metodos-pago.ver', 'comprobantes.ver',
+                'solicitudes-permiso.ver', 'solicitudes-permiso.crear',
             ])->pluck('id')
         );
 
-        // Mecánico: solo asignaciones, diagnóstico, servicios y repuestos (solo lectura)
+        // Mecánico
         $mecanico->permisos()->sync(
             Permiso::whereIn('codigo', [
                 'dashboard.ver',
-                'ordenes.ver',
-                'ordenes.actualizar_estado',
-                'inventario.ver',
-                'servicios.ver',
-                'tipos-servicio.ver',
-                'proveedores.ver',
-                'repuestos.ver',
-                'empleados.ver',
-                'mecanicos.ver',
-                'metodos-pago.ver',
-                'comprobantes.ver',
-                'solicitudes-permiso.ver',
-                'solicitudes-permiso.crear',
+                'ordenes.ver', 'ordenes.actualizar_estado',
+                'inventario.ver', 'servicios.ver', 'tipos-servicio.ver',
+                'proveedores.ver', 'repuestos.ver', 'empleados.ver', 'mecanicos.ver',
+                'metodos-pago.ver', 'comprobantes.ver',
+                'solicitudes-permiso.ver', 'solicitudes-permiso.crear',
             ])->pluck('id')
         );
     }

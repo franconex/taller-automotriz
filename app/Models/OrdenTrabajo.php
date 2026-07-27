@@ -93,4 +93,9 @@ class OrdenTrabajo extends Model
     {
         return $this->hasMany(Pago::class);
     }
+
+    public function fotos(): HasMany
+    {
+        return $this->hasMany(OrdenTrabajoFoto::class, 'orden_trabajo_id');
+    }
 }
