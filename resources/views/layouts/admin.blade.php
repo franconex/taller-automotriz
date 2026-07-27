@@ -120,8 +120,8 @@
                                 </a>
                             </li>
                             
-                            {{-- Solo mostramos Configuración si NO es Mecánico --}}
-                            @if ($rolNombre !== 'Mecánico')
+                            {{-- EXCLUSIVO ADMINISTRADOR: Oculto para Gerente y Mecánico --}}
+                            @if ($rolNombre === 'Administrador')
                                 <li>
                                     <a class="dropdown-item" href="{{ route('admin.configuracion.index') }}">
                                         <i class="bi bi-sliders" aria-hidden="true"></i>
