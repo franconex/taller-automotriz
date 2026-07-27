@@ -354,17 +354,53 @@ class CitaController extends AdminController
             return $this->respuestaAccion($request, 'Solo se pueden confirmar citas en estado pendiente.', false);
         }
 
-        DB::transaction(function () use ($cita) {
-            $cita->estado_anterior = $cita->estado;
-            $cita->estado = 'confirmada';
-            $cita->save();
-            $this->registrarAuditoria('citas', $cita->id, 'confirmar', [
-                'antes'  => $cita->estado_anterior,
-                'despues' => 'confirmada',
-            ]);
-        });
+        if ($cita->ordenTrabajo) {
+            return $this->respuestaAccion($request, 'La cita ya tiene una orden de trabajo asociada.', false);
+        }
 
-        return $this->respuestaAccion($request, 'La cita fue confirmada correctamente.', true);
+        try {
+            $orden = DB::transaction(function () use ($cita) {
+                $cita->estado_anterior = $cita->estado;
+                $cita->estado = 'confirmada';
+                $cita->save();
+
+                $siguienteId = (OrdenTrabajo::withTrashed()->max('id') ?? 0) + 1;
+                $numeroOrden = 'OT-' . str_pad((string) $siguienteId, 6, '0', STR_PAD_LEFT);
+
+                $orden = OrdenTrabajo::create([
+                    'numero_orden'          => $numeroOrden,
+                    'cliente_id'            => $cita->cliente_id,
+                    'vehiculo_id'           => $cita->vehiculo_id,
+                    'sucursal_id'           => $cita->sucursal_id,
+                    'usuario_recepcion_id'  => Auth::id(),
+                    'cita_id'               => $cita->id,
+                    'fecha_emision'         => now(),
+                    'descripcion_problema'  => $cita->descripcion_problema,
+                    'estado'                => 'recibida',
+                    'descuento'             => 0,
+                    'kilometraje_ingreso'   => 0,
+                ]);
+
+                $this->registrarAuditoria('citas', $cita->id, 'confirmar', [
+                    'antes'       => $cita->estado_anterior,
+                    'despues'     => 'confirmada',
+                    'orden_id'    => $orden->id,
+                    'orden_numero' => $orden->numero_orden,
+                ]);
+
+                return $orden;
+            });
+        } catch (\Throwable $e) {
+            return $this->respuestaAccion($request, 'No se pudo crear la orden: ' . $e->getMessage(), false);
+        }
+
+        $msg = "Cita confirmada. Se creó la orden {$orden->numero_orden}.";
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'message' => $msg, 'orden_id' => $orden->id]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     public function cancelar(Request $request, Cita $cita): RedirectResponse|JsonResponse
