@@ -65,10 +65,8 @@ class AuthenticatedSessionController extends Controller
     private function redirectBasedOnRole(User $user): string
     {
         return match ($user->rol->nombre) {
-            'Administrador' => '/admin/dashboard',
-            'Gerente' => '/gerente/dashboard',
-            'Recepcionista' => '/recepcion/dashboard',
-            'Mecánico' => '/mecanico/dashboard',
+            'Recepcionista' => route('admin.citas.index'),
+            default => route('admin.dashboard'),
         };
     }
 
@@ -87,13 +85,6 @@ class AuthenticatedSessionController extends Controller
     {
         $path = parse_url($url, PHP_URL_PATH) ?? '';
 
-        $panelPaths = [
-            'Administrador' => '/admin/dashboard',
-            'Gerente' => '/gerente/dashboard',
-            'Recepcionista' => '/recepcion/dashboard',
-            'Mecánico' => '/mecanico/dashboard',
-        ];
-
-        return str_ends_with($path, $panelPaths[$user->rol->nombre] ?? '');
+        return str_contains($path, '/admin/');
     }
 }
