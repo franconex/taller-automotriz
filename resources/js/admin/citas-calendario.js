@@ -128,35 +128,41 @@ import interactionPlugin from '@fullcalendar/interaction';
                 abrirDetalle(info.event.id);
             },
             eventContent(arg) {
-                const ev = arg.event;
-                const p = ev.extendedProps || {};
-                const esTimeGrid = arg.view.type === 'timeGridWeek' || arg.view.type === 'timeGridDay';
-                const esDayGrid = arg.view.type === 'dayGridMonth';
-                const h = formatHora(ev.start ? ev.start.toTimeString().slice(0, 8) : '');
-                const hf = formatHora(ev.end ? ev.end.toTimeString().slice(0, 8) : '');
-                const hTexto = (h && hf) ? `${h} - ${hf}` : h;
-                const cliente = p.cliente || '';
-                const vehiculo = p.vehiculo || '';
-                const servicio = p.servicio || '';
-                const estado = p.estado || '';
-                const color = COLORES[estado] || '#6B7280';
-                const html = esTimeGrid
-                    ? `<div class="cita-card cita-card--timegrid" style="--cita-color:${color}">` +
-                        `<div class="cita-card__hora">${escape(hTexto)}</div>` +
-                        `<div class="cita-card__cliente">${escape(cliente)}</div>` +
-                        (vehiculo ? `<div class="cita-card__vehiculo">${escape(vehiculo)}</div>` : '') +
-                        (servicio ? `<div class="cita-card__servicio">${escape(servicio)}</div>` : '') +
-                        `<div class="cita-card__estado" style="background:${color}">${escape(p.estado_label || estado)}</div>` +
-                    `</div>`
-                    : esDayGrid
-                    ? `<div class="cita-card cita-card--daygrid" style="--cita-color:${color}">` +
-                        `<span class="cita-card__dot" style="background:${color}"></span>` +
-                        `<span class="cita-card__cliente">${escape(cliente)}</span>` +
-                    `</div>`
-                    : `<div class="cita-card cita-card--list">` +
-                        `<span>${escape(hTexto)} ${escape(cliente)}${vehiculo ? ' · ' + escape(vehiculo) : ''}</span>` +
-                    `</div>`;
-                return { html };
+                try {
+                    const ev = arg.event;
+                    const p = ev.extendedProps || {};
+                    const esTimeGrid = arg.view.type === 'timeGridWeek' || arg.view.type === 'timeGridDay';
+                    const esDayGrid = arg.view.type === 'dayGridMonth';
+                    const h = ev.start ? String(ev.start.getHours()).padStart(2, '0') + ':' + String(ev.start.getMinutes()).padStart(2, '0') : '';
+                    const hf = ev.end ? String(ev.end.getHours()).padStart(2, '0') + ':' + String(ev.end.getMinutes()).padStart(2, '0') : '';
+                    const hTexto = (h && hf) ? h + ' - ' + hf : h;
+                    const cliente = p.cliente || '';
+                    const vehiculo = p.vehiculo || '';
+                    const servicio = p.servicio || '';
+                    const estado = p.estado || '';
+                    const color = COLORES[estado] || '#6B7280';
+                    var labelEstado = p.estado_label || estado;
+                    labelEstado = labelEstado.charAt(0).toUpperCase() + labelEstado.slice(1);
+
+                    if (esTimeGrid) {
+                        return { html: '<div class="cita-card cita-card--timegrid" style="--cita-color:' + color + '">' +
+                            '<div class="cita-card__hora">' + escape(hTexto) + '</div>' +
+                            '<div class="cita-card__cliente">' + escape(cliente) + '</div>' +
+                            (vehiculo ? '<div class="cita-card__vehiculo">' + escape(vehiculo) + '</div>' : '') +
+                            (servicio ? '<div class="cita-card__servicio">' + escape(servicio) + '</div>' : '') +
+                            '<div class="cita-card__estado" style="background:' + color + '">' + escape(labelEstado) + '</div>' +
+                        '</div>' };
+                    }
+                    if (esDayGrid) {
+                        return { html: '<div class="cita-card cita-card--daygrid">' +
+                            '<span class="cita-card__dot" style="background:' + color + '"></span>' +
+                            '<span class="cita-card__cliente">' + escape(cliente) + '</span>' +
+                        '</div>' };
+                    }
+                    return { html: '<span>' + escape(hTexto) + ' ' + escape(cliente) + (vehiculo ? ' \u00b7 ' + escape(vehiculo) : '') + '</span>' };
+                } catch (e) {
+                    return { html: '<span>' + escape(arg.event.title || 'Cita') + '</span>' };
+                }
             },
             select(info) {
                 if (!permitirCrear) return;

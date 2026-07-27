@@ -379,7 +379,6 @@
     border: none !important;
     background: transparent !important;
     cursor: pointer;
-    padding: 1px 2px;
 }
 
 /* ============ TARJETAS DE EVENTO (citas) ============ */
@@ -461,8 +460,8 @@
     padding: 1px 4px;
     font-size: .72rem;
     line-height: 1.3;
-    background: rgba(107, 114, 128, 0.12);
     border-radius: 4px;
+    background: rgba(107, 114, 128, 0.12);
 }
 
 .cita-card__dot {
