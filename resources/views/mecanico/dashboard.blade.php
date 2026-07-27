@@ -21,7 +21,8 @@
 
     <!-- Contenido Principal -->
     <div class="row g-4">
-        <div class="col-12 col-xl-8">
+        {{-- Ajustado a col-lg-6 col-xl-5 para que la tarjeta no se vea estirada en pantallas grandes --}}
+        <div class="col-12 col-md-8 col-lg-6 col-xl-5">
             <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center mb-3">

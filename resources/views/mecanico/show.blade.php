@@ -62,7 +62,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-success w-100 fw-bold py-2 shadow-sm rounded-3">
-                            💾 Guardar Diagnóstico y Estado
+                             Guardar Diagnóstico y Estado
                         </button>
                     </form>
                 </div>

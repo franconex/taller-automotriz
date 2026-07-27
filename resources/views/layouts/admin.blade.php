@@ -119,12 +119,17 @@
                                     Mi perfil
                                 </a>
                             </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('admin.configuracion.index') }}">
-                                    <i class="bi bi-sliders" aria-hidden="true"></i>
-                                    Configuración
-                                </a>
-                            </li>
+                            
+                            {{-- Solo mostramos Configuración si NO es Mecánico --}}
+                            @if ($rolNombre !== 'Mecánico')
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('admin.configuracion.index') }}">
+                                        <i class="bi bi-sliders" aria-hidden="true"></i>
+                                        Configuración
+                                    </a>
+                                </li>
+                            @endif
+                            
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}" class="m-0">

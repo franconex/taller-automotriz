@@ -1,5 +1,9 @@
 @php
     use Illuminate\Support\Facades\Route;
+    use Illuminate\Support\Facades\Auth;
+
+    // Identificamos de forma segura si el usuario autenticado tiene el rol de Mecánico
+    $esMecanico = Auth::check() && Auth::user()->rol->nombre === 'Mecánico';
 
     $items = [
         ['route' => 'admin.dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
@@ -59,17 +63,20 @@
 @endphp
 
 <nav class="admin-sidebar__nav" aria-label="Menú principal">
-    {{-- PRINCIPAL --}}
-    <div class="admin-sidebar__section">Principal</div>
-    <ul class="list-unstyled m-0">
-        <x-admin.sidebar-item
-            routeName="admin.dashboard"
-            icon="bi-speedometer2"
-            label="Dashboard" />
-    </ul>
+    
+    {{-- PRINCIPAL: Se oculta completamente si el usuario es Mecánico --}}
+    @if (!$esMecanico)
+        <div class="admin-sidebar__section">Principal</div>
+        <ul class="list-unstyled m-0">
+            <x-admin.sidebar-item
+                routeName="admin.dashboard"
+                icon="bi-speedometer2"
+                label="Dashboard" />
+        </ul>
+    @endif
 
-    {{-- MÓDULO MECÁNICO (Se muestra si existen las rutas de mecánico) --}}
-    @if (Route::has('mecanico.dashboard'))
+    {{-- MÓDULO MECÁNICO: Se muestra SOLO si el usuario es Mecánico --}}
+    @if ($esMecanico && Route::has('mecanico.dashboard'))
         <div class="admin-sidebar__section">MECÁNICO</div>
         <ul class="list-unstyled m-0">
             @foreach ($mecanicoOp as $item)
@@ -84,73 +91,76 @@
         </ul>
     @endif
 
-    {{-- ORGANIZACIÓN --}}
-    @if ($hasVisible($organizacion))
-        <div class="admin-sidebar__section">Organización</div>
-        <ul class="list-unstyled m-0">
-            @foreach ($organizacion as $item)
-                <x-admin.sidebar-item
-                    :routeName="$item['route']"
-                    :permission="$item['permission'] ?? null"
-                    :icon="$item['icon']"
-                    :label="$item['label']" />
-            @endforeach
-        </ul>
-    @endif
+    {{-- EL RESTO DEL MENÚ: Se bloquea totalmente para el Mecánico --}}
+    @if (!$esMecanico)
+        {{-- ORGANIZACIÓN --}}
+        @if ($hasVisible($organizacion))
+            <div class="admin-sidebar__section">Organización</div>
+            <ul class="list-unstyled m-0">
+                @foreach ($organizacion as $item)
+                    <x-admin.sidebar-item
+                        :routeName="$item['route']"
+                        :permission="$item['permission'] ?? null"
+                        :icon="$item['icon']"
+                        :label="$item['label']" />
+                @endforeach
+            </ul>
+        @endif
 
-    {{-- ATENCIÓN Y OPERACIÓN --}}
-    @if ($hasVisible($atencion))
-        <div class="admin-sidebar__section">Atención y operación</div>
-        <ul class="list-unstyled m-0">
-            @foreach ($atencion as $item)
-                <x-admin.sidebar-item
-                    :routeName="$item['route']"
-                    :permission="$item['permission'] ?? null"
-                    :icon="$item['icon']"
-                    :label="$item['label']" />
-            @endforeach
-        </ul>
-    @endif
+        {{-- ATENCIÓN Y OPERACIÓN --}}
+        @if ($hasVisible($atencion))
+            <div class="admin-sidebar__section">Atención y operación</div>
+            <ul class="list-unstyled m-0">
+                @foreach ($atencion as $item)
+                    <x-admin.sidebar-item
+                        :routeName="$item['route']"
+                        :permission="$item['permission'] ?? null"
+                        :icon="$item['icon']"
+                        :label="$item['label']" />
+                @endforeach
+            </ul>
+        @endif
 
-    {{-- SERVICIOS E INVENTARIO --}}
-    @if ($hasVisible($serviciosInventario))
-        <div class="admin-sidebar__section">Servicios e inventario</div>
-        <ul class="list-unstyled m-0">
-            @foreach ($serviciosInventario as $item)
-                <x-admin.sidebar-item
-                    :routeName="$item['route']"
-                    :permission="$item['permission'] ?? null"
-                    :icon="$item['icon']"
-                    :label="$item['label']" />
-            @endforeach
-        </ul>
-    @endif
+        {{-- SERVICIOS E INVENTARIO --}}
+        @if ($hasVisible($serviciosInventario))
+            <div class="admin-sidebar__section">Servicios e inventario</div>
+            <ul class="list-unstyled m-0">
+                @foreach ($serviciosInventario as $item)
+                    <x-admin.sidebar-item
+                        :routeName="$item['route']"
+                        :permission="$item['permission'] ?? null"
+                        :icon="$item['icon']"
+                        :label="$item['label']" />
+                @endforeach
+            </ul>
+        @endif
 
-    {{-- FINANZAS Y CONTROL --}}
-    @if ($hasVisible($finanzas))
-        <div class="admin-sidebar__section">Finanzas y control</div>
-        <ul class="list-unstyled m-0">
-            @foreach ($finanzas as $item)
-                <x-admin.sidebar-item
-                    :routeName="$item['route']"
-                    :permission="$item['permission'] ?? null"
-                    :icon="$item['icon']"
-                    :label="$item['label']" />
-            @endforeach
-        </ul>
-    @endif
+        {{-- FINANZAS Y CONTROL --}}
+        @if ($hasVisible($finanzas))
+            <div class="admin-sidebar__section">Finanzas y control</div>
+            <ul class="list-unstyled m-0">
+                @foreach ($finanzas as $item)
+                    <x-admin.sidebar-item
+                        :routeName="$item['route']"
+                        :permission="$item['permission'] ?? null"
+                        :icon="$item['icon']"
+                        :label="$item['label']" />
+                @endforeach
+            </ul>
+        @endif
 
-    {{-- SISTEMA --}}
-    @if ($hasVisible($sistema))
-        <div class="admin-sidebar__section">Sistema</div>
-        <ul class="list-unstyled m-0">
-            @foreach ($sistema as $item)
-                <x-admin.sidebar-item
-                    :routeName="$item['route']"
-                    :permission="$item['permission'] ?? null"
-                    :icon="$item['icon']"
-                    :label="$item['label']" />
-            @endforeach
-        </ul>
+        {{-- SISTEMA --}}
+        @if ($hasVisible($sistema))
+            <div class="admin-sidebar__section">Sistema</div>
+            <ul class="list-unstyled m-0">
+                @foreach ($sistema as $item)
+                    <x-admin.sidebar-item
+                        :routeName="$item['route']"
+                        :permission="$item['permission'] ?? null"
+                        :icon="$item['icon']"
+                        :label="$item['label']" />
+                @endforeach
+            </ul>
+        @endif
     @endif
 </nav>
