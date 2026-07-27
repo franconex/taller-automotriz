@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Contracts\Validation\Validator;
 
 class AdminFormRequest extends FormRequest
 {
@@ -19,6 +21,21 @@ class AdminFormRequest extends FormRequest
     public function attributes(): array
     {
         return [];
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        if ($this->expectsJson() || $this->ajax()) {
+            throw new HttpResponseException(
+                response()->json([
+                    'ok' => false,
+                    'message' => 'Error de validación.',
+                    'errors' => $validator->errors()->toArray(),
+                ], 422)
+            );
+        }
+
+        parent::failedValidation($validator);
     }
 
     public function messages(): array

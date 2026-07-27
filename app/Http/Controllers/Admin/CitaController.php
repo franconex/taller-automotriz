@@ -138,13 +138,12 @@ class CitaController extends AdminController
             $color    = $cita->estado_color;
 
             $fechaStr = $cita->fecha->format('Y-m-d');
-            $horaInicio = strlen((string) $cita->hora) === 5 ? $cita->hora . ':00' : (string) $cita->hora;
-            $start = Carbon::createFromFormat('Y-m-d H:i:s', $fechaStr . ' ' . $horaInicio);
+            $start = Carbon::parse($fechaStr . ' ' . $cita->hora);
 
             $horaFin = $cita->hora_fin
-                ? (strlen((string) $cita->hora_fin) === 5 ? $cita->hora_fin . ':00' : (string) $cita->hora_fin)
+                ? Carbon::parse($cita->hora_fin)->format('H:i:s')
                 : $start->copy()->addHour()->format('H:i:s');
-            $end = Carbon::createFromFormat('Y-m-d H:i:s', $fechaStr . ' ' . $horaFin);
+            $end = Carbon::parse($fechaStr . ' ' . $horaFin);
 
             return [
                 'id'              => $cita->id,

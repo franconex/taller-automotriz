@@ -131,7 +131,7 @@ class CitaRequest extends AdminFormRequest
     protected function calcularHoraFinPorDefecto(string $hora): string
     {
         try {
-            return Carbon::createFromFormat('H:i', $hora)->addHour()->format('H:i');
+            return Carbon::parse($hora)->addHour()->format('H:i');
         } catch (\Throwable $e) {
             return $hora;
         }
@@ -139,13 +139,13 @@ class CitaRequest extends AdminFormRequest
 
     protected function citaInicio(Cita $c): Carbon
     {
-        return Carbon::createFromFormat('Y-m-d H:i', $c->fecha->format('Y-m-d') . ' ' . $c->hora);
+        return Carbon::parse($c->fecha->format('Y-m-d') . ' ' . $c->hora);
     }
 
     protected function citaFin(Cita $c): Carbon
     {
-        $h = $c->hora_fin ?: Carbon::createFromFormat('H:i', $c->hora)->addHour()->format('H:i');
-        return Carbon::createFromFormat('Y-m-d H:i', $c->fecha->format('Y-m-d') . ' ' . $h);
+        $h = $c->hora_fin ?: Carbon::parse($c->hora)->addHour()->format('H:i');
+        return Carbon::parse($c->fecha->format('Y-m-d') . ' ' . $h);
     }
 
     public function attributes(): array

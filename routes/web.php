@@ -230,7 +230,6 @@ Route::middleware('auth')->group(function () {
             ->prefix('admin')
             ->name('admin.')
             ->group(function () {
-            // Rutas específicas ANTES del resource para evitar conflictos con {cita}
             Route::get('citas/eventos', [CitaController::class, 'eventos'])->name('citas.eventos');
             Route::get('citas/tabla-dia', [CitaController::class, 'tablaDia'])->name('citas.tabla-dia');
             Route::get('citas/proximas', [CitaController::class, 'proximas'])->name('citas.proximas');
@@ -243,7 +242,6 @@ Route::middleware('auth')->group(function () {
             Route::post('citas', [CitaController::class, 'store'])
                 ->middleware('permiso:citas.crear')
                 ->name('citas.store');
-            Route::resource('citas', CitaController::class)->except(['create', 'store', 'destroy']);
             Route::put('citas/{cita}/reprogramar', [CitaController::class, 'reprogramar'])
                 ->middleware('permiso:citas.editar')
                 ->name('citas.reprogramar');
@@ -259,6 +257,7 @@ Route::middleware('auth')->group(function () {
             Route::post('citas/{cita}/convertir-orden', [CitaController::class, 'convertirEnOrden'])
                 ->middleware('permiso:ordenes.crear')
                 ->name('citas.convertir-orden');
+            Route::resource('citas', CitaController::class)->except(['create', 'store', 'destroy']);
         });
 });
 
