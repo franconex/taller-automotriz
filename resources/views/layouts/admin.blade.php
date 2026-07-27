@@ -137,6 +137,7 @@
             </nav>
 
             <main id="adminMain" class="admin-main" tabindex="-1">
+                <x-admin.toast />
                 <x-admin.flash-message />
 
                 @hasSection('breadcrumb')

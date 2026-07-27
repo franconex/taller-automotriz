@@ -1323,3 +1323,84 @@ textarea.form-control,
     font-weight: 500;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
+
+/* ============================================
+   TOAST NOTIFICATIONS
+   ============================================ */
+.admin-toast {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 400px;
+    width: 100%;
+    pointer-events: none;
+}
+
+.admin-toast__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.8rem 1rem;
+    border-radius: var(--tp-radius);
+    background: #fff;
+    border: 1px solid var(--tp-border);
+    border-left: 4px solid var(--tp-info);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    font-size: 0.9rem;
+    color: var(--tp-text);
+    pointer-events: auto;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.admin-toast__item--visible {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.admin-toast__item--leaving {
+    transform: translateX(120%);
+    opacity: 0;
+}
+
+.admin-toast__item i {
+    font-size: 1.15rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+}
+
+.admin-toast__item span {
+    flex: 1;
+    line-height: 1.45;
+}
+
+.admin-toast__close {
+    background: transparent;
+    border: 0;
+    color: var(--tp-text-muted);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+.admin-toast__close:hover { color: var(--tp-text); }
+
+.admin-toast__item--success { border-left-color: var(--tp-success); }
+.admin-toast__item--success i { color: var(--tp-success); }
+
+.admin-toast__item--error { border-left-color: var(--tp-danger); }
+.admin-toast__item--error i { color: var(--tp-danger); }
+
+.admin-toast__item--warning { border-left-color: var(--tp-warning); }
+.admin-toast__item--warning i { color: var(--tp-warning); }
+
+.admin-toast__item--info { border-left-color: var(--tp-info); }
+.admin-toast__item--info i { color: var(--tp-info); }
