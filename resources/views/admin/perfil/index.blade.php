@@ -65,11 +65,13 @@
                     <h2 class="h6 fw-bold mb-3">
                         <i class="bi bi-person-badge me-1" aria-hidden="true"></i>
                         Datos personales
-                        <span class="cell-muted small fw-normal ms-2">(heredados del empleado)</span>
+                        @if ($empleado)
+                            <span class="cell-muted small fw-normal ms-2">(heredados del empleado)</span>
+                        @endif
                     </h2>
                     <dl class="admin-meta">
                         <dt>Nombre completo</dt>
-                        <dd>{{ $empleado->nombre_completo ?? $usuario->nombre }} <span class="cell-muted small">— Empleado</span></dd>
+                        <dd>{{ $empleado->nombre_completo ?? $usuario->nombre }}</dd>
                         @if ($empleado)
                             <dt>CI</dt><dd>{{ $empleado->ci ?? '—' }}</dd>
                             <dt>Teléfono</dt><dd>{{ $empleado->telefono ?? '—' }}</dd>
@@ -80,12 +82,17 @@
                                 <dt>Cargo</dt><dd>{{ $empleado->cargo }}</dd>
                             @endif
                             <dt>Sucursal</dt><dd>{{ $empleado->sucursal->nombre ?? '—' }}</dd>
+                        @else
+                            <dt>Correo</dt><dd>{{ $usuario->email ?? '—' }}</dd>
+                            <dt>Rol</dt><dd>{{ $usuario->rol->nombre ?? '—' }}</dd>
                         @endif
                     </dl>
+                    @if ($empleado)
                     <p class="cell-muted small mb-0">
                         <i class="bi bi-info-circle" aria-hidden="true"></i>
                         Para modificar estos datos, ve a <a href="{{ route('admin.empleados.index') }}">Empleados</a>.
                     </p>
+                    @endif
                 </div>
 
                 <div class="admin-table-wrap p-4">

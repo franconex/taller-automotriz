@@ -25,6 +25,8 @@ class PerfilController extends AdminController
         ]);
     }
 
+
+
     public function update(PerfilRequest $request): RedirectResponse
     {
         $user = auth()->user();
