@@ -121,7 +121,7 @@ import interactionPlugin from '@fullcalendar/interaction';
                 })
                     .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
                     .then((data) => {
-                        console.log('FullCalendar events loaded:', data.length, 'events for view', info.view.type, info.startStr, '-', info.endStr);
+                        console.log('FullCalendar events loaded:', data.length);
                         setLoading(false);
                         success(data);
                     })
