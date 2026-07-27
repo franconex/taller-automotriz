@@ -9,11 +9,21 @@ use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
-class UsuarioController extends AdminController
+class UsuarioController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permiso:usuarios.crear', only: ['create', 'store']),
+            new Middleware('permiso:usuarios.editar', only: ['edit', 'update', 'restablecerPassword']),
+            new Middleware('permiso:usuarios.desactivar', only: ['destroy', 'toggle']),
+        ];
+    }
     public function index(Request $request): View
     {
         $query = User::query()->with(['rol', 'sucursal']);

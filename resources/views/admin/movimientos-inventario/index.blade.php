@@ -133,6 +133,12 @@
                                        aria-label="Ver detalle">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
                                     </a>
+                                    <a href="{{ route('admin.movimientos-inventario.route', $m) }}"
+                                       class="btn-icon"
+                                       title="Ver ruta"
+                                       aria-label="Ver ruta">
+                                        <i class="bi bi-map" aria-hidden="true"></i>
+                                    </a>
                                     <form method="POST"
                                           action="{{ route('admin.movimientos-inventario.destroy', $m) }}"
                                           class="d-inline">

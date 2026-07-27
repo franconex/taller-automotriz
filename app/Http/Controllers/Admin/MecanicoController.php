@@ -8,10 +8,16 @@ use App\Models\Especialidad;
 use App\Models\Mecanico;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
-class MecanicoController extends AdminController
+class MecanicoController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [new Middleware('permiso:roles.editar')];
+    }
     public function index(Request $request): View
     {
         $query = Mecanico::query()

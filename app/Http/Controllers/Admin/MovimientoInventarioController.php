@@ -17,7 +17,7 @@ class MovimientoInventarioController extends AdminController
     public function index(Request $request): View
     {
         $query = MovimientoInventario::query()
-            ->with(['inventario.repuesto', 'inventario.sucursal', 'usuario']);
+            ->with(['inventario.repuesto', 'inventario.sucursal', 'sucursalOrigen', 'sucursalDestino', 'usuario']);
 
         if ($sucursalId = $this->usuarioSucursalId()) {
             $query->whereHas('inventario', fn ($q) => $q->where('sucursal_id', $sucursalId));
@@ -63,9 +63,13 @@ class MovimientoInventarioController extends AdminController
         $datos = $request->validated();
 
         DB::transaction(function () use ($datos) {
+            $sucursalId = $datos['tipo'] === 'transferencia'
+                ? $datos['sucursal_origen_id']
+                : $datos['sucursal_id'];
+
             $inventario = Inventario::firstOrCreate(
                 [
-                    'sucursal_id' => $datos['sucursal_id'],
+                    'sucursal_id' => $sucursalId,
                     'repuesto_id' => $datos['repuesto_id'],
                 ],
                 [
@@ -95,6 +99,24 @@ class MovimientoInventarioController extends AdminController
                 in_array($datos['tipo'], ['ajuste', 'ajuste_negativo']) => $cantidad,
                 default => $anterior,
             };
+            };
+
+            if ($datos['tipo'] === 'transferencia' && ! empty($datos['sucursal_destino_id'])) {
+                $invDestino = Inventario::firstOrCreate(
+                    [
+                        'sucursal_id' => $datos['sucursal_destino_id'],
+                        'repuesto_id' => $datos['repuesto_id'],
+                    ],
+                    [
+                        'cantidad_actual' => 0,
+                        'cantidad_reservada' => 0,
+                        'fecha_actualizacion' => now(),
+                    ]
+                );
+                $invDestino->cantidad_actual = (int) $invDestino->cantidad_actual + $cantidad;
+                $invDestino->fecha_actualizacion = now();
+                $invDestino->save();
+            }
 
             $inventario->cantidad_actual = $nuevo;
             $inventario->fecha_actualizacion = now();
@@ -116,6 +138,8 @@ class MovimientoInventarioController extends AdminController
 
             MovimientoInventario::create([
                 'inventario_id' => $inventario->id,
+                'sucursal_origen_id' => $datos['sucursal_origen_id'] ?? null,
+                'sucursal_destino_id' => $datos['sucursal_destino_id'] ?? null,
                 'usuario_id' => auth()->id(),
                 'orden_trabajo_id' => $datos['orden_trabajo_id'] ?? null,
                 'tipo' => $datos['tipo'],
@@ -132,7 +156,7 @@ class MovimientoInventarioController extends AdminController
 
     public function show(MovimientoInventario $movimiento): View
     {
-        $movimiento->load(['inventario.repuesto', 'inventario.sucursal', 'usuario', 'ordenTrabajo']);
+        $movimiento->load(['inventario.repuesto', 'inventario.sucursal', 'sucursalOrigen', 'sucursalDestino', 'usuario', 'ordenTrabajo']);
 
         return view('admin.movimientos-inventario.show', [
             'movimiento' => $movimiento,
@@ -144,5 +168,27 @@ class MovimientoInventarioController extends AdminController
         $movimiento->delete();
 
         return $this->redirigirConExito('movimientos de inventario', 'eliminado');
+    }
+
+    public function route(MovimientoInventario $movimiento): View
+    {
+        $movimiento->load([
+            'inventario.repuesto',
+            'inventario.sucursal',
+            'sucursalOrigen',
+            'sucursalDestino',
+            'usuario',
+        ]);
+
+        $sucursales = Sucursal::query()
+            ->whereNotNull('latitud')
+            ->whereNotNull('longitud')
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.movimientos-inventario.route', [
+            'movimiento' => $movimiento,
+            'sucursales' => $sucursales,
+        ]);
     }
 }

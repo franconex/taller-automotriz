@@ -15,6 +15,8 @@ class Sucursal extends Model
     protected $fillable = [
         'nombre',
         'direccion',
+        'latitud',
+        'longitud',
         'telefono',
         'horario_atencion',
         'estado',

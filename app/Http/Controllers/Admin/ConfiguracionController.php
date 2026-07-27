@@ -5,10 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
-class ConfiguracionController extends AdminController
+class ConfiguracionController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [new Middleware('permiso:roles.editar')];
+    }
     public function index(): View
     {
         $config = [

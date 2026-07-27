@@ -10,11 +10,20 @@ use App\Models\TipoUso;
 use App\Models\Vehiculo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
-class ClienteController extends AdminController
+class ClienteController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permiso:clientes.crear', only: ['create', 'store']),
+            new Middleware('permiso:clientes.editar', only: ['edit', 'update', 'destroy', 'toggle']),
+        ];
+    }
     public function index(Request $request): View
     {
         $query = Cliente::query();

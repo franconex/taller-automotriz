@@ -14,6 +14,10 @@
         :title="'Movimiento #' . $movimiento->id"
         :description="$movimiento->fecha_movimiento?->format('d/m/Y H:i')">
         <x-slot:actions>
+            <a href="{{ route('admin.movimientos-inventario.route', $movimiento) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-map" aria-hidden="true"></i>
+                Ver ruta
+            </a>
             <a href="{{ route('admin.movimientos-inventario.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 Volver
@@ -33,15 +37,20 @@
                                 'entrada' => 'success',
                                 'salida' => 'warning',
                                 'ajuste' => 'info',
+                                'transferencia' => 'primary',
                                 default => 'neutral',
                             }"
                             :icon="match($movimiento->tipo) {
                                 'entrada' => 'bi-plus-circle-fill',
                                 'salida' => 'bi-dash-circle-fill',
                                 'ajuste' => 'bi-arrow-left-right',
+                                'transferencia' => 'bi-arrow-left-right',
                                 default => 'bi-circle',
                             }"
-                            :label="ucfirst($movimiento->tipo)" />
+                            :label="match($movimiento->tipo) {
+                                'transferencia' => 'Transferencia',
+                                default => ucfirst($movimiento->tipo),
+                            }" />
                     </dd>
                     <dt>Cantidad</dt><dd>{{ $movimiento->cantidad }}</dd>
                     <dt>Existencia anterior</dt><dd>{{ $movimiento->existencia_anterior }}</dd>
@@ -67,6 +76,14 @@
                     </dd>
                     <dt>Sucursal</dt>
                     <dd>{{ optional($movimiento->inventario->sucursal)->nombre ?? '—' }}</dd>
+                    @if ($movimiento->sucursalOrigen)
+                        <dt>Sucursal origen</dt>
+                        <dd>{{ $movimiento->sucursalOrigen->nombre }}</dd>
+                    @endif
+                    @if ($movimiento->sucursalDestino)
+                        <dt>Sucursal destino</dt>
+                        <dd>{{ $movimiento->sucursalDestino->nombre }}</dd>
+                    @endif
                 </dl>
             </div>
         </div>

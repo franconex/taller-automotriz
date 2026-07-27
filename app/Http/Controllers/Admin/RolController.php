@@ -7,10 +7,19 @@ use App\Models\Permiso;
 use App\Models\Rol;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
-class RolController extends AdminController
+class RolController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permiso:roles.editar', only: ['create', 'store', 'edit', 'update', 'destroy', 'toggle']),
+            new Middleware('permiso:permisos.asignar', only: ['permisos', 'actualizarPermisos']),
+        ];
+    }
     public function index(Request $request): View
     {
         $query = Rol::query();

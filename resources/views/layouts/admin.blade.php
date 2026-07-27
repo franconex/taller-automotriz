@@ -55,9 +55,9 @@
                 <div class="admin-mobile-drawer__brand">
                     <img src="{{ asset('img/logo-modo-oscuro.png') }}" alt="Taller Pro">
                 </div>
-                @include('layouts.partials.sidebar-menu')
-            </div>
-        </aside>
+                    @include('layouts.partials.sidebar-menu')
+                </div>
+            </aside>
 
         <div class="admin-content">
             <nav class="admin-navbar" aria-label="Barra superior">
@@ -119,12 +119,6 @@
                                 <a class="dropdown-item" href="{{ route('admin.perfil.index') }}">
                                     <i class="bi bi-person" aria-hidden="true"></i>
                                     Mi perfil
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('admin.configuracion.index') }}">
-                                    <i class="bi bi-sliders" aria-hidden="true"></i>
-                                    Configuración
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>

@@ -12,10 +12,19 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
-class InventarioController extends AdminController
+class InventarioController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permiso:inventario.ajustar', only: ['edit', 'update', 'toggle']),
+            new Middleware('permiso:roles.editar', only: ['destroy']),
+        ];
+    }
     public function index(Request $request): View
     {
         $query = Repuesto::query()

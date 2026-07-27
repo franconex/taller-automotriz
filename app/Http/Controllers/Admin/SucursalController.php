@@ -6,10 +6,19 @@ use App\Http\Requests\Admin\SucursalRequest;
 use App\Models\Sucursal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
-class SucursalController extends AdminController
+class SucursalController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permiso:sucursales.crear', only: ['create', 'store']),
+            new Middleware('permiso:sucursales.editar', only: ['edit', 'update', 'destroy', 'toggle']),
+        ];
+    }
     public function index(Request $request): View
     {
         $query = Sucursal::query();

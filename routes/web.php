@@ -43,17 +43,14 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 
-    Route::get('/gerente/dashboard', function () {
-        return view('gerente.dashboard');
-    })->middleware('rol:Gerente')->name('gerente.dashboard');
+    Route::get('/gerente/dashboard', [DashboardController::class, 'index'])
+        ->middleware('rol:Gerente')->name('gerente.dashboard');
 
-    Route::get('/recepcion/dashboard', function () {
-        return view('recepcion.dashboard');
-    })->middleware('rol:Recepcionista')->name('recepcion.dashboard');
+    Route::get('/recepcion/dashboard', [DashboardController::class, 'index'])
+        ->middleware('rol:Recepcionista')->name('recepcion.dashboard');
 
-    Route::get('/mecanico/dashboard', function () {
-        return view('mecanico.dashboard');
-    })->middleware('rol:Mecánico')->name('mecanico.dashboard');
+    Route::get('/mecanico/dashboard', [DashboardController::class, 'index'])
+        ->middleware('rol:Mecánico')->name('mecanico.dashboard');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'index'])->name('perfil.index');
@@ -74,7 +71,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('admin')
-        ->middleware('rol:Administrador')
+        ->middleware('rol:Administrador,Gerente,Recepcionista,Mecánico')
         ->name('admin.')
         ->group(function () {
 
@@ -114,11 +111,11 @@ Route::middleware('auth')->group(function () {
             // (citas movido fuera del grupo admin, ver bloque más abajo)
 
             Route::resource('ordenes', OrdenTrabajoController::class);
-            Route::patch('ordenes/{orden}/toggle', [OrdenTrabajoController::class, 'toggle'])
+            Route::patch('ordenes/{ordene}/toggle', [OrdenTrabajoController::class, 'toggle'])
                 ->name('ordenes.toggle');
-            Route::patch('ordenes/{orden}/estado', [OrdenTrabajoController::class, 'cambiarEstadoOrden'])
+            Route::patch('ordenes/{ordene}/estado', [OrdenTrabajoController::class, 'cambiarEstadoOrden'])
                 ->name('ordenes.cambiar-estado');
-            Route::patch('ordenes/{orden}/cancelar', [OrdenTrabajoController::class, 'cancelar'])
+            Route::patch('ordenes/{ordene}/cancelar', [OrdenTrabajoController::class, 'cancelar'])
                 ->name('ordenes.cancelar');
 
             Route::get('ordenes/{orden}/repuestos', [OrdenTrabajoController::class, 'editRepuestos'])
@@ -166,6 +163,8 @@ Route::middleware('auth')->group(function () {
             Route::resource('movimientos-inventario', MovimientoInventarioController::class)
                 ->parameters(['movimientos-inventario' => 'movimiento'])
                 ->except(['edit', 'update']);
+            Route::get('movimientos-inventario/{movimiento}/route', [MovimientoInventarioController::class, 'route'])
+                ->name('movimientos-inventario.route');
 
             Route::resource('metodos-pago', MetodoPagoController::class)
                 ->parameters(['metodos-pago' => 'metodoPago'])

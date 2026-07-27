@@ -11,10 +11,36 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
-class RepuestoController extends AdminController
+class RepuestoController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [new Middleware('permiso:roles.editar')];
+    }
+    public function index(Request $request): View
+    {
+        $query = Repuesto::query()->with('proveedor');
+
+        $this->aplicarFiltros($request, $query, ['estado', 'proveedor_id']);
+        $this->aplicarBusqueda($query, $request, [
+            'codigo',
+            'nombre',
+            'descripcion',
+        ]);
+
+        $repuestos = $query->orderBy('nombre')->paginate(15)->withQueryString();
+
+        $proveedores = Proveedor::orderBy('nombre_empresa')->get();
+
+        return view('admin.repuestos.index', [
+            'repuestos' => $repuestos,
+            'proveedores' => $proveedores,
+        ]);
+    }
     public function create(): View
     {
         $categorias = Repuesto::whereNotNull('categoria')->distinct()->orderBy('categoria')->pluck('categoria');
