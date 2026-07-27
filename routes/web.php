@@ -43,14 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 
-    Route::get('/gerente/dashboard', [DashboardController::class, 'index'])
-        ->middleware('rol:Gerente')->name('gerente.dashboard');
 
-    Route::get('/recepcion/dashboard', [DashboardController::class, 'index'])
-        ->middleware('rol:Recepcionista')->name('recepcion.dashboard');
-
-    Route::get('/mecanico/dashboard', [DashboardController::class, 'index'])
-        ->middleware('rol:Mecánico')->name('mecanico.dashboard');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('perfil', [\App\Http\Controllers\Admin\PerfilController::class, 'index'])->name('perfil.index');
@@ -76,6 +69,7 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
 
             Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->middleware('permiso:dashboard.ver')
                 ->name('dashboard');
 
             Route::resource('sucursales', SucursalController::class);
