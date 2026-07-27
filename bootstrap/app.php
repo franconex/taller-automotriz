@@ -2,15 +2,15 @@
 
 use App\Http\Middleware\PermisoMiddleware;
 use App\Http\Middleware\RolMiddleware;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Illuminate\Auth\Access\AuthorizationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -67,27 +67,27 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (HttpException $e, Request $request) {
-            if ($e->getStatusCode() === 419) {
+            $status = $e->getStatusCode();
+
+            if ($status === 419) {
                 if ($request->expectsJson()) {
                     return response()->json(['error' => 'Sesión expirada.'], 419);
                 }
                 return response()->view('errors.419', [], 419);
             }
-            if ($e->getStatusCode() === 503) {
+
+            if ($status === 503) {
                 if ($request->expectsJson()) {
                     return response()->json(['error' => 'Sistema en mantenimiento.'], 503);
                 }
                 return response()->view('errors.503', [], 503);
             }
-        });
 
-        $exceptions->render(function (Throwable $e, Request $request) {
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'Error interno del servidor.'], 500);
+            if ($status === 500) {
+                if ($request->expectsJson()) {
+                    return response()->json(['error' => 'Error interno del servidor.'], 500);
+                }
+                return response()->view('errors.500', [], 500);
             }
-            if (app()->isDownForMaintenance()) {
-                return response()->view('errors.503', [], 503);
-            }
-            return response()->view('errors.500', [], 500);
         });
     })->create();
