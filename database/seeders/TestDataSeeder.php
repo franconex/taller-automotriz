@@ -374,51 +374,59 @@ class TestDataSeeder extends Seeder
             );
         }
 
-        $this->command->info('Creando citas pasadas y futuras...');
         $hoy = Carbon::today();
+        $citas = Cita::whereIn('estado', ['pendiente', 'confirmada', 'atendida'])->limit(10)->get();
+        $citasCount = Cita::count();
 
-        $citasData = [
-            [$clientes[0], $vehiculos[0], 'Mantenimiento', 'Cambio de aceite y filtro', $hoy->subDays(5), '09:00', $servicios[0]->id ?? null, 'atendida', 'confirmada'],
-            [$clientes[1], $vehiculos[1], 'Reparacion', 'Frenos hacen ruido', $hoy->subDays(3), '10:30', $servicios[3]->id ?? null, 'atendida', 'confirmada'],
-            [$clientes[2], $vehiculos[2], 'Diagnostico', 'Se enciende luz de check engine', $hoy->subDays(1), '08:00', $servicios[4]->id ?? null, 'confirmada', 'pendiente'],
-            [$clientes[3], $vehiculos[3], 'Mantenimiento', 'Alineacion y balanceo', $hoy->addDays(1), '14:00', $servicios[1]->id ?? null, 'pendiente', 'pendiente'],
-            [$clientes[4], $vehiculos[4], 'Reparacion', 'Aire acondicionado no enfria', $hoy->addDays(2), '09:30', $servicios[10]->id ?? null, 'pendiente', 'pendiente'],
-            [$clientes[5], $vehiculos[5], 'Revision', 'Revision general antes de viaje', $hoy->addDays(3), '11:00', $servicios[5]->id ?? null, 'pendiente', 'pendiente'],
-            [$clientes[0], $vehiculos[0], 'Reparacion', 'Suspension trasera ruidosa', $hoy->subDays(10), '08:30', $servicios[18]->id ?? null, 'cancelada', 'cancelada'],
-            [$clientes[6], $vehiculos[6], 'Mantenimiento', 'Cambio de pastillas de freno', $hoy->subDays(2), '15:00', $servicios[3]->id ?? null, 'atendida', 'confirmada'],
-            [$clientes[7], $vehiculos[7], 'Diagnostico', 'Auto no enciende bien en las mananas', $hoy->subDays(7), '09:00', $servicios[4]->id ?? null, 'atendida', 'confirmada'],
-            [$clientes[8], $vehiculos[8], 'Reparacion', 'Embrague patina', $hoy->addDays(5), '10:00', $servicios[19]->id ?? null, 'pendiente', 'pendiente'],
-        ];
+        if ($citasCount <= 5) {
+            $this->command->info('Creando citas nuevas...');
+            $horas = ['08:00', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00'];
+            $tipos = ['diagnostico', 'mantenimiento', 'reparacion'];
+            $citas = [];
+            $idx = 0;
 
-        $citas = [];
-        foreach ($citasData as $c) {
-            $citas[] = Cita::create([
-                'cliente_id' => $c[0]->id,
-                'vehiculo_id' => $c[1]->id,
-                'sucursal_id' => $sucursal->id,
-                'usuario_id' => ($userRecepcion ? $userRecepcion->id : ($userAdmin->id ?? 1)),
-                'servicio_id' => $c[6],
-                'fecha' => $c[4],
-                'hora' => $c[5],
-                'tipo' => $c[2],
-                'descripcion_problema' => $c[3],
-                'estado' => $c[7],
-                'estado_anterior' => null,
-                'deja_vehiculo' => rand(0, 1),
-                'costo_consulta' => 0,
-            ]);
+            foreach ([-5, -4, -3, -2, -1, -0, 1, 2, 3, 4, 5, 6, 7] as $offset) {
+                $fecha = $hoy->copy()->addDays($offset);
+                $porDia = rand(1, 3);
+                for ($i = 0; $i < $porDia; $i++) {
+                    $cliente = $clientes[$idx % count($clientes)];
+                    $vehiculo = $vehiculos->where('cliente_id', $cliente->id)->first() ?? $vehiculos->first();
+                    $tipo = $tipos[array_rand($tipos)];
+                    $servicioId = $tipo === 'diagnostico' ? 5 : ($tipo === 'mantenimiento' ? 1 : null);
+                    $estado = $offset < 0 ? 'atendida' : (rand(0, 1) ? 'confirmada' : 'pendiente');
+
+                    $citas[] = Cita::create([
+                        'cliente_id' => $cliente->id,
+                        'vehiculo_id' => $vehiculo->id,
+                        'sucursal_id' => $sucursal->id,
+                        'usuario_id' => ($userRecepcion ? $userRecepcion->id : ($userAdmin->id ?? 1)),
+                        'servicio_id' => $servicioId,
+                        'fecha' => $fecha,
+                        'hora' => $horas[array_rand($horas)],
+                        'tipo' => $tipo,
+                        'descripcion_problema' => 'Cita de ' . $tipo . ' - ' . $cliente->nombre_completo,
+                        'estado' => $estado,
+                        'estado_anterior' => null,
+                        'deja_vehiculo' => $tipo !== 'diagnostico' || rand(0, 1),
+                        'costo_consulta' => 0,
+                    ]);
+                    $idx++;
+                }
+            }
+        } else {
+            $this->command->info('Citas existentes: ' . $citasCount . ', se reutilizan.');
         }
 
         $this->command->info('Creando ordenes de trabajo...');
         $ordenesData = [
-            [$clientes[0], $vehiculos[0], $hoy->subDays(5), 'Cambio de aceite y filtro programado', 'finalizada', 80, 45, 0, 125, $citas[0] ?? null],
-            [$clientes[1], $vehiculos[1], $hoy->subDays(3), 'Ruido en frenos delanteros al frenar', 'finalizada', 150, 160, 10, 300, $citas[1] ?? null],
-            [$clientes[8], $vehiculos[8], $hoy->subDays(12), 'Perdida de potencia y vibracion', 'en_proceso', 0, 450, 0, 450, null],
-            [$clientes[3], $vehiculos[3], $hoy->subDays(1), 'Alineacion y balanceo de las 4 ruedas', 'diagnostico', 120, 0, 0, 120, null],
-            [$clientes[6], $vehiculos[6], $hoy->subDays(2), 'Cambio de pastillas y discos de freno', 'finalizada', 150, 440, 20, 570, $citas[7] ?? null],
-            [$clientes[7], $vehiculos[7], $hoy->subDays(7), 'Dificultad para encender en frio', 'finalizada', 200, 250, 0, 450, $citas[8] ?? null],
-            [$clientes[4], $vehiculos[4], $hoy->subDays(1), 'Aire acondicionado no enfria lo suficiente', 'recibida', 400, 0, 0, 400, $citas[4] ?? null],
-            [$clientes[9], $vehiculos[9], $hoy->subDays(3), 'Revision de 5000 km', 'finalizada', 100, 105, 0, 205, null],
+            [$clientes[0], $vehiculos[0], $hoy->copy()->subDays(5), 'Cambio de aceite y filtro programado', 'finalizada', 80, 45, 0, 125, isset($citas[0]) ? $citas[0] : null],
+            [$clientes[1], $vehiculos[1], $hoy->copy()->subDays(3), 'Ruido en frenos delanteros al frenar', 'finalizada', 150, 160, 10, 300, isset($citas[1]) ? $citas[1] : null],
+            [$clientes[8], $vehiculos[8], $hoy->copy()->subDays(12), 'Perdida de potencia y vibracion', 'en_proceso', 0, 450, 0, 450, null],
+            [$clientes[3], $vehiculos[3], $hoy->copy()->subDays(1), 'Alineacion y balanceo de las 4 ruedas', 'diagnostico', 120, 0, 0, 120, null],
+            [$clientes[6], $vehiculos[6], $hoy->copy()->subDays(2), 'Cambio de pastillas y discos de freno', 'finalizada', 150, 440, 20, 570, isset($citas[3]) ? $citas[3] : null],
+            [$clientes[7], $vehiculos[7], $hoy->copy()->subDays(7), 'Dificultad para encender en frio', 'finalizada', 200, 250, 0, 450, isset($citas[4]) ? $citas[4] : null],
+            [$clientes[4], $vehiculos[4], $hoy->copy()->subDays(1), 'Aire acondicionado no enfria lo suficiente', 'recibida', 400, 0, 0, 400, isset($citas[5]) ? $citas[5] : null],
+            [$clientes[9], $vehiculos[9], $hoy->copy()->subDays(3), 'Revision de 5000 km', 'finalizada', 100, 105, 0, 205, null],
         ];
 
         $ordenes = [];
