@@ -933,6 +933,13 @@ import interactionPlugin from '@fullcalendar/interaction';
        =========================================================== */
 
     document.addEventListener('DOMContentLoaded', function () {
+        // Fix aria-hidden al cerrar modales (Bootstrap focus management)
+        document.addEventListener('hidden.bs.modal', function () {
+            if (document.activeElement && document.activeElement !== document.body) {
+                document.activeElement.blur();
+            }
+        });
+
         initMainCalendar();
         initMiniCalendar();
         bindToolbar();
