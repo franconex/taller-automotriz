@@ -29,12 +29,12 @@
     </div>
     <x-admin.form-field name="codigo_fabricante" label="Código del fabricante" :value="$repuesto->codigo_fabricante ?? null" />
     <x-admin.form-field name="marca" label="Marca" :value="$repuesto->marca ?? null" />
-    <x-admin.form-field name="categoria" label="Categoría" :value="$repuesto->categoria ?? null" list="categoriasList" />
-    <datalist id="categoriasList">
-        @foreach (($categorias ?? collect()) as $cat)
-            <option value="{{ $cat }}">
+    <x-admin.form-field name="categoria_id" label="Categoría" type="select" :value="$repuesto->categoria_id ?? null">
+        <option value="">— Sin categoría —</option>
+        @foreach (\App\Models\Categoria::where('activo', true)->orderBy('nombre')->get() as $cat)
+            <option value="{{ $cat->id }}" @selected(($repuesto->categoria_id ?? null) == $cat->id)>{{ $cat->nombre }}</option>
         @endforeach
-    </datalist>
+    </x-admin.form-field>
     <x-admin.form-field name="descripcion" label="Descripción" type="textarea" :value="$repuesto->descripcion ?? null" />
 
     <h3 class="h6 fw-bold mt-4 mb-2">Precios</h3>

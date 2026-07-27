@@ -165,6 +165,8 @@ Route::middleware('auth')->group(function () {
             Route::resource('repuestos', RepuestoController::class)->except(['index', 'show']);
 
             Route::resource('inventario', InventarioController::class)->except(['create', 'store']);
+            Route::get('inventario/buscar/sugerencias', [InventarioController::class, 'buscarSugerencias'])
+                ->name('inventario.buscar.sugerencias');
             Route::post('inventario/entrada-rapida', [InventarioController::class, 'entradaRapida'])
                 ->name('inventario.entrada-rapida');
             Route::post('inventario/entrada', [InventarioController::class, 'registrarEntrada'])

@@ -23,6 +23,7 @@ class RepuestoRequest extends AdminFormRequest
             'tipo' => ['required', 'string', 'in:repuesto,herramienta'],
             'nombre' => ['required', 'string', 'max:150'],
             'categoria' => ['nullable', 'string', 'max:100'],
+            'categoria_id' => ['nullable', 'exists:categorias,id'],
             'marca' => ['nullable', 'string', 'max:100'],
             'descripcion' => ['nullable', 'string', 'max:1000'],
             'costo_compra' => ['nullable', 'numeric', 'min:0'],

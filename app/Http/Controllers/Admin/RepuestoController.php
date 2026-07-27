@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\Admin\EscanerBuscarRequest;
 use App\Http\Requests\Admin\RepuestoRequest;
+use App\Models\Categoria;
 use App\Models\Inventario;
 use App\Models\MovimientoInventario;
 use App\Models\Repuesto;
@@ -47,9 +48,8 @@ class RepuestoController extends AdminController implements HasMiddleware
     }
     public function create(): View
     {
-        $categorias = Repuesto::whereNotNull('categoria')->distinct()->orderBy('categoria')->pluck('categoria');
         return view('admin.repuestos.create', [
-            'categorias' => $categorias,
+            'categorias' => Categoria::where('activo', true)->orderBy('nombre')->get(),
             'repuesto' => new \App\Models\Repuesto(),
         ]);
     }
@@ -142,8 +142,10 @@ class RepuestoController extends AdminController implements HasMiddleware
 
     public function edit(Repuesto $repuesto): View
     {
-        $categorias = Repuesto::whereNotNull('categoria')->distinct()->orderBy('categoria')->pluck('categoria');
-        return view('admin.repuestos.edit', ['repuesto' => $repuesto, 'categorias' => $categorias]);
+        return view('admin.repuestos.edit', [
+            'repuesto' => $repuesto,
+            'categorias' => Categoria::where('activo', true)->orderBy('nombre')->get(),
+        ]);
     }
 
     public function update(RepuestoRequest $request, Repuesto $repuesto): RedirectResponse

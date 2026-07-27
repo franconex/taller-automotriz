@@ -45,6 +45,11 @@ class Repuesto extends Model
         return $this->belongsTo(Proveedor::class);
     }
 
+    public function categoria(): BelongsTo
+    {
+        return $this->belongsTo(Categoria::class, 'categoria_id');
+    }
+
     public function inventarios(): HasMany
     {
         return $this->hasMany(Inventario::class);

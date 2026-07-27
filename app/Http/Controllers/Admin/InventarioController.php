@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\Categoria;
 use App\Models\Inventario;
 use App\Models\MovimientoInventario;
 use App\Models\Proveedor;
@@ -30,10 +31,11 @@ class InventarioController extends AdminController implements HasMiddleware
         $query = Repuesto::query()
             ->select('repuestos.*')
             ->with(['inventarios' => fn ($q) => $q->select('repuesto_id', 'cantidad_actual', 'cantidad_reservada')])
+            ->with('categoria')
             ->where('estado', true);
 
-        $this->aplicarFiltros($request, $query, ['tipo']);
-        $this->aplicarBusqueda($query, $request, ['nombre', 'codigo', 'codigo_barras', 'marca']);
+        $this->aplicarFiltros($request, $query, ['tipo', 'categoria_id']);
+        $this->aplicarBusqueda($query, $request, ['nombre', 'codigo', 'codigo_barras', 'marca', 'categoria', 'categoria.nombre']);
 
         if ($request->filled('stock')) {
             if ($request->stock === 'bajo') {
@@ -52,15 +54,8 @@ class InventarioController extends AdminController implements HasMiddleware
 
         $proveedores = Proveedor::where('estado', true)->orderBy('nombre_empresa')->get();
 
-        $categorias = Repuesto::whereNotNull('categoria')
-            ->distinct()
-            ->orderBy('categoria')
-            ->pluck('categoria');
-
-        $marcas = Repuesto::whereNotNull('marca')
-            ->distinct()
-            ->orderBy('marca')
-            ->pluck('marca');
+        $categorias = Categoria::where('activo', true)->orderBy('nombre')->get();
+        $marcas = Repuesto::whereNotNull('marca')->distinct()->orderBy('marca')->pluck('marca');
 
         return view('admin.inventario.index', [
             'productos' => $productos,
@@ -69,6 +64,55 @@ class InventarioController extends AdminController implements HasMiddleware
             'categorias' => $categorias,
             'marcas' => $marcas,
         ]);
+    }
+
+    public function buscarSugerencias(Request $request)
+    {
+        $q = $request->input('q', '');
+
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
+
+        $productos = Repuesto::where('estado', true)
+            ->where(function ($query) use ($q) {
+                $query->where('nombre', 'like', "%{$q}%")
+                    ->orWhere('codigo', 'like', "%{$q}%")
+                    ->orWhere('codigo_barras', 'like', "%{$q}%")
+                    ->orWhere('marca', 'like', "%{$q}%");
+            })
+            ->with('categoria')
+            ->limit(8)
+            ->get()
+            ->map(fn ($r) => [
+                'id' => $r->id,
+                'text' => "{$r->nombre} ({$r->codigo})",
+                'nombre' => $r->nombre,
+                'codigo' => $r->codigo,
+                'marca' => $r->marca,
+                'categoria' => $r->categoria?->nombre,
+                'stock' => (int) $r->inventarios()->sum('cantidad_actual'),
+            ]);
+
+        $categorias = Categoria::where('activo', true)
+            ->where('nombre', 'like', "%{$q}%")
+            ->limit(5)
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'text' => "[Categoría] {$c->nombre}",
+                'tipo' => 'categoria',
+            ]);
+
+        $sugerencias = collect();
+
+        if ($categorias->isNotEmpty() && $productos->where('categoria', 'like', "%{$q}%")->isEmpty()) {
+            $sugerencias = $sugerencias->merge($categorias);
+        }
+
+        $sugerencias = $sugerencias->merge($productos);
+
+        return response()->json($sugerencias);
     }
 
     public function entradaRapida(Request $request): RedirectResponse
@@ -178,6 +222,7 @@ class InventarioController extends AdminController implements HasMiddleware
             'nombre' => ['required', 'string', 'max:150'],
             'tipo' => ['required', 'in:repuesto,herramienta'],
             'categoria' => ['nullable', 'string', 'max:100'],
+            'categoria_id' => ['nullable', 'exists:categorias,id'],
             'marca' => ['nullable', 'string', 'max:100'],
             'descripcion' => ['nullable', 'string', 'max:1000'],
             'cantidad' => ['required', 'integer', 'min:0'],

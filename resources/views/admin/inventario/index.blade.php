@@ -64,8 +64,15 @@
     <x-admin.filters
         :action="route('admin.inventario.index')"
         search-name="q"
-        search-placeholder="Buscar por nombre, código o marca">
+        search-placeholder="Buscar por nombre, código, marca o categoría..."
+        search-id="inventario-search">
         <x-slot:filters>
+            <select name="categoria_id" class="form-select" style="max-width:180px;" onchange="this.form.submit()">
+                <option value="">Todas las categorías</option>
+                @foreach ($categorias as $c)
+                    <option value="{{ $c->id }}" @selected((string) request('categoria_id') === (string) $c->id)>{{ $c->nombre }}</option>
+                @endforeach
+            </select>
             <select name="stock" class="form-select" style="max-width:150px;" onchange="this.form.submit()">
                 <option value="">Todo stock</option>
                 <option value="bajo" @selected(request('stock') === 'bajo')>Stock bajo (< 5)</option>
@@ -86,6 +93,7 @@
                     <tr>
                         <th>Producto</th>
                         <th class="d-none d-md-table-cell">Código</th>
+                        <th>Categoría</th>
                         <th>Tipo</th>
                         <th class="text-end">Stock</th>
                         <th class="col-actions">Acciones</th>
@@ -106,6 +114,7 @@
                                 <div class="cell-muted small">{{ $p->marca ? $p->marca . ' · ' : '' }}{{ $p->categoria ?? '' }}</div>
                             </td>
                             <td class="d-none d-md-table-cell cell-muted">{{ $p->codigo }}</td>
+                            <td class="cell-muted">{{ $p->categoria?->nombre ?? '—' }}</td>
                             <td>
                                 <x-admin.status-badge
                                     :tone="$p->tipo === 'herramienta' ? 'warning' : 'primary'"
@@ -149,7 +158,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="p-0">
+                            <td colspan="6" class="p-0">
                                 <x-admin.empty-state icon="bi-search" title="Sin resultados" message="No se encontraron productos." />
                             </td>
                         </tr>
@@ -195,12 +204,12 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label">Categoría</label>
-                            <input type="text" name="categoria" class="form-control" list="categoriasList" placeholder="Lubricantes, Filtros">
-                            <datalist id="categoriasList">
-                                @foreach ($categorias ?? collect() as $cat)
-                                    <option value="{{ $cat }}">
+                            <select name="categoria_id" class="form-control form-select">
+                                <option value="">— Sin categoría —</option>
+                                @foreach ($categorias as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->nombre }}</option>
                                 @endforeach
-                            </datalist>
+                            </select>
                         </div>
                     </div>
                     <div class="row g-2 mt-2">
@@ -494,6 +503,92 @@
             document.getElementById('bc-input')?.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') { e.preventDefault(); buscarCodigoModal(); }
             });
+
+            /* ---------------------------------------------------------
+               AUTOCOMPLETE EN BUSCADOR PRINCIPAL
+               --------------------------------------------------------- */
+            var searchInput = document.getElementById('inventario-search');
+            var sugerenciasDiv = document.createElement('div');
+            sugerenciasDiv.style.position = 'absolute';
+            sugerenciasDiv.style.zIndex = '1000';
+            sugerenciasDiv.style.background = '#fff';
+            sugerenciasDiv.style.border = '1px solid #e2e8f0';
+            sugerenciasDiv.style.borderRadius = '8px';
+            sugerenciasDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+            sugerenciasDiv.style.maxHeight = '300px';
+            sugerenciasDiv.style.overflowY = 'auto';
+            sugerenciasDiv.style.display = 'none';
+            sugerenciasDiv.style.width = '100%';
+            sugerenciasDiv.style.marginTop = '2px';
+
+            if (searchInput) {
+                searchInput.parentNode.style.position = 'relative';
+                searchInput.parentNode.appendChild(sugerenciasDiv);
+
+                var timeoutId = null;
+
+                searchInput.addEventListener('input', function () {
+                    var q = this.value.trim();
+                    if (q.length < 2) {
+                        sugerenciasDiv.style.display = 'none';
+                        return;
+                    }
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(function () {
+                        fetch('{{ route("admin.inventario.buscar.sugerencias") }}?q=' + encodeURIComponent(q))
+                            .then(function (r) { return r.json(); })
+                            .then(function (data) {
+                                if (!data || data.length === 0) {
+                                    sugerenciasDiv.style.display = 'none';
+                                    return;
+                                }
+                                sugerenciasDiv.innerHTML = '';
+                                data.forEach(function (item) {
+                                    var a = document.createElement('a');
+                                    a.href = '#';
+                                    a.style.display = 'block';
+                                    a.style.padding = '8px 12px';
+                                    a.style.fontSize = '0.85rem';
+                                    a.style.textDecoration = 'none';
+                                    a.style.color = '#1e293b';
+                                    a.style.borderBottom = '1px solid #f1f5f9';
+                                    if (item.tipo === 'categoria') {
+                                        a.innerHTML = '<span class="badge bg-primary me-1">Cat</span> ' + escHtml(item.text);
+                                        a.addEventListener('click', function (e) {
+                                            e.preventDefault();
+                                            window.location.href = '{{ route("admin.inventario.index") }}?categoria_id=' + item.id;
+                                        });
+                                    } else {
+                                        a.innerHTML = '<strong>' + escHtml(item.nombre) + '</strong> <span class="text-muted">' + escHtml(item.codigo) + '</span> <span class="badge bg-secondary">Stock: ' + item.stock + '</span>';
+                                        a.addEventListener('click', function (e) {
+                                            e.preventDefault();
+                                            searchInput.value = item.nombre;
+                                            sugerenciasDiv.style.display = 'none';
+                                            window.location.href = '{{ route("admin.inventario.index") }}?q=' + encodeURIComponent(item.nombre);
+                                        });
+                                    }
+                                    a.addEventListener('mouseenter', function () { this.style.background = '#f8fafc'; });
+                                    a.addEventListener('mouseleave', function () { this.style.background = ''; });
+                                    sugerenciasDiv.appendChild(a);
+                                });
+                                sugerenciasDiv.style.display = '';
+                            })
+                            .catch(function () {
+                                sugerenciasDiv.style.display = 'none';
+                            });
+                    }, 300);
+                });
+
+                searchInput.addEventListener('blur', function () {
+                    setTimeout(function () { sugerenciasDiv.style.display = 'none'; }, 200);
+                });
+
+                searchInput.addEventListener('focus', function () {
+                    if (sugerenciasDiv.children.length > 0) {
+                        sugerenciasDiv.style.display = '';
+                    }
+                });
+            }
         });
     })();
     </script>
