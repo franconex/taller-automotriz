@@ -59,37 +59,20 @@ class ClienteController extends AdminController implements HasMiddleware
         $cliente = DB::transaction(function () use ($request, $datos) {
             $cliente = Cliente::create($datos);
 
-            if ($request->filled('vehiculo_placa')) {
-                $errores = [];
-                if (! $request->filled('vehiculo_marca') || ! $request->filled('vehiculo_modelo')) {
-                    $errores['vehiculo_marca'] = 'La marca y modelo del vehículo son obligatorios.';
-                }
-                if (Vehiculo::where('placa', $request->input('vehiculo_placa'))->exists()) {
-                    $errores['vehiculo_placa'] = 'La placa ya está registrada.';
-                }
-                if ($errores) {
-                    return back()->withInput()->withErrors($errores);
-                }
-
-                Vehiculo::create([
-                    'cliente_id'         => $cliente->id,
-                    'marca'              => $request->input('vehiculo_marca'),
-                    'modelo'             => $request->input('vehiculo_modelo'),
-                    'placa'              => $request->input('vehiculo_placa'),
-                    'anio'               => $request->input('vehiculo_anio'),
-                    'color'              => $request->input('vehiculo_color'),
-                    'foto'               => $request->input('vehiculo_foto_base64'),
-                    'kilometraje_actual' => 0,
-                    'estado'             => true,
-                ]);
-            }
+            Vehiculo::create([
+                'cliente_id'         => $cliente->id,
+                'marca'              => $request->input('vehiculo_marca'),
+                'modelo'             => $request->input('vehiculo_modelo'),
+                'placa'              => $request->input('vehiculo_placa'),
+                'anio'               => $request->input('vehiculo_anio'),
+                'color'              => $request->input('vehiculo_color'),
+                'foto'               => $request->input('vehiculo_foto_base64'),
+                'kilometraje_actual' => 0,
+                'estado'             => true,
+            ]);
 
             return $cliente;
         });
-
-        if ($cliente instanceof \Illuminate\Http\RedirectResponse) {
-            return $cliente;
-        }
 
         return $this->redirigirALista('admin.clientes.index', 'Cliente creado con éxito.');
     }

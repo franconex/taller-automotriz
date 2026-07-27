@@ -12,17 +12,22 @@
 </div>
 
 <div class="admin-form-section">
-    <h3 class="admin-form-section__title">Vehículo (opcional)</h3>
-    <p class="small text-muted mb-3">Si el cliente tiene un vehículo, puedes registrarlo aquí mismo.</p>
+    <h3 class="admin-form-section__title">Vehículo</h3>
+    @php $esCreacion = ! isset($cliente) || ! $cliente->id; @endphp
+    @if ($esCreacion)
+    <p class="small text-muted mb-3">Registra el primer vehículo del cliente (obligatorio).</p>
+    @else
+    <p class="small text-muted mb-3">Para agregar más vehículos, ve a <a href="{{ route('admin.vehiculos.create', ['cliente_id' => $cliente->id]) }}">Vehículos</a>.</p>
+    @endif
     <div class="row g-3">
         <div class="col-md-6">
-            <x-admin.form-field name="vehiculo_marca" label="Marca" icon="bi-building" />
+            <x-admin.form-field name="vehiculo_marca" label="Marca" :required="$esCreacion" icon="bi-building" />
         </div>
         <div class="col-md-6">
-            <x-admin.form-field name="vehiculo_modelo" label="Modelo" icon="bi-car-front" />
+            <x-admin.form-field name="vehiculo_modelo" label="Modelo" :required="$esCreacion" icon="bi-car-front" />
         </div>
         <div class="col-md-6">
-            <x-admin.form-field name="vehiculo_placa" label="Placa" icon="bi-upc-scan" />
+            <x-admin.form-field name="vehiculo_placa" label="Placa" :required="$esCreacion" icon="bi-upc-scan" />
         </div>
         <div class="col-md-3">
             <x-admin.form-field name="vehiculo_anio" label="Año" type="number" />
