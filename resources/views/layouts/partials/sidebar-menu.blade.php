@@ -95,16 +95,7 @@
                     :icon="$item['icon']"
                     :label="$item['label']" />
             @endforeach
-            @if (Auth::user()->tieneRol('Mecánico'))
-            <li>
-                <a href="{{ route('admin.ordenes.index') }}?mecanico=1"
-                   class="admin-sidebar__link {{ request('mecanico') ? 'active' : '' }}"
-                   data-tp-label="Mis órdenes">
-                    <i class="bi bi-wrench" aria-hidden="true"></i>
-                    <span class="admin-sidebar__text">Mis órdenes</span>
-                </a>
-            </li>
-            @endif
+
         </ul>
     @endif
 

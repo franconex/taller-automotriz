@@ -210,6 +210,10 @@ Route::middleware('auth')->group(function () {
                 ->name('reportes.index');
             Route::get('reportes/{tipo}', [ReporteController::class, 'mostrar'])
                 ->name('reportes.mostrar');
+            Route::get('reportes/{tipo}/pdf', [ReporteController::class, 'descargarPdf'])
+                ->name('reportes.pdf');
+            Route::get('reportes/{tipo}/csv', [ReporteController::class, 'descargarCsv'])
+                ->name('reportes.csv');
 
             Route::get('auditoria', [AuditoriaController::class, 'index'])
                 ->name('auditoria.index');

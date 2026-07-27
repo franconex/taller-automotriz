@@ -11,9 +11,9 @@
 @section('content')
     <x-admin.page-header
         title="Órdenes de trabajo"
-        :description="$esMecanico ? 'Tus órdenes asignadas' : 'Órdenes de servicio emitidas, en proceso, finalizadas o entregadas.'">
+        description="Órdenes de servicio emitidas, en proceso, finalizadas o entregadas.">
         <x-slot:actions>
-            @if (!$esMecanico && Auth::user()->tienePermiso('ordenes.crear'))
+            @if (Auth::user()->tienePermiso('ordenes.crear'))
             <a href="{{ route('admin.ordenes.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
                 Nueva orden
@@ -44,6 +44,12 @@
                         <option value="{{ $m->id }}" @selected((string) request('mecanico_id') === (string) $m->id)>{{ $m->empleado->nombre_completo ?? 'Mecánico #' . $m->id }}</option>
                     @endforeach
                 </select>
+                <select name="sucursal_id" class="form-select" style="max-width:200px;" onchange="this.form.submit()">
+                    <option value="">Todas las sucursales</option>
+                    @foreach (($sucursales ?? collect()) as $s)
+                        <option value="{{ $s->id }}" @selected((string) request('sucursal_id') === (string) $s->id)>{{ $s->nombre }}</option>
+                    @endforeach
+                </select>
             @endif
         </x-slot:filters>
     </x-admin.filters>
@@ -62,9 +68,7 @@
                     <tr>
                         <th>N° de orden</th>
                         <th>Cliente / Vehículo</th>
-                        @if (!$esMecanico)
                         <th class="d-none d-md-table-cell">Mecánico</th>
-                        @endif
                         <th class="d-none d-md-table-cell">Emisión</th>
                         <th>Estado</th>
                         <th class="col-actions">Acciones</th>
@@ -84,11 +88,9 @@
                                 <div class="cell-strong">{{ $o->cliente->nombre_completo ?? '—' }}</div>
                                 <div class="cell-muted small">{{ $o->vehiculo->placa ?? '—' }}</div>
                             </td>
-                            @if (!$esMecanico)
                             <td class="d-none d-md-table-cell cell-muted">
                                 {{ $asignacion?->mecanico?->empleado?->nombre_completo ?? '—' }}
                             </td>
-                            @endif
                             <td class="d-none d-md-table-cell cell-muted">
                                 {{ $o->fecha_emision?->format('d/m/Y H:i') ?? '—' }}
                             </td>
@@ -154,7 +156,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $esMecanico ? 5 : 6 }}" class="p-0">
+                            <td colspan="6" class="p-0">
                                 <x-admin.empty-state icon="bi-search" title="Sin resultados" message="No se encontraron órdenes con los filtros aplicados." />
                             </td>
                         </tr>

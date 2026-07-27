@@ -18,6 +18,14 @@
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 Volver
             </a>
+            <a href="{{ route('admin.reportes.pdf', $tipo) }}?desde={{ request('desde') }}&hasta={{ request('hasta') }}" class="btn btn-danger btn-sm">
+                <i class="bi bi-filetype-pdf" aria-hidden="true"></i>
+                PDF
+            </a>
+            <a href="{{ route('admin.reportes.csv', $tipo) }}?desde={{ request('desde') }}&hasta={{ request('hasta') }}" class="btn btn-success btn-sm">
+                <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i>
+                CSV
+            </a>
         </x-slot:actions>
     </x-admin.page-header>
 

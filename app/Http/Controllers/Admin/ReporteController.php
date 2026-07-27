@@ -10,9 +10,11 @@ use App\Models\OrdenTrabajo;
 use App\Models\Pago;
 use App\Models\Repuesto;
 use App\Models\Servicio;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Response;
 use Illuminate\View\View;
 
 class ReporteController extends AdminController
@@ -194,5 +196,95 @@ class ReporteController extends AdminController
             'descripcion' => 'Servicios con mayor cantidad registrada en el período.',
             'servicios' => $servicios,
         ];
+    }
+
+    private function obtenerDatosReporte(Request $request, string $tipo): ?array
+    {
+        $sucursalId = $this->usuarioSucursalId();
+        $desde = $request->filled('desde') ? Carbon::parse($request->input('desde'))->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
+        $hasta = $request->filled('hasta') ? Carbon::parse($request->input('hasta'))->endOfDay() : Carbon::now()->endOfDay();
+
+        return match ($tipo) {
+            'ingresos' => $this->reporteIngresos($desde, $hasta, $sucursalId),
+            'ordenes-estado' => $this->reporteOrdenesEstado($sucursalId),
+            'mecanicos-productividad' => $this->reporteMecanicosProductividad($desde, $hasta, $sucursalId),
+            'stock-critico' => $this->reporteStockCritico($sucursalId),
+            'clientes-frecuentes' => $this->reporteClientesFrecuentes($desde, $hasta, $sucursalId),
+            'servicios-mas-vendidos' => $this->reporteServiciosMasVendidos($desde, $hasta, $sucursalId),
+            default => null,
+        };
+    }
+
+    public function descargarPdf(Request $request, string $tipo)
+    {
+        $datos = $this->obtenerDatosReporte($request, $tipo);
+        if (!$datos) abort(404);
+
+        $pdf = Pdf::loadView('admin.reportes.pdf.reporte', [
+            'tipo' => $tipo,
+            'datos' => $datos,
+        ])->setPaper('letter', 'portrait');
+
+        $nombre = 'reporte-' . $tipo . '-' . now()->format('Ymd-His') . '.pdf';
+
+        return $pdf->download($nombre);
+    }
+
+    public function descargarCsv(Request $request, string $tipo)
+    {
+        $datos = $this->obtenerDatosReporte($request, $tipo);
+        if (!$datos) abort(404);
+
+        $nombre = 'reporte-' . $tipo . '-' . now()->format('Ymd-His') . '.csv';
+        $separador = ';';
+        $lineas = [];
+
+        // Header
+        $encabezados = match ($tipo) {
+            'ingresos' => ['Fecha', 'Orden', 'Metodo', 'Monto'],
+            'ordenes-estado' => ['Estado', 'Cantidad', 'Monto'],
+            'mecanicos-productividad' => ['Mecanico', 'Asignaciones', 'Finalizadas'],
+            'stock-critico' => ['Repuesto', 'Codigo', 'Stock', 'Minimo'],
+            'clientes-frecuentes' => ['Cliente', 'Ordenes', 'Monto total'],
+            'servicios-mas-vendidos' => ['Servicio', 'Veces'],
+            default => [],
+        };
+        $lineas[] = implode($separador, $encabezados);
+
+        // Data rows
+        $filas = match ($tipo) {
+            'ingresos' => $datos['pagos']->map(fn ($p) => [
+                $p->fecha_pago?->format('d/m/Y'), $p->ordenTrabajo->numero_orden ?? '',
+                $p->metodoPago->nombre ?? '', number_format((float) $p->monto, 2, ',', '.'),
+            ]),
+            'ordenes-estado' => $datos['por_estado']->map(fn ($row) => [
+                str_replace('_', ' ', $row->estado), $row->cantidad, number_format((float) $row->monto, 2, ',', '.'),
+            ]),
+            'mecanicos-productividad' => collect($datos['mecanicos'])->map(fn ($m) => [
+                $m['mecanico'], $m['asignaciones'], $m['finalizadas'],
+            ]),
+            'stock-critico' => $datos['items']->map(fn ($it) => [
+                $it->repuesto->nombre ?? '', $it->repuesto->codigo ?? '',
+                $it->cantidad_actual, $it->repuesto->stock_minimo ?? 0,
+            ]),
+            'clientes-frecuentes' => collect($datos['clientes'])->map(fn ($c) => [
+                $c['cliente'], $c['ordenes'], number_format($c['monto_total'], 2, ',', '.'),
+            ]),
+            'servicios-mas-vendidos' => collect($datos['servicios'])->map(fn ($s) => [
+                $s['servicio'], $s['veces'],
+            ]),
+            default => collect([]),
+        };
+
+        foreach ($filas as $fila) {
+            $lineas[] = implode($separador, array_map(fn ($v) => '"' . str_replace('"', '""', (string) $v) . '"', $fila));
+        }
+
+        $contenido = implode("\n", $lineas);
+
+        return Response::make($contenido, 200, [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $nombre . '"',
+        ]);
     }
 }
