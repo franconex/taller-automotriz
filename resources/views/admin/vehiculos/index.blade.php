@@ -13,10 +13,12 @@
         title="Vehículos"
         description="Vehículos registrados de cada cliente, con placa, marca y modelo.">
         <x-slot:actions>
+            @if (Auth::user()->tienePermiso('vehiculos.crear'))
             <a href="{{ route('admin.vehiculos.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
                 Nuevo vehículo
             </a>
+            @endif
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -38,8 +40,8 @@
             icon="bi-car-front"
             title="Aún no hay vehículos registrados"
             message="Registra el primer vehículo para empezar a gestionar servicios."
-            :action-label="'Registrar vehículo'"
-            :action-href="route('admin.vehiculos.create')" />
+            :action-label="Auth::user()->tienePermiso('vehiculos.crear') ? 'Registrar vehículo' : null"
+            :action-href="Auth::user()->tienePermiso('vehiculos.crear') ? route('admin.vehiculos.create') : null" />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de vehículos">
@@ -50,7 +52,10 @@
                         <th class="d-none d-lg-table-cell">Año</th>
                         <th class="d-none d-lg-table-cell">Color</th>
                         <th>Estado</th>
+                        @php $puedeEditarVehiculo = Auth::user()->tienePermiso('vehiculos.editar'); @endphp
+                        @if ($puedeEditarVehiculo)
                         <th class="col-actions">Acciones</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -78,6 +83,7 @@
                                     :icon="$v->estado ? 'bi-check-circle-fill' : 'bi-pause-circle-fill'"
                                     :label="$v->estado ? 'Activo' : 'Inactivo'" />
                             </td>
+                            @if ($puedeEditarVehiculo)
                             <td>
                                 <div class="row-actions">
                                     <a href="{{ route('admin.vehiculos.show', $v) }}"
@@ -118,10 +124,11 @@
                                     </form>
                                 </div>
                             </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="p-0">
+                            <td colspan="7" class="p-0">
                                 <x-admin.empty-state icon="bi-search" title="Sin resultados" message="No se encontraron vehículos con los filtros aplicados." />
                             </td>
                         </tr>

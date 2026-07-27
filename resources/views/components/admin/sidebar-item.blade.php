@@ -11,23 +11,14 @@
     $active = $routeName && request()->routeIs($routeName);
 @endphp
 
+@if ($hasRoute && $hasPermission)
 <li>
-    @if ($hasRoute && $hasPermission)
-        <a href="{{ route($routeName) }}"
-           class="admin-sidebar__link {{ $active ? 'active' : '' }}"
-           data-tp-label="{{ $label }}"
-           @if ($active) aria-current="page" @endif>
-            <i class="bi {{ $icon }}" aria-hidden="true"></i>
-            <span class="admin-sidebar__text">{{ $label }}</span>
-        </a>
-    @else
-        <span class="admin-sidebar__link disabled"
-              role="link"
-              aria-disabled="true"
-              data-tp-label="{{ $label }}"
-              title="Próximamente disponible">
-            <i class="bi {{ $icon }}" aria-hidden="true"></i>
-            <span class="admin-sidebar__text">{{ $label }}</span>
-        </span>
-    @endif
+    <a href="{{ route($routeName) }}"
+       class="admin-sidebar__link {{ $active ? 'active' : '' }}"
+       data-tp-label="{{ $label }}"
+       @if ($active) aria-current="page" @endif>
+        <i class="bi {{ $icon }}" aria-hidden="true"></i>
+        <span class="admin-sidebar__text">{{ $label }}</span>
+    </a>
 </li>
+@endif

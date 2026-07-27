@@ -38,15 +38,7 @@
                 <img src="{{ asset('img/logo-modo-oscuro.png') }}" alt="Taller Pro">
             </div>
             <div class="admin-sidebar__nav-wrap">
-                @if (Auth::user()->tieneRol('Gerente'))
-                    @include('layouts.partials.sidebar-gerente')
-                @elseif (Auth::user()->tieneRol('Recepcionista'))
-                    @include('layouts.partials.sidebar-recepcionista')
-                @elseif (Auth::user()->tieneRol('Mecánico'))
-                    @include('layouts.partials.sidebar-mecanico')
-                @else
-                    @include('layouts.partials.sidebar-menu')
-                @endif
+                @include('layouts.partials.sidebar-menu')
             </div>
         </aside>
 
@@ -63,15 +55,7 @@
                 <div class="admin-mobile-drawer__brand">
                     <img src="{{ asset('img/logo-modo-oscuro.png') }}" alt="Taller Pro">
                 </div>
-                    @if (Auth::user()->tieneRol('Gerente'))
-                        @include('layouts.partials.sidebar-gerente')
-                    @elseif (Auth::user()->tieneRol('Recepcionista'))
-                        @include('layouts.partials.sidebar-recepcionista')
-                    @elseif (Auth::user()->tieneRol('Mecánico'))
-                        @include('layouts.partials.sidebar-mecanico')
-                    @else
-                        @include('layouts.partials.sidebar-menu')
-                    @endif
+                    @include('layouts.partials.sidebar-menu')
                 </div>
             </aside>
 
@@ -135,12 +119,6 @@
                                 <a class="dropdown-item" href="{{ route('admin.perfil.index') }}">
                                     <i class="bi bi-person" aria-hidden="true"></i>
                                     Mi perfil
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('admin.configuracion.index') }}">
-                                    <i class="bi bi-sliders" aria-hidden="true"></i>
-                                    Configuración
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>

@@ -37,9 +37,7 @@
         ['route' => 'admin.auditoria.index',      'permission' => 'auditoria.ver', 'icon' => 'bi-journal-text',  'label' => 'Auditoría'],
     ];
 
-    $sistema = [
-        ['route' => 'admin.configuracion.index', 'permission' => 'dashboard.ver', 'icon' => 'bi-sliders', 'label' => 'Configuración'],
-    ];
+    $sistema = [];
 
     $hasVisible = function (array $list): bool {
         foreach ($list as $item) {

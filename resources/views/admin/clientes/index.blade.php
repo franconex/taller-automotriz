@@ -13,10 +13,12 @@
         title="Clientes"
         description="Administra los clientes registrados y su información de contacto.">
         <x-slot:actions>
+            @if (Auth::user()->tienePermiso('clientes.crear'))
             <a href="{{ route('admin.clientes.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
                 Nuevo cliente
             </a>
+            @endif
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -38,8 +40,8 @@
             icon="bi-person-vcard"
             title="Aún no hay clientes registrados"
             message="Comienza registrando tu primer cliente para iniciar operaciones."
-            :action-label="'Registrar cliente'"
-            :action-href="route('admin.clientes.create')" />
+            :action-label="Auth::user()->tienePermiso('clientes.crear') ? 'Registrar cliente' : null"
+            :action-href="Auth::user()->tienePermiso('clientes.crear') ? route('admin.clientes.create') : null" />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de clientes">
@@ -50,7 +52,10 @@
                         <th class="d-none d-lg-table-cell">Teléfono</th>
                         <th class="d-none d-lg-table-cell">Email</th>
                         <th>Estado</th>
+                        @php $puedeEditarCliente = Auth::user()->tienePermiso('clientes.editar'); @endphp
+                        @if ($puedeEditarCliente)
                         <th class="col-actions">Acciones</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -62,7 +67,13 @@
                                         {{ mb_strtoupper(mb_substr($cliente->nombre_completo, 0, 1)) }}
                                     </span>
                                     <div>
-                                        <div class="cell-strong">{{ $cliente->nombre_completo }}</div>
+                                        <div class="cell-strong">
+                                            @if ($puedeEditarCliente)
+                                            <a href="{{ route('admin.clientes.show', $cliente) }}">{{ $cliente->nombre_completo }}</a>
+                                            @else
+                                            {{ $cliente->nombre_completo }}
+                                            @endif
+                                        </div>
                                         <div class="cell-muted small">Cliente #{{ $cliente->id }}</div>
                                     </div>
                                 </div>
@@ -76,6 +87,7 @@
                                     :icon="$cliente->estado ? 'bi-check-circle-fill' : 'bi-pause-circle-fill'"
                                     :label="$cliente->estado ? 'Activo' : 'Inactivo'" />
                             </td>
+                            @if ($puedeEditarCliente)
                             <td>
                                 <div class="row-actions">
                                     <a href="{{ route('admin.clientes.show', $cliente) }}"
@@ -116,10 +128,11 @@
                                     </form>
                                 </div>
                             </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="p-0">
+                            <td colspan="7" class="p-0">
                                 <x-admin.empty-state icon="bi-search" title="Sin resultados" message="No se encontraron clientes con los filtros aplicados." />
                             </td>
                         </tr>

@@ -10,11 +10,20 @@ use App\Models\TipoUso;
 use App\Models\Vehiculo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
-class VehiculoController extends AdminController
+class VehiculoController extends AdminController implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permiso:vehiculos.crear', only: ['create', 'store']),
+            new Middleware('permiso:vehiculos.editar', only: ['edit', 'update', 'destroy', 'toggle']),
+        ];
+    }
     public function index(Request $request): View
     {
         $query = Vehiculo::query()->with(['cliente', 'modelo.marca']);
