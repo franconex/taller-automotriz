@@ -35,4 +35,5 @@
             </div>
         </form>
     </div>
+    @include('admin.pagos.partials.modal-qr')
 @endsection

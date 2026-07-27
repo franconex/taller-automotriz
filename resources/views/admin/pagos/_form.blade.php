@@ -12,7 +12,7 @@
 
 <div class="admin-form-section">
     <h3 class="admin-form-section__title">Pago</h3>
-    <x-admin.form-field name="metodo_pago_id" label="Método de pago" type="select" required>
+    <x-admin.form-field name="metodo_pago_id" label="Método de pago" type="select" required id="field-metodo_pago_id">
         <option value="">— Selecciona un método —</option>
         @foreach (($metodos ?? collect()) as $m)
             <option value="{{ $m->id }}" @selected(old('metodo_pago_id', $pago->metodo_pago_id ?? null) == $m->id)>{{ $m->nombre }}</option>
@@ -20,13 +20,34 @@
     </x-admin.form-field>
     <div class="row g-2">
         <div class="col-7">
-            <x-admin.form-field name="monto" type="number" label="Monto" :value="$pago->monto ?? null" required icon="bi-currency-dollar" />
+            <x-admin.form-field name="monto" type="number" label="Monto" :value="$pago->monto ?? null" required icon="bi-currency-dollar" id="field-monto" />
         </div>
         <div class="col-5">
             <x-admin.form-field name="fecha_pago" type="datetime-local" label="Fecha y hora" :value="isset($pago) && $pago->fecha_pago ? $pago->fecha_pago->format('Y-m-d\TH:i') : now()->format('Y-m-d\TH:i')" required />
         </div>
     </div>
 </div>
+
+{{-- QR — se muestra solo si el método seleccionado es QR --}}
+<div id="seccion-qr" class="admin-form-section d-none">
+    <h3 class="admin-form-section__title">
+        <i class="bi bi-qr-code" aria-hidden="true"></i>
+        Código QR
+    </h3>
+    <p class="cell-muted small mb-3">
+        El código QR se genera automáticamente al seleccionar el método QR y completar el monto.
+    </p>
+    <div id="qr-preview-container" class="text-center py-3 bg-light rounded-3">
+        <div class="text-muted small">
+            <i class="bi bi-qr-code" style="font-size:3rem;display:block;margin-bottom:.5rem;"></i>
+            Selecciona QR como método de pago<br>y completa el monto para ver el código.
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+    @vite(['resources/js/admin/pago-qr.js'])
+@endpush
 
 <div class="admin-form-section">
     <h3 class="admin-form-section__title">Comprobante</h3>

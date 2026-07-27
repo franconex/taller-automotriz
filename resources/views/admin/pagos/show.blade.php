@@ -51,6 +51,13 @@
                             :label="ucfirst($pago->estado)" />
                     </dd>
                 </dl>
+                @if ($pago->metodoPago && strcasecmp($pago->metodoPago->nombre, 'QR') === 0)
+                    <hr>
+                    <a href="{{ route('admin.pagos.qr', $pago) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-qr-code" aria-hidden="true"></i>
+                        Ver código QR
+                    </a>
+                @endif
             </div>
         </div>
         <div class="col-12 col-lg-6">

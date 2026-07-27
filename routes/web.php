@@ -172,6 +172,10 @@ Route::middleware('auth')->group(function () {
             Route::post('pagos/stripe/cobrar', [\App\Http\Controllers\Admin\PagoStripeController::class, 'cobrar'])->middleware('permiso:pagos.registrar')->name('pagos.stripe.cobrar');
             Route::patch('pagos/{pago}/anular', [PagoController::class, 'anular'])
                 ->name('pagos.anular');
+            Route::get('pagos/{pago}/qr', [\App\Http\Controllers\Admin\PagoQRController::class, 'mostrar'])
+                ->name('pagos.qr');
+            Route::post('pagos/qr-data', [\App\Http\Controllers\Admin\PagoQRController::class, 'qrData'])
+                ->name('pagos.qr-data');
 
             Route::resource('comprobantes', ComprobanteController::class)
                 ->except(['create', 'store']);
