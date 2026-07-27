@@ -136,7 +136,7 @@
                             <div class="invalid-feedback"></div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="form-group-servicio">
                             <label class="form-label" for="form-servicio_id">Servicio</label>
                             <select name="servicio_id" id="form-servicio_id" class="form-select">
                                 <option value="">— Sin servicio específico —</option>
@@ -173,10 +173,10 @@
                             </select>
                             <div class="invalid-feedback"></div>
                         </div>
-                        <div class="col-4 d-flex align-items-end pb-1">
+                        <div class="col-4 d-flex align-items-end pb-1" id="form-group-deja">
                             <div class="form-check form-switch mb-2">
                                 <input type="hidden" name="deja_vehiculo" value="0">
-                                <input class="form-check-input" type="checkbox" name="deja_vehiculo" id="form-deja_vehiculo" value="1">
+                                <input class="form-check-input" type="checkbox" name="deja_vehiculo" id="form-deja_vehiculo" value="1" checked>
                                 <label class="form-check-label" for="form-deja_vehiculo">¿Dejará el vehículo?</label>
                             </div>
                             <div class="cell-muted small ms-1" id="form-ayuda-deja"></div>
@@ -200,6 +200,86 @@
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    var container = document.getElementById('modal-formulario-cita');
+    if (!container) return;
+
+    var tipoEl = document.getElementById('form-tipo');
+    var dejaEl = document.getElementById('form-deja_vehiculo');
+    var costoEl = document.getElementById('form-costo_consulta');
+    var ayudaEl = document.getElementById('form-costo_ayuda');
+    var ayudaDeja = document.getElementById('form-ayuda-deja');
+    var grupoServicio = document.getElementById('form-group-servicio');
+    var grupoDeja = document.getElementById('form-group-deja');
+    var servicioEl = document.getElementById('form-servicio_id');
+
+    if (!tipoEl || !costoEl) return;
+
+    // IDs de servicios predefinidos para auto-seleccion
+    var DIAGNOSTICO_SERVICIO_ID = '5';
+    var MANTENIMIENTO_SERVICIO_ID = '1';
+
+    function actualizarPorTipo() {
+        var tipo = tipoEl.value;
+
+        // Mostrar/ocultar grupo servicio
+        if (tipo === 'diagnostico') {
+            grupoServicio.classList.add('d-none');
+            servicioEl.value = DIAGNOSTICO_SERVICIO_ID;
+        } else {
+            grupoServicio.classList.remove('d-none');
+            if (tipo === 'mantenimiento' && !servicioEl.value) {
+                servicioEl.value = MANTENIMIENTO_SERVICIO_ID;
+            }
+        }
+
+        // Mostrar/ocultar deja_vehiculo solo en diagnostico
+        if (tipo === 'diagnostico') {
+            grupoDeja.classList.remove('d-none');
+        } else {
+            grupoDeja.classList.add('d-none');
+            dejaEl.checked = true;
+        }
+
+        actualizarCosto();
+    }
+
+    function actualizarCosto() {
+        var esDiagnostico = tipoEl.value === 'diagnostico';
+        var dejaVehiculo = dejaEl.checked;
+
+        if (esDiagnostico) {
+            if (dejaVehiculo) {
+                costoEl.value = '0';
+                costoEl.readOnly = true;
+                if (ayudaEl) ayudaEl.textContent = 'Diagnostico gratis por dejar el vehiculo.';
+                if (ayudaDeja) ayudaDeja.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> Diagnostico gratis</span>';
+            } else {
+                costoEl.readOnly = false;
+                if (costoEl.value === '0' || costoEl.value === '') costoEl.value = '50';
+                if (ayudaEl) ayudaEl.textContent = 'Costo del diagnostico (no deja el vehiculo).';
+                if (ayudaDeja) ayudaDeja.innerHTML = '<span class="text-warning"><i class="bi bi-exclamation-triangle-fill"></i> Se cobrara el diagnostico</span>';
+            }
+        } else {
+            costoEl.readOnly = false;
+            costoEl.value = '0';
+            if (ayudaEl) ayudaEl.textContent = '0 si no aplica.';
+            if (ayudaDeja) ayudaDeja.innerHTML = '';
+        }
+    }
+
+    tipoEl.addEventListener('change', actualizarPorTipo);
+    dejaEl.addEventListener('change', actualizarCosto);
+
+    container.addEventListener('shown.bs.modal', function () {
+        setTimeout(actualizarPorTipo, 50);
+    });
+
+    actualizarPorTipo();
+})();
+</script>
 
 <script type="application/json" id="vehiculos-data">
 [

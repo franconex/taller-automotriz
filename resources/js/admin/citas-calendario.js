@@ -625,8 +625,11 @@ import interactionPlugin from '@fullcalendar/interaction';
         document.getElementById('form-estado').value = c.estado || 'pendiente';
         document.getElementById('form-descripcion_problema').value = c.descripcion_problema || '';
         document.getElementById('form-costo_consulta').value = c.costo_consulta || '0';
-        document.getElementById('form-deja_vehiculo').checked = !!c.deja_vehiculo;
+        document.getElementById('form-deja_vehiculo').checked = c.deja_vehiculo !== undefined ? !!c.deja_vehiculo : true;
         actualizarVehiculos();
+        // Disparar actualizacion de tipo (servicio, deja_vehiculo, costo)
+        var evt = new Event('change');
+        document.getElementById('form-tipo')?.dispatchEvent(evt);
     }
 
     function actualizarVehiculos() {
