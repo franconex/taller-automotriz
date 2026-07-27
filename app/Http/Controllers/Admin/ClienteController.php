@@ -59,17 +59,19 @@ class ClienteController extends AdminController implements HasMiddleware
         $cliente = DB::transaction(function () use ($request, $datos) {
             $cliente = Cliente::create($datos);
 
-            Vehiculo::create([
-                'cliente_id'         => $cliente->id,
-                'marca'              => $request->input('vehiculo_marca'),
-                'modelo'             => $request->input('vehiculo_modelo'),
-                'placa'              => $request->input('vehiculo_placa'),
-                'anio'               => $request->input('vehiculo_anio'),
-                'color'              => $request->input('vehiculo_color'),
-                'foto'               => $request->input('vehiculo_foto_base64'),
-                'kilometraje_actual' => 0,
-                'estado'             => true,
-            ]);
+            $vehiculos = $request->input('vehiculos', []);
+            foreach ($vehiculos as $v) {
+                Vehiculo::create([
+                    'cliente_id'         => $cliente->id,
+                    'marca'              => $v['marca'],
+                    'modelo'             => $v['modelo'],
+                    'placa'              => $v['placa'],
+                    'anio'               => $v['anio'] ?? null,
+                    'color'              => $v['color'] ?? null,
+                    'kilometraje_actual' => 0,
+                    'estado'             => true,
+                ]);
+            }
 
             return $cliente;
         });

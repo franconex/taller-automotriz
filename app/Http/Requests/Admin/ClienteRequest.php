@@ -22,15 +22,26 @@ class ClienteRequest extends AdminFormRequest
             'direccion' => ['nullable', 'string', 'max:255'],
             'estado' => ['nullable', 'boolean'],
         ], $esCreacion ? [
-            'vehiculo_marca' => ['required', 'string', 'max:100'],
-            'vehiculo_modelo' => ['required', 'string', 'max:100'],
-            'vehiculo_placa' => [
+            'vehiculos' => ['required', 'array', 'min:1'],
+            'vehiculos.*.marca' => ['required', 'string', 'max:100'],
+            'vehiculos.*.modelo' => ['required', 'string', 'max:100'],
+            'vehiculos.*.placa' => [
                 'required', 'string', 'max:20',
                 Rule::unique('vehiculos', 'placa')->whereNull('deleted_at'),
             ],
-            'vehiculo_anio' => ['nullable', 'integer', 'min:1900', 'max:' . (date('Y') + 1)],
-            'vehiculo_color' => ['nullable', 'string', 'max:50'],
+            'vehiculos.*.anio' => ['nullable', 'integer', 'min:1900', 'max:' . (date('Y') + 1)],
+            'vehiculos.*.color' => ['nullable', 'string', 'max:50'],
         ] : []);
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $placas = $this->input('vehiculos.*.placa');
+            if (is_array($placas) && count($placas) !== count(array_unique($placas))) {
+                $validator->errors()->add('vehiculos.*.placa', 'No puedes registrar dos vehículos con la misma placa.');
+            }
+        });
     }
 
     public function attributes(): array
@@ -42,6 +53,11 @@ class ClienteRequest extends AdminFormRequest
             'email' => 'correo electrónico',
             'direccion' => 'dirección',
             'estado' => 'estado',
+            'vehiculos.*.marca' => 'marca',
+            'vehiculos.*.modelo' => 'modelo',
+            'vehiculos.*.placa' => 'placa',
+            'vehiculos.*.anio' => 'año',
+            'vehiculos.*.color' => 'color',
         ];
     }
 }
