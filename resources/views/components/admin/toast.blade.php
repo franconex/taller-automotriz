@@ -59,25 +59,7 @@
         return div.innerHTML;
     }
 
-    // Convertir flashes de Laravel en toasts
-    function convertFlashes() {
-        var flashes = document.querySelectorAll('.admin-flash');
-        flashes.forEach(function (flash) {
-            var textEl = flash.querySelector('span');
-            if (!textEl) return;
-            var text = textEl.textContent || '';
-            var type = 'info';
-            if (flash.classList.contains('admin-flash--success')) type = 'success';
-            else if (flash.classList.contains('admin-flash--danger')) type = 'error';
-            else if (flash.classList.contains('admin-flash--warning')) type = 'warning';
-            createToast(text, type, 6000);
-            flash.remove();
-        });
-    }
-
     window.showToast = createToast;
-
-    document.addEventListener('DOMContentLoaded', convertFlashes);
 })();
 </script>
 @endpush
