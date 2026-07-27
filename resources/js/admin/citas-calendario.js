@@ -120,8 +120,33 @@ import interactionPlugin from '@fullcalendar/interaction';
                     credentials: 'same-origin',
                 })
                     .then((r) => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
-                    .then((data) => { setLoading(false); success(data); })
-                    .catch((err) => { setLoading(false); failure(err); });
+                    .then((data) => {
+                        console.log('FullCalendar events loaded:', data.length, 'events for view', info.view.type, info.startStr, '-', info.endStr);
+                        setLoading(false);
+                        success(data);
+                    })
+                    .catch((err) => {
+                        console.error('Error loading events:', err);
+                        setLoading(false);
+                        failure(err);
+                    });
+            },
+            eventDidMount(info) {
+                try {
+                    const ev = info.event;
+                    const p = ev.extendedProps || {};
+                    const viewType = info.view.type;
+                    if (viewType === 'timeGridWeek' || viewType === 'timeGridDay') {
+                        const el = info.el;
+                        if (el) {
+                            el.style.background = p.estado ? (COLORES[p.estado] || '#6B7280') : '#6B7280';
+                            el.style.borderLeft = '3px solid rgba(255,255,255,0.6)';
+                            el.style.color = '#fff';
+                        }
+                    }
+                } catch (e) {
+                    console.error('eventDidMount error:', e);
+                }
             },
             eventClick(info) {
                 info.jsEvent.preventDefault();
@@ -150,7 +175,6 @@ import interactionPlugin from '@fullcalendar/interaction';
                             '<div class="cita-card__cliente">' + escape(cliente) + '</div>' +
                             (vehiculo ? '<div class="cita-card__vehiculo">' + escape(vehiculo) + '</div>' : '') +
                             (servicio ? '<div class="cita-card__servicio">' + escape(servicio) + '</div>' : '') +
-                            '<div class="cita-card__estado" style="background:' + color + '">' + escape(labelEstado) + '</div>' +
                         '</div>' };
                     }
                     if (esDayGrid) {
