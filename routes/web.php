@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\RepuestoController;
 use App\Http\Controllers\Admin\RolController;
 use App\Http\Controllers\Admin\ServicioController;
 use App\Http\Controllers\Admin\SolicitudCompraController;
+use App\Http\Controllers\Admin\SolicitudPermisoController;
 use App\Http\Controllers\Admin\SucursalController;
 use App\Http\Controllers\Admin\TipoServicioController;
 use App\Http\Controllers\Admin\UsuarioController;
@@ -93,6 +94,14 @@ Route::middleware('auth')->group(function () {
                 ->name('roles.permisos');
             Route::put('roles/{role}/permisos', [RolController::class, 'actualizarPermisos'])
                 ->name('roles.actualizar-permisos');
+
+            Route::resource('solicitudes-permiso', SolicitudPermisoController::class)
+                ->parameters(['solicitudes-permiso' => 'solicitudPermiso'])
+                ->except(['edit', 'update', 'destroy']);
+            Route::patch('solicitudes-permiso/{solicitudPermiso}/aprobar', [SolicitudPermisoController::class, 'aprobar'])
+                ->name('solicitudes-permiso.aprobar');
+            Route::patch('solicitudes-permiso/{solicitudPermiso}/rechazar', [SolicitudPermisoController::class, 'rechazar'])
+                ->name('solicitudes-permiso.rechazar');
 
             Route::resource('clientes', ClienteController::class);
             Route::patch('clientes/{cliente}/toggle', [ClienteController::class, 'toggle'])

@@ -75,6 +75,8 @@ class RolPermisoSeeder extends Seeder
                 'comprobantes.ver',
                 'comprobantes.editar',
                 'precios.ver',
+                'solicitudes-permiso.ver',
+                'solicitudes-permiso.crear',
             ])->pluck('id')
         );
 
@@ -104,6 +106,8 @@ class RolPermisoSeeder extends Seeder
                 'mecanicos.ver',
                 'metodos-pago.ver',
                 'comprobantes.ver',
+                'solicitudes-permiso.ver',
+                'solicitudes-permiso.crear',
             ])->pluck('id')
         );
 
@@ -122,6 +126,8 @@ class RolPermisoSeeder extends Seeder
                 'mecanicos.ver',
                 'metodos-pago.ver',
                 'comprobantes.ver',
+                'solicitudes-permiso.ver',
+                'solicitudes-permiso.crear',
             ])->pluck('id')
         );
     }

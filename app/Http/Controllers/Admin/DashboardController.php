@@ -159,18 +159,6 @@ class DashboardController extends AdminController
             ['route' => 'admin.pagos.create',     'perm' => 'pagos.registrar', 'icon' => 'bi-cash-coin',      'titulo' => 'Registrar pago',     'desc' => 'Registra un pago a una orden.'],
         ];
 
-        if ($usuario->tieneRol('Gerente')) {
-            return view('gerente.dashboard', compact('usuario', 'ordenesRecientes', 'alertasInventario', 'metricas'));
-        }
-
-        if ($usuario->tieneRol('Recepcionista')) {
-            return view('recepcion.dashboard', compact('usuario', 'citasDelDia', 'metricas'));
-        }
-
-        if ($usuario->tieneRol('Mecánico')) {
-            return view('mecanico.dashboard', compact('usuario', 'ordenesRecientes', 'metricas'));
-        }
-
         return view('admin.dashboard', [
             'usuario' => $usuario,
             'metricas' => $metricas,

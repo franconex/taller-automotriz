@@ -42,7 +42,8 @@
     ];
 
     $sistema = [
-        ['route' => 'admin.configuracion.index', 'permission' => 'configuracion.ver', 'icon' => 'bi-sliders', 'label' => 'Configuración'],
+        ['route' => 'admin.solicitudes-permiso.index', 'permission' => 'solicitudes-permiso.ver', 'icon' => 'bi-shield-exclamation', 'label' => 'Solicitudes de permiso'],
+        ['route' => 'admin.configuracion.index',       'permission' => 'configuracion.ver',       'icon' => 'bi-sliders',           'label' => 'Configuración'],
     ];
 
     $hasVisible = function (array $list): bool {

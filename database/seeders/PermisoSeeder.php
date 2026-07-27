@@ -114,6 +114,11 @@ class PermisoSeeder extends Seeder
 
             // Precios
             ['nombre' => 'Ver Precios de Compra', 'codigo' => 'precios.ver', 'modulo' => 'repuestos'],
+
+            // Solicitudes de Permiso
+            ['nombre' => 'Ver Solicitudes de Permiso', 'codigo' => 'solicitudes-permiso.ver', 'modulo' => 'solicitudes-permiso'],
+            ['nombre' => 'Crear Solicitudes de Permiso', 'codigo' => 'solicitudes-permiso.crear', 'modulo' => 'solicitudes-permiso'],
+            ['nombre' => 'Aprobar Solicitudes de Permiso', 'codigo' => 'solicitudes-permiso.aprobar', 'modulo' => 'solicitudes-permiso'],
         ];
 
         foreach ($permisos as $permiso) {
