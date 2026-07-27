@@ -88,7 +88,7 @@ class EmpleadoController extends AdminController implements HasMiddleware
                 if ($esMecanico) {
                     Mecanico::create([
                         'empleado_id' => $empleado->id,
-                        'especialidad_id' => $datos['especialidad_id'],
+                        'especialidad_id' => $this->obtenerEspecialidadId($datos['especialidad'] ?? null),
                         'disponibilidad' => $datos['disponibilidad'] ?? 'disponible',
                         'observaciones' => $datos['observaciones_mecanico'] ?? null,
                     ]);
@@ -151,14 +151,14 @@ class EmpleadoController extends AdminController implements HasMiddleware
                             $mecanicoExistente->restore();
                         }
                         $mecanicoExistente->update([
-                            'especialidad_id' => $datos['especialidad_id'],
+                            'especialidad_id' => $this->obtenerEspecialidadId($datos['especialidad'] ?? null),
                             'disponibilidad' => $datos['disponibilidad'] ?? 'disponible',
                             'observaciones' => $datos['observaciones_mecanico'] ?? null,
                         ]);
                     } else {
                         Mecanico::create([
                             'empleado_id' => $empleado->id,
-                            'especialidad_id' => $datos['especialidad_id'],
+                            'especialidad_id' => $this->obtenerEspecialidadId($datos['especialidad'] ?? null),
                             'disponibilidad' => $datos['disponibilidad'] ?? 'disponible',
                             'observaciones' => $datos['observaciones_mecanico'] ?? null,
                         ]);
@@ -206,6 +206,17 @@ class EmpleadoController extends AdminController implements HasMiddleware
         });
 
         return back()->with('success', 'El empleado y sus cuentas de acceso fueron eliminados correctamente.');
+    }
+
+    private function obtenerEspecialidadId(?string $nombre): ?int
+    {
+        if (! $nombre || trim($nombre) === '') {
+            return null;
+        }
+        return Especialidad::firstOrCreate(
+            ['nombre' => trim($nombre)],
+            ['descripcion' => 'Especialidad: ' . trim($nombre), 'estado' => true]
+        )->id;
     }
 
     public function toggle(Request $request, Empleado $empleado): RedirectResponse

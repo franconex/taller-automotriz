@@ -93,18 +93,11 @@
     @endphp
 
     <x-admin.form-field
-        name="especialidad_id"
-        label="Especialidad"
-        type="select"
-        :required="$esMecanicoActual">
-        <option value="">— Selecciona una especialidad —</option>
-        @foreach (($especialidades ?? collect()) as $esp)
-            <option value="{{ $esp->id }}"
-                @selected(old('especialidad_id', optional(optional($empleado)->mecanico)->especialidad_id) == $esp->id)>
-                {{ $esp->nombre }}
-            </option>
-        @endforeach
-    </x-admin.form-field>
+        name="especialidad"
+        label="Especialidad (opcional)"
+        :value="optional(optional($empleado)->mecanico)->especialidad?->nombre ?? old('especialidad')"
+        help="Ej: Mecánica General, Electricidad Automotriz, Motores Diesel..."
+        icon="bi-wrench" />
     <x-admin.form-field
         name="disponibilidad"
         label="Disponibilidad"

@@ -14,7 +14,7 @@ class EmpleadoRequest extends AdminFormRequest
         $esMecanico = $rol && strcasecmp($rol->nombre, 'Mecánico') === 0;
 
         $mecanicoRules = $esMecanico ? [
-            'especialidad_id' => ['required', 'exists:especialidades,id'],
+            'especialidad' => ['nullable', 'string', 'max:100'],
             'disponibilidad' => ['nullable', 'in:disponible,ocupado,ausente'],
             'observaciones_mecanico' => ['nullable', 'string', 'max:1000'],
         ] : [];
@@ -52,7 +52,7 @@ class EmpleadoRequest extends AdminFormRequest
             'cargo' => 'cargo',
             'fecha_contratacion' => 'fecha de contratación',
             'estado' => 'estado',
-            'especialidad_id' => 'especialidad',
+            'especialidad' => 'especialidad',
             'disponibilidad' => 'disponibilidad',
             'observaciones_mecanico' => 'observaciones',
         ];
