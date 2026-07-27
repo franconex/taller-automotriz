@@ -18,6 +18,8 @@ class SucursalRequest extends AdminFormRequest
             'direccion' => ['required', 'string', 'max:255'],
             'telefono' => ['required', 'string', 'max:20'],
             'horario_atencion' => ['nullable', 'string', 'max:255'],
+            'latitud' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitud' => ['nullable', 'numeric', 'between:-180,180'],
             'estado' => ['nullable', 'boolean'],
         ];
     }
@@ -29,6 +31,8 @@ class SucursalRequest extends AdminFormRequest
             'direccion' => 'dirección',
             'telefono' => 'teléfono',
             'horario_atencion' => 'horario de atención',
+            'latitud' => 'latitud',
+            'longitud' => 'longitud',
             'estado' => 'estado',
         ];
     }

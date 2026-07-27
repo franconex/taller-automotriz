@@ -13,8 +13,6 @@ class Inventario extends Model
         'repuesto_id',
         'cantidad_actual',
         'cantidad_reservada',
-        'stock_minimo',
-        'stock_maximo',
         'costo_promedio',
         'fecha_actualizacion',
     ];
@@ -24,8 +22,6 @@ class Inventario extends Model
         return [
             'fecha_actualizacion' => 'datetime',
             'costo_promedio' => 'decimal:2',
-            'stock_minimo' => 'integer',
-            'stock_maximo' => 'integer',
         ];
     }
 

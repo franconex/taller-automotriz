@@ -20,6 +20,7 @@ class MovimientoInventarioRequest extends AdminFormRequest
         'vencido',
         'perdida',
         'devolucion_proveedor',
+        'transferencia',
         'entrada',
         'salida',
         'ajuste',
@@ -27,31 +28,21 @@ class MovimientoInventarioRequest extends AdminFormRequest
 
     public function rules(): array
     {
-        $tipo = $this->input('tipo');
-
         return [
             'inventario_id' => ['nullable', 'exists:inventarios,id'],
-            'sucursal_id' => $tipo === 'transferencia'
-                ? ['nullable', 'exists:sucursales,id']
-                : ['required', 'exists:sucursales,id'],
             'repuesto_id' => ['required', 'exists:repuestos,id'],
             'tipo' => ['required', Rule::in(self::TIPOS)],
             'cantidad' => ['required', 'integer', 'min:1'],
             'motivo' => ['required', 'string', 'max:255'],
             'orden_trabajo_id' => ['nullable', 'exists:ordenes_trabajo,id'],
-            'sucursal_origen_id' => $tipo === 'transferencia'
-                ? ['required', 'exists:sucursales,id']
-                : ['nullable', 'exists:sucursales,id'],
-            'sucursal_destino_id' => $tipo === 'transferencia'
-                ? ['required', 'exists:sucursales,id', 'different:sucursal_origen_id']
-                : ['nullable', 'exists:sucursales,id'],
+            'sucursal_origen_id' => ['required', 'exists:sucursales,id'],
+            'sucursal_destino_id' => ['nullable', 'exists:sucursales,id', 'different:sucursal_origen_id'],
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'sucursal_id' => 'sucursal',
             'repuesto_id' => 'repuesto',
             'tipo' => 'tipo',
             'cantidad' => 'cantidad',

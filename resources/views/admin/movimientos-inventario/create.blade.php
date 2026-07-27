@@ -24,14 +24,8 @@
     <div class="admin-table-wrap p-4">
         <form method="POST" action="{{ route('admin.movimientos-inventario.store') }}">
             @csrf
-            <div class="admin-form-section" id="seccion-ubicacion">
-                <h3 class="admin-form-section__title">Ubicación y repuesto</h3>
-                <x-admin.form-field name="sucursal_id" label="Sucursal" type="select" required>
-                    <option value="">— Selecciona una sucursal —</option>
-                    @foreach (($sucursales ?? collect()) as $s)
-                        <option value="{{ $s->id }}" @selected(old('sucursal_id') == $s->id)>{{ $s->nombre }}</option>
-                    @endforeach
-                </x-admin.form-field>
+            <div class="admin-form-section">
+                <h3 class="admin-form-section__title">Repuesto</h3>
                 <x-admin.form-field name="repuesto_id" label="Repuesto" type="select" required>
                     <option value="">— Selecciona un repuesto —</option>
                     @foreach (($repuestos ?? collect()) as $r)
@@ -40,21 +34,21 @@
                 </x-admin.form-field>
             </div>
 
-            <div id="seccion-origen-destino" class="admin-form-section @if(old('tipo') !== 'transferencia') d-none @endif">
-                <h3 class="admin-form-section__title">Origen y destino de la transferencia</h3>
+            <div class="admin-form-section">
+                <h3 class="admin-form-section__title">Sucursales</h3>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <x-admin.form-field name="sucursal_origen_id" label="Sucursal de origen (sale el repuesto)" type="select" required>
+                        <x-admin.form-field name="sucursal_origen_id" label="Sucursal de origen" type="select" required>
                             <option value="">— Selecciona sucursal origen —</option>
-                            @foreach (($sucursales ?? collect()) as $s)
+                            @foreach (($todasLasSucursales ?? collect()) as $s)
                                 <option value="{{ $s->id }}" @selected(old('sucursal_origen_id') == $s->id)>{{ $s->nombre }}</option>
                             @endforeach
                         </x-admin.form-field>
                     </div>
                     <div class="col-md-6">
-                        <x-admin.form-field name="sucursal_destino_id" label="Sucursal de destino (llega el repuesto)" type="select" required>
+                        <x-admin.form-field name="sucursal_destino_id" label="Sucursal de destino" type="select">
                             <option value="">— Selecciona sucursal destino —</option>
-                            @foreach (($sucursales ?? collect()) as $s)
+                            @foreach (($todasLasSucursales ?? collect()) as $s)
                                 <option value="{{ $s->id }}" @selected(old('sucursal_destino_id') == $s->id)>{{ $s->nombre }}</option>
                             @endforeach
                         </x-admin.form-field>
@@ -84,6 +78,9 @@
                         <option value="ajuste_positivo" @selected(old('tipo') === 'ajuste_positivo')>Ajuste positivo</option>
                         <option value="ajuste_negativo" @selected(old('tipo') === 'ajuste_negativo')>Ajuste negativo</option>
                     </optgroup>
+                    <optgroup label="Transferencia">
+                        <option value="transferencia" @selected(old('tipo') === 'transferencia')>Transferencia entre sucursales</option>
+                    </optgroup>
                 </x-admin.form-field>
 
                 <x-admin.form-field name="cantidad" type="number" label="Cantidad" :value="old('cantidad')" required icon="bi-123" />
@@ -100,13 +97,3 @@
         </form>
     </div>
 @endsection
-
-@push('scripts')
-<script>
-    document.getElementById('field-tipo')?.addEventListener('change', function () {
-        const esTransferencia = this.value === 'transferencia';
-        document.getElementById('seccion-ubicacion')?.classList.toggle('d-none', esTransferencia);
-        document.getElementById('seccion-origen-destino')?.classList.toggle('d-none', !esTransferencia);
-    });
-</script>
-@endpush

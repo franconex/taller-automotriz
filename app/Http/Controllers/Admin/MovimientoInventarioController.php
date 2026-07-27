@@ -46,14 +46,11 @@ class MovimientoInventarioController extends AdminController
 
     public function create(): View
     {
-        $sucursales = Sucursal::query()
-            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('id', $this->usuarioSucursalId()))
-            ->orderBy('nombre')
-            ->get();
+        $sucursales = Sucursal::orderBy('nombre')->get();
         $repuestos = Repuesto::orderBy('nombre')->get();
 
         return view('admin.movimientos-inventario.create', [
-            'sucursales' => $sucursales,
+            'todasLasSucursales' => $sucursales,
             'repuestos' => $repuestos,
         ]);
     }
@@ -63,13 +60,9 @@ class MovimientoInventarioController extends AdminController
         $datos = $request->validated();
 
         DB::transaction(function () use ($datos) {
-            $sucursalId = $datos['tipo'] === 'transferencia'
-                ? $datos['sucursal_origen_id']
-                : $datos['sucursal_id'];
-
             $inventario = Inventario::firstOrCreate(
                 [
-                    'sucursal_id' => $sucursalId,
+                    'sucursal_id' => $datos['sucursal_origen_id'],
                     'repuesto_id' => $datos['repuesto_id'],
                 ],
                 [
@@ -82,12 +75,10 @@ class MovimientoInventarioController extends AdminController
             $anterior = (int) $inventario->cantidad_actual;
             $cantidad = (int) $datos['cantidad'];
 
-            // Tipos que suman stock
             $tiposEntrada = [
                 'entrada_inicial', 'entrada_compra', 'devolucion',
                 'ajuste_positivo', 'liberacion_reserva',
             ];
-            // Tipos que restan stock
             $tiposSalida = [
                 'salida_orden', 'consumo', 'dañado', 'vencido', 'perdida',
                 'devolucion_proveedor', 'reserva',
@@ -100,7 +91,7 @@ class MovimientoInventarioController extends AdminController
                 default => $anterior,
             };
 
-            if ($datos['tipo'] === 'transferencia' && ! empty($datos['sucursal_destino_id'])) {
+            if (! empty($datos['sucursal_destino_id'])) {
                 $invDestino = Inventario::firstOrCreate(
                     [
                         'sucursal_id' => $datos['sucursal_destino_id'],
@@ -121,7 +112,6 @@ class MovimientoInventarioController extends AdminController
             $inventario->fecha_actualizacion = now();
             $inventario->save();
 
-            // Actualizar costo promedio cuando es entrada
             if (in_array($datos['tipo'], $tiposEntrada)) {
                 $costoActual = (float) ($inventario->costo_promedio ?? 0);
                 $nuevoCosto = (float) ($inventario->repuesto->costo_compra ?? 0);
@@ -137,7 +127,7 @@ class MovimientoInventarioController extends AdminController
 
             MovimientoInventario::create([
                 'inventario_id' => $inventario->id,
-                'sucursal_origen_id' => $datos['sucursal_origen_id'] ?? null,
+                'sucursal_origen_id' => $datos['sucursal_origen_id'],
                 'sucursal_destino_id' => $datos['sucursal_destino_id'] ?? null,
                 'usuario_id' => auth()->id(),
                 'orden_trabajo_id' => $datos['orden_trabajo_id'] ?? null,
@@ -179,11 +169,7 @@ class MovimientoInventarioController extends AdminController
             'usuario',
         ]);
 
-        $sucursales = Sucursal::query()
-            ->whereNotNull('latitud')
-            ->whereNotNull('longitud')
-            ->orderBy('nombre')
-            ->get();
+        $sucursales = Sucursal::orderBy('nombre')->get();
 
         return view('admin.movimientos-inventario.route', [
             'movimiento' => $movimiento,

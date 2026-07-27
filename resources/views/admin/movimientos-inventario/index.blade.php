@@ -25,7 +25,7 @@
         search-name="q"
         search-placeholder="Buscar por repuesto o motivo">
         <x-slot:filters>
-            <select name="tipo" class="form-select" style="max-width:180px;" onchange="this.form.submit()">
+            <select name="tipo" class="form-select" style="max-width:200px;" onchange="this.form.submit()">
                 <option value="">Todos los tipos</option>
                 <optgroup label="Entradas">
                     <option value="entrada_inicial" @selected(request('tipo') === 'entrada_inicial')>Entrada inicial</option>
@@ -45,6 +45,9 @@
                 <optgroup label="Ajustes">
                     <option value="ajuste_positivo" @selected(request('tipo') === 'ajuste_positivo')>Ajuste positivo</option>
                     <option value="ajuste_negativo" @selected(request('tipo') === 'ajuste_negativo')>Ajuste negativo</option>
+                </optgroup>
+                <optgroup label="Transferencia">
+                    <option value="transferencia" @selected(request('tipo') === 'transferencia')>Transferencia</option>
                 </optgroup>
             </select>
             <select name="sucursal_id" class="form-select" style="max-width:200px;" onchange="this.form.submit()">
@@ -99,6 +102,7 @@
                             'reserva' => ['label' => 'Reserva', 'tone' => 'info', 'icon' => 'bi-bookmark'],
                             'ajuste_positivo' => ['label' => 'Ajuste +', 'tone' => 'success', 'icon' => 'bi-plus'],
                             'ajuste_negativo' => ['label' => 'Ajuste -', 'tone' => 'danger', 'icon' => 'bi-dash'],
+                            'transferencia' => ['label' => 'Transferencia', 'tone' => 'primary', 'icon' => 'bi-arrow-left-right'],
                             'entrada' => ['label' => 'Entrada', 'tone' => 'success', 'icon' => 'bi-plus-circle-fill'],
                             'salida' => ['label' => 'Salida', 'tone' => 'warning', 'icon' => 'bi-dash-circle-fill'],
                             'ajuste' => ['label' => 'Ajuste', 'tone' => 'info', 'icon' => 'bi-arrow-left-right'],
