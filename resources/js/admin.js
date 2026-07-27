@@ -231,10 +231,10 @@ import * as bootstrap from 'bootstrap';
     function initOffcanvas() {
         document.addEventListener('click', function (e) {
             const opener = e.target.closest('[data-tp-offcanvas-open]');
-            if (opener) {
+                if (opener) {
                 e.preventDefault();
                 const target = document.querySelector(opener.getAttribute('data-tp-offcanvas-open'));
-                if (target && window.bootstrap) {
+                if (target) {
                     bootstrap.Offcanvas.getOrCreateInstance(target).show();
                 }
                 return;
@@ -243,7 +243,7 @@ import * as bootstrap from 'bootstrap';
             if (closer) {
                 e.preventDefault();
                 const off = closer.closest('.offcanvas');
-                if (off && window.bootstrap) {
+                if (off) {
                     bootstrap.Offcanvas.getOrCreateInstance(off).hide();
                 }
             }
@@ -253,9 +253,7 @@ import * as bootstrap from 'bootstrap';
         const successFlash = document.querySelector('.admin-flash--success');
         if (successFlash) {
             document.querySelectorAll('.offcanvas.show').forEach(function (off) {
-                if (window.bootstrap) {
-                    bootstrap.Offcanvas.getOrCreateInstance(off).hide();
-                }
+                bootstrap.Offcanvas.getOrCreateInstance(off).hide();
             });
         }
     }
