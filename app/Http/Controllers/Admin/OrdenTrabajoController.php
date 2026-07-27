@@ -81,7 +81,6 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
         $datos['usuario_recepcion_id'] = auth()->id();
         $datos['estado'] = $datos['estado'] ?? 'recibida';
         $datos['descuento'] = $datos['descuento'] ?? 0;
-        $datos['kilometraje_ingreso'] = $datos['kilometraje_ingreso'] ?? 0;
 
         OrdenTrabajo::create($datos);
 

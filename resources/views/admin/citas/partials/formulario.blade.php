@@ -21,9 +21,60 @@
                             <div class="mb-0">
                                 <textarea name="motivo_reprogramacion" id="form-motivo_reprogramacion" class="form-control" rows="2" placeholder="Motivo de reprogramación (obligatorio)"></textarea>
                                 <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                    </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var container = document.getElementById('modal-formulario-cita');
+    if (!container) return;
+
+    var tipoEl = document.getElementById('form-tipo');
+    var dejaEl = document.getElementById('form-deja_vehiculo');
+    var costoEl = document.getElementById('form-costo_consulta');
+    var ayudaEl = document.getElementById('form-costo_ayuda');
+    var ayudaDeja = document.getElementById('form-ayuda-deja');
+
+    if (!tipoEl || !dejaEl || !costoEl) return;
+
+    function actualizarCosto() {
+        var esDiagnostico = tipoEl.value === 'diagnostico';
+        var dejaVehiculo = dejaEl.checked;
+
+        if (esDiagnostico) {
+            if (dejaVehiculo) {
+                // Diagnostico con dejada de vehiculo -> GRATIS
+                costoEl.value = '0';
+                costoEl.readOnly = true;
+                if (ayudaEl) ayudaEl.textContent = 'Diagnostico gratis por dejar el vehiculo.';
+                if (ayudaDeja) ayudaDeja.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> Diagnostico gratis</span>';
+            } else {
+                // Diagnostico SIN dejada -> se cobra
+                costoEl.readOnly = false;
+                if (costoEl.value === '0' || costoEl.value === '') costoEl.value = '50';
+                if (ayudaEl) ayudaEl.textContent = 'Costo del diagnostico (no deja el vehiculo).';
+                if (ayudaDeja) ayudaDeja.innerHTML = '<span class="text-warning"><i class="bi bi-exclamation-triangle-fill"></i> Se cobrara el diagnostico</span>';
+            }
+        } else {
+            costoEl.readOnly = false;
+            if (ayudaEl) ayudaEl.textContent = '0 si no aplica.';
+            if (ayudaDeja) ayudaDeja.innerHTML = '';
+        }
+    }
+
+    tipoEl.addEventListener('change', actualizarCosto);
+    dejaEl.addEventListener('change', actualizarCosto);
+
+    // Escuchar cuando el modal se abre (para resetear)
+    container.addEventListener('shown.bs.modal', function () {
+        setTimeout(actualizarCosto, 50);
+    });
+
+    // Al editar, ejecutar con los valores cargados
+    actualizarCosto();
+})();
+</script>
 
                     <div class="row g-2">
                         <div class="col-md-6">
@@ -109,7 +160,7 @@
                         <div class="col-4">
                             <label class="form-label" for="form-costo_consulta">Costo consulta</label>
                             <input type="number" step="0.01" min="0" name="costo_consulta" id="form-costo_consulta" class="form-control" value="0">
-                            <small class="form-text">0 si no aplica.</small>
+                            <small class="form-text" id="form-costo_ayuda">0 si no aplica.</small>
                             <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-4">
@@ -128,6 +179,7 @@
                                 <input class="form-check-input" type="checkbox" name="deja_vehiculo" id="form-deja_vehiculo" value="1">
                                 <label class="form-check-label" for="form-deja_vehiculo">¿Dejará el vehículo?</label>
                             </div>
+                            <div class="cell-muted small ms-1" id="form-ayuda-deja"></div>
                         </div>
 
                         <div class="col-12">

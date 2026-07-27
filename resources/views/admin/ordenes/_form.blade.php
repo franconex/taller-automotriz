@@ -21,15 +21,8 @@
 </div>
 
 <div class="admin-form-section">
-    <h3 class="admin-form-section__title">Recepción</h3>
-    <x-admin.form-field name="kilometraje_ingreso" type="number" label="Kilometraje de ingreso" :value="$orden->kilometraje_ingreso ?? null" icon="bi-speedometer2" />
+    <h3 class="admin-form-section__title">Problema reportado</h3>
     <x-admin.form-field name="descripcion_problema" label="Descripción del problema" type="textarea" :value="$orden->descripcion_problema ?? null" required />
-</div>
-
-<div class="admin-form-section">
-    <h3 class="admin-form-section__title">Diagnóstico y notas</h3>
-    <x-admin.form-field name="diagnostico_general" label="Diagnóstico general" type="textarea" :value="$orden->diagnostico_general ?? null" />
-    <x-admin.form-field name="observaciones" label="Observaciones" type="textarea" :value="$orden->observaciones ?? null" />
 </div>
 
 <div class="admin-form-section">
