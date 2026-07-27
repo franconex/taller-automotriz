@@ -136,13 +136,44 @@ import interactionPlugin from '@fullcalendar/interaction';
                     const ev = info.event;
                     const p = ev.extendedProps || {};
                     const viewType = info.view.type;
+                    const h = ev.start ? String(ev.start.getHours()).padStart(2, '0') + ':' + String(ev.start.getMinutes()).padStart(2, '0') : '';
+                    const hf = ev.end ? String(ev.end.getHours()).padStart(2, '0') + ':' + String(ev.end.getMinutes()).padStart(2, '0') : '';
+                    const hTexto = (h && hf) ? h + ' - ' + hf : h;
+                    const cliente = p.cliente || ev.title || 'Cita';
+                    const vehiculo = p.vehiculo || '';
+                    const servicio = p.servicio || '';
+                    const estado = p.estado || '';
+                    const color = COLORES[estado] || '#6B7280';
+
+                    info.el.setAttribute('title', hTexto + ' - ' + cliente + (vehiculo ? ' (' + vehiculo + ')' : '') + ' [' + estado + ']');
+
                     if (viewType === 'timeGridWeek' || viewType === 'timeGridDay') {
                         const el = info.el;
-                        if (el) {
-                            el.style.background = p.estado ? (COLORES[p.estado] || '#6B7280') : '#6B7280';
-                            el.style.borderLeft = '3px solid rgba(255,255,255,0.6)';
-                            el.style.color = '#fff';
+                        el.style.background = color;
+                        el.style.borderColor = color;
+                        el.style.color = '#fff';
+                        el.style.fontSize = '0.72rem';
+                        el.style.padding = '2px 4px';
+                        el.style.fontWeight = '500';
+                        el.style.overflow = 'hidden';
+
+                        var extra = '';
+                        if (vehiculo) extra += '<div style="font-size:0.65rem;opacity:0.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escape(vehiculo) + '</div>';
+                        if (servicio) extra += '<div style="font-size:0.62rem;opacity:0.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escape(servicio) + '</div>';
+
+                        const mainEl = info.el.querySelector('.fc-event-main');
+                        if (mainEl) {
+                            mainEl.innerHTML =
+                                '<div style="font-weight:600;font-size:0.7rem;">' + escape(hTexto) + '</div>' +
+                                '<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escape(cliente) + '</div>' +
+                                extra;
                         }
+                    } else if (viewType === 'dayGridMonth') {
+                        info.el.innerHTML =
+                            '<div style="display:flex;align-items:center;gap:4px;font-size:0.72rem;">' +
+                                '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
+                                '<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escape(cliente) + '</span>' +
+                            '</div>';
                     }
                 } catch (e) {
                     console.error('eventDidMount error:', e);
@@ -151,42 +182,6 @@ import interactionPlugin from '@fullcalendar/interaction';
             eventClick(info) {
                 info.jsEvent.preventDefault();
                 abrirDetalle(info.event.id);
-            },
-            eventContent(arg) {
-                try {
-                    const ev = arg.event;
-                    const p = ev.extendedProps || {};
-                    const esTimeGrid = arg.view.type === 'timeGridWeek' || arg.view.type === 'timeGridDay';
-                    const esDayGrid = arg.view.type === 'dayGridMonth';
-                    const h = ev.start ? String(ev.start.getHours()).padStart(2, '0') + ':' + String(ev.start.getMinutes()).padStart(2, '0') : '';
-                    const hf = ev.end ? String(ev.end.getHours()).padStart(2, '0') + ':' + String(ev.end.getMinutes()).padStart(2, '0') : '';
-                    const hTexto = (h && hf) ? h + ' - ' + hf : h;
-                    const cliente = p.cliente || '';
-                    const vehiculo = p.vehiculo || '';
-                    const servicio = p.servicio || '';
-                    const estado = p.estado || '';
-                    const color = COLORES[estado] || '#6B7280';
-                    var labelEstado = p.estado_label || estado;
-                    labelEstado = labelEstado.charAt(0).toUpperCase() + labelEstado.slice(1);
-
-                    if (esTimeGrid) {
-                        return { html: '<div class="cita-card cita-card--timegrid" style="--cita-color:' + color + '">' +
-                            '<div class="cita-card__hora">' + escape(hTexto) + '</div>' +
-                            '<div class="cita-card__cliente">' + escape(cliente) + '</div>' +
-                            (vehiculo ? '<div class="cita-card__vehiculo">' + escape(vehiculo) + '</div>' : '') +
-                            (servicio ? '<div class="cita-card__servicio">' + escape(servicio) + '</div>' : '') +
-                        '</div>' };
-                    }
-                    if (esDayGrid) {
-                        return { html: '<div class="cita-card cita-card--daygrid">' +
-                            '<span class="cita-card__dot" style="background:' + color + '"></span>' +
-                            '<span class="cita-card__cliente">' + escape(cliente) + '</span>' +
-                        '</div>' };
-                    }
-                    return { html: '<span>' + escape(hTexto) + ' ' + escape(cliente) + (vehiculo ? ' \u00b7 ' + escape(vehiculo) : '') + '</span>' };
-                } catch (e) {
-                    return { html: '<span>' + escape(arg.event.title || 'Cita') + '</span>' };
-                }
             },
             select(info) {
                 if (!permitirCrear) return;
