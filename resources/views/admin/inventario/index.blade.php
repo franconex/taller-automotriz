@@ -274,8 +274,11 @@
            ABRIR MODALES
            --------------------------------------------------------- */
         window.abrirAgregarRepuesto = function () {
-            var inp = document.getElementById('pi-input');
-            if (inp) { inp.focus(); inp.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            document.getElementById('ef_codigo_barras').value = '';
+            document.getElementById('ef_codigo_label').textContent = '—';
+            document.getElementById('ef_nombre').value = '';
+            tpAbrirModal('modalFormEscaner');
+            setTimeout(function () { document.getElementById('ef_nombre')?.focus(); }, 200);
         };
 
         window.abrirBuscarCodigo = function () {
@@ -371,6 +374,7 @@
                     '</div>' +
                     '<form id="form-entrada-pi" class="row g-2 mt-2">' +
                         '<input type="hidden" name="repuesto_id" value="' + rep.id + '">' +
+                        '<input type="hidden" name="sucursal_id" value="{{ auth()->user()->sucursal_id ?? '' }}">' +
                         '<div class="col-4">' +
                             '<label class="form-label small">Cantidad</label>' +
                             '<input type="number" name="cantidad" class="form-control form-control-sm" min="1" required>' +
@@ -383,6 +387,7 @@
                             '<label class="form-label small">Factura</label>' +
                             '<input type="text" name="factura" class="form-control form-control-sm">' +
                         '</div>' +
+                        '<div class="col-12"><div id="pi-error" class="text-danger small d-none"></div></div>' +
                         '<div class="col-12 d-flex gap-2 mt-2">' +
                             '<button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check2"></i> Confirmar entrada</button>' +
                             '<button type="button" class="btn btn-outline-secondary btn-sm" onclick="limpiarPanel()">Cancelar</button>' +
@@ -398,8 +403,10 @@
 
         function confirmarEntrada(form) {
             var btn = form.querySelector('button[type="submit"]');
+            var errorEl = document.getElementById('pi-error');
             btn.disabled = true;
             btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Guardando…';
+            if (errorEl) { errorEl.classList.add('d-none'); errorEl.textContent = ''; }
 
             var datos = {};
             var fd = new FormData(form);
@@ -413,15 +420,28 @@
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
                 body: JSON.stringify(datos)
             })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.exito) {
+            .then(function (r) {
+                return r.json().then(function (data) { return { status: r.status, data: data }; });
+            })
+            .then(function (result) {
+                if (result.data && result.data.exito) {
                     var resEl = document.getElementById('pi-resultado');
-                    resEl.innerHTML = '<div class="text-success fw-semibold small py-2"><i class="bi bi-check-circle"></i> ' + escHtml(data.mensaje) + '</div>';
+                    resEl.innerHTML = '<div class="text-success fw-semibold small py-2"><i class="bi bi-check-circle"></i> ' + escHtml(result.data.mensaje || 'Entrada registrada') + '</div>';
                     setTimeout(function () { limpiarPanel(); }, 1500);
+                } else {
+                    var msg = 'Error del servidor.';
+                    if (result.data && result.data.message) msg = result.data.message;
+                    if (result.data && result.data.errors) {
+                        var lista = Object.values(result.data.errors).flat();
+                        if (lista.length) msg = lista.join('. ');
+                    }
+                    if (errorEl) { errorEl.textContent = msg; errorEl.classList.remove('d-none'); }
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check2"></i> Confirmar entrada';
                 }
             })
             .catch(function () {
+                if (errorEl) { errorEl.textContent = 'Error de conexión. Intenta de nuevo.'; errorEl.classList.remove('d-none'); }
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-check2"></i> Confirmar entrada';
             });

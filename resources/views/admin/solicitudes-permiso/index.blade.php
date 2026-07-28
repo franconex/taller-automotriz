@@ -12,7 +12,13 @@
     <x-admin.page-header
         title="Solicitudes de permiso"
         description="Gestiona las solicitudes de permisos especiales.">
-        @if(Auth::user()->tienePermiso('solicitudes-permiso.crear'))
+        @php
+            $user = Auth::user();
+            $puedeSolicitar = $user->tienePermiso('solicitudes-permiso.crear')
+                && !$user->tieneRol('Administrador')
+                && !$user->tieneRol('Mecánico');
+        @endphp
+        @if($puedeSolicitar)
             <x-slot:actions>
                 <a href="{{ route('admin.solicitudes-permiso.create') }}" class="btn btn-primary">
                     <i class="bi bi-plus-lg" aria-hidden="true"></i>

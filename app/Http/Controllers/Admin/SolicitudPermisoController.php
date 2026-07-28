@@ -45,8 +45,19 @@ class SolicitudPermisoController extends AdminController implements HasMiddlewar
         ]);
     }
 
+    protected function noPuedeSolicitar(): bool
+    {
+        $user = Auth::user();
+        return $user->tieneRol('Administrador') || $user->tieneRol('Mecánico');
+    }
+
     public function create(): View
     {
+        if ($this->noPuedeSolicitar()) {
+            return redirect()->route('admin.solicitudes-permiso.index')
+                ->with('error', 'No tienes permiso para realizar solicitudes.');
+        }
+
         $user = Auth::user();
 
         $idsYaAsignados = $user->rol->permisos()->pluck('permisos.id');
@@ -65,6 +76,11 @@ class SolicitudPermisoController extends AdminController implements HasMiddlewar
 
     public function store(Request $request): RedirectResponse
     {
+        if ($this->noPuedeSolicitar()) {
+            return redirect()->route('admin.solicitudes-permiso.index')
+                ->with('error', 'No tienes permiso para realizar solicitudes.');
+        }
+
         $validados = $request->validate([
             'permiso_id' => ['required', 'exists:permisos,id'],
             'motivo' => ['required', 'string', 'max:500'],
