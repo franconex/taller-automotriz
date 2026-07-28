@@ -136,6 +136,7 @@
                                     <option value="en_proceso" {{ in_array($orden->estado, ['diagnostico']) ? '' : 'disabled' }}>⚙️ En proceso</option>
                                     <option value="esperando_repuesto" {{ in_array($orden->estado, ['diagnostico','en_proceso']) ? '' : 'disabled' }}>⏳ Esperando repuesto</option>
                                     <option value="pausada" {{ in_array($orden->estado, ['diagnostico','en_proceso']) ? '' : 'disabled' }}>⏸️ Pausar</option>
+                                    <option value="finalizada_mecanico" {{ in_array($orden->estado, ['diagnostico','en_proceso','esperando_repuesto','pausada']) ? '' : 'disabled' }}>✅ Finalizado</option>
                                 </select>
                             </div>
                             <div class="col-auto">
@@ -245,21 +246,7 @@
                 </div>
             </div>
 
-            {{-- FINALIZAR --}}
-            @if (in_array($orden->estado, ['en_proceso', 'diagnostico', 'esperando_repuesto', 'pausada']))
-                <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;border-left:3px solid #198754 !important;">
-                    <div class="card-body p-3 text-center">
-                        <p class="small mb-2">¿Has terminado el trabajo en este vehículo?</p>
-                        <form method="POST" action="{{ route('mecanico.ordenes.finalizar', $orden) }}" onsubmit="return confirm('¿Finalizar trabajo? Se marcará como listo para entrega.');">
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-check2-circle"></i> Finalizar trabajo
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            @endif
+
         </div>
     </div>
 @endsection

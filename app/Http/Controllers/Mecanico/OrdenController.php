@@ -260,7 +260,7 @@ class OrdenController extends Controller
         $this->ordenAsignada($orden);
 
         $estado = $request->input('estado');
-        $permitidos = ['diagnostico', 'en_proceso', 'esperando_repuesto', 'pausada', 'pendiente_autorizacion'];
+        $permitidos = ['diagnostico', 'en_proceso', 'esperando_repuesto', 'pausada', 'pendiente_autorizacion', 'finalizada_mecanico'];
 
         if (! in_array($estado, $permitidos)) {
             return back()->with('error', 'Estado no permitido.');
@@ -268,10 +268,10 @@ class OrdenController extends Controller
 
         $transiciones = [
             'recibida' => ['diagnostico'],
-            'diagnostico' => ['en_proceso', 'esperando_repuesto', 'pausada', 'pendiente_autorizacion'],
-            'en_proceso' => ['esperando_repuesto', 'pausada', 'pendiente_autorizacion'],
-            'esperando_repuesto' => ['en_proceso', 'pendiente_autorizacion'],
-            'pausada' => ['diagnostico', 'en_proceso'],
+            'diagnostico' => ['en_proceso', 'esperando_repuesto', 'pausada', 'pendiente_autorizacion', 'finalizada_mecanico'],
+            'en_proceso' => ['esperando_repuesto', 'pausada', 'pendiente_autorizacion', 'finalizada_mecanico'],
+            'esperando_repuesto' => ['en_proceso', 'pendiente_autorizacion', 'finalizada_mecanico'],
+            'pausada' => ['diagnostico', 'en_proceso', 'finalizada_mecanico'],
             'pendiente_autorizacion' => ['en_proceso'],
         ];
 
@@ -279,6 +279,49 @@ class OrdenController extends Controller
 
         if (! isset($transiciones[$origen]) || ! in_array($estado, $transiciones[$origen])) {
             return back()->with('error', "No puedes cambiar de '{$origen}' a '{$estado}'.");
+        }
+
+        if ($estado === 'finalizada_mecanico') {
+            DB::transaction(function () use ($orden) {
+                $orden->update([
+                    'estado' => 'finalizada_mecanico',
+                    'fecha_fin' => now(),
+                ]);
+
+                $asignacion = $this->asignacionActiva($orden);
+                if ($asignacion) {
+                    $asignacion->update([
+                        'fecha_finalizacion' => now(),
+                        'porcentaje_avance' => 100,
+                    ]);
+                }
+
+                // Auto-generar nota para el cliente
+                $asignacion = $asignacion ?? $this->asignacionActiva($orden);
+                if ($asignacion) {
+                    \App\Models\NotaTrabajo::create([
+                        'asignacion_trabajo_id' => $asignacion->id,
+                        'usuario_id' => Auth::id(),
+                        'contenido' => '✅ Trabajo finalizado. Tu vehículo está listo para retirar. Podés pasar por el taller cuando quieras.',
+                        'visible_cliente' => true,
+                    ]);
+                }
+            });
+
+            // Notificar a recepcionistas de la sucursal
+            $recepcionistas = \App\Models\User::whereHas('rol', fn ($q) => $q->where('nombre', 'Recepcionista'))
+                ->where('sucursal_id', $orden->sucursal_id)
+                ->where('estado', 'activo')
+                ->get();
+            Notification::send($recepcionistas, new \App\Notifications\TrabajoFinalizado($orden));
+
+            // Notificar al cliente
+            if ($orden->cliente?->user) {
+                $orden->cliente->user->notify(new \App\Notifications\TrabajoFinalizado($orden));
+            }
+
+            return redirect()->route('mecanico.ordenes.index')
+                ->with('success', 'Trabajo finalizado correctamente. El vehículo está listo para entrega.');
         }
 
         $orden->update(['estado' => $estado]);
