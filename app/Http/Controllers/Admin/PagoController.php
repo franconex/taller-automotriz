@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\Admin\PagoRequest;
+use App\Models\Comprobante;
 use App\Models\MetodoPago;
 use App\Models\OrdenTrabajo;
 use App\Models\Pago;
@@ -119,7 +120,7 @@ class PagoController extends AdminController implements HasMiddleware
             'metodo_pago_id' => ['required', 'exists:metodos_pago,id'],
         ]);
 
-        $orden = OrdenTrabajo::with(['serviciosMecanico', 'repuestosMecanico'])->findOrFail($data['orden_id']);
+        $orden = OrdenTrabajo::with(['serviciosMecanico', 'repuestosMecanico.repuesto', 'cliente'])->findOrFail($data['orden_id']);
 
         if (! in_array($orden->estado, ['finalizada_mecanico', 'lista_entrega', 'finalizada', 'recibida', 'diagnostico', 'en_proceso'])) {
             return response()->json(['ok' => false, 'mensaje' => 'La orden no está en un estado válido para cobrar.'], 422);
@@ -137,13 +138,33 @@ class PagoController extends AdminController implements HasMiddleware
 
         try {
             DB::transaction(function () use ($orden, $data, $pendiente) {
-                Pago::create([
+                $pago = Pago::create([
                     'orden_trabajo_id' => $orden->id,
                     'metodo_pago_id' => $data['metodo_pago_id'],
                     'usuario_id' => auth()->id(),
                     'fecha_pago' => now(),
                     'monto' => $pendiente,
                     'estado' => 'confirmado',
+                ]);
+
+                // Generar comprobante con detalle
+                $items = [];
+                foreach ($orden->serviciosMecanico as $s) {
+                    $items[] = $s->nombre_servicio . ' Bs ' . number_format($s->precio_base, 2);
+                }
+                foreach ($orden->repuestosMecanico as $r) {
+                    $items[] = ($r->repuesto?->nombre ?? 'Repuesto') . ' x' . $r->cantidad . ' Bs ' . number_format($r->cantidad * $r->precio_unitario_snapshot, 2);
+                }
+
+                $ultimoId = Comprobante::withTrashed()->max('id') ?? 0;
+                Comprobante::create([
+                    'pago_id'      => $pago->id,
+                    'cliente_id'   => $orden->cliente_id,
+                    'numero'       => 'REC-' . now()->format('Ymd') . '-' . str_pad($ultimoId + 1, 4, '0', STR_PAD_LEFT),
+                    'fecha_emision' => now(),
+                    'monto_total'  => $pendiente,
+                    'estado'       => 'emitido',
+                    'observaciones' => implode("\n", $items),
                 ]);
 
                 if ($orden->estado === 'finalizada_mecanico' || $orden->estado === 'lista_entrega' || $orden->estado === 'finalizada') {
@@ -153,7 +174,7 @@ class PagoController extends AdminController implements HasMiddleware
 
             return response()->json([
                 'ok' => true,
-                'mensaje' => 'Pago de Bs ' . number_format($pendiente, 2) . ' registrado. Orden entregada.',
+                'mensaje' => 'Pago de Bs ' . number_format($pendiente, 2) . ' registrado. Comprobante generado.',
             ]);
         } catch (\Throwable $e) {
             return response()->json(['ok' => false, 'mensaje' => 'Error al procesar pago: ' . $e->getMessage()], 500);
