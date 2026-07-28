@@ -117,14 +117,12 @@ class CotizacionController extends Controller
                 ->with('error', 'No se encontró tu perfil de mecánico.');
         }
 
-        // Buscar cotización pendiente SIN items (borrador vacío) para reusarla
+        // Buscar cotización pendiente existente para esta cita (con o sin items)
         $autorizacion = Autorizacion::where('cita_id', $cita->id)
             ->where('estado', 'pendiente')
-            ->whereDoesntHave('servicios')
-            ->whereDoesntHave('repuestos')
             ->first();
 
-        // Si no hay borrador vacío, crear una nueva
+        // Si no existe ninguna, crear una nueva
         if (! $autorizacion) {
             $autorizacion = Autorizacion::create([
                 'cita_id'               => $cita->id,
