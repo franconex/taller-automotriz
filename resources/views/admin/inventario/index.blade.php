@@ -178,7 +178,7 @@
                 @csrf
                 <input type="hidden" name="codigo_barras" id="ef_codigo_barras">
                 <input type="hidden" name="tipo" value="repuesto">
-                <input type="hidden" name="sucursal_id" value="{{ auth()->user()->sucursal_id ?? '' }}">
+                <input type="hidden" name="sucursal_id" value="{{ auth()->user()->sucursal_id ?? session('admin_sucursal_id') ?? '' }}">
                 <div class="modal-header">
                     <h2 class="modal-title h5">
                         <i class="bi bi-upc-scan text-primary"></i>
@@ -376,7 +376,7 @@
                     '</div>' +
                     '<form id="form-entrada-pi" class="row g-2 mt-2">' +
                         '<input type="hidden" name="repuesto_id" value="' + rep.id + '">' +
-                        '<input type="hidden" name="sucursal_id" value="{{ auth()->user()->sucursal_id ?? '' }}">' +
+                        '<input type="hidden" name="sucursal_id" value="{{ auth()->user()->sucursal_id ?? session('admin_sucursal_id') ?? '' }}">' +
                         '<div class="col-4">' +
                             '<label class="form-label small">Cantidad</label>' +
                             '<input type="number" name="cantidad" class="form-control form-control-sm" min="1" required>' +

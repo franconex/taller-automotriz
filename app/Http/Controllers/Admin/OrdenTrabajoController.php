@@ -77,7 +77,7 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             ->get();
 
         $mecanicos = Mecanico::with('empleado')
-            ->whereHas('empleado', fn ($q) => $q->where('sucursal_id', $this->usuarioSucursalId() ?: optional($user->sucursal)->id))
+            ->when($this->usuarioSucursalId(), fn ($q) => $q->whereHas('empleado', fn ($sq) => $sq->where('sucursal_id', $this->usuarioSucursalId())))
             ->orderBy('disponibilidad')
             ->get();
 

@@ -16,7 +16,12 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE mecanicos DROP FOREIGN KEY mecanicos_especialidad_id_foreign');
+        try {
+            DB::statement('ALTER TABLE mecanicos DROP FOREIGN KEY mecanicos_especialidad_id_foreign');
+        } catch (\Illuminate\Database\QueryException $e) {
+            // La FK pudo no existir, continuar
+        }
+        DB::statement('UPDATE mecanicos SET especialidad_id = (SELECT id FROM especialidades LIMIT 1) WHERE especialidad_id IS NULL');
         DB::statement('ALTER TABLE mecanicos MODIFY especialidad_id BIGINT UNSIGNED NOT NULL');
         DB::statement('ALTER TABLE mecanicos ADD CONSTRAINT mecanicos_especialidad_id_foreign FOREIGN KEY (especialidad_id) REFERENCES especialidades(id) ON DELETE RESTRICT');
     }
