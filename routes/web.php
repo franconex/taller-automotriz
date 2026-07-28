@@ -31,6 +31,7 @@ use App\Http\Controllers\Auth\GoogleSocialiteController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Mecanico\DashboardController as MecanicoDashboardController;
 use App\Http\Controllers\Mecanico\OrdenController as MecanicoOrdenController;
+use App\Http\Controllers\NotificacionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -238,5 +239,13 @@ Route::middleware('auth')->group(function () {
         Route::post('ordenes/{orden}/evidencias', [MecanicoOrdenController::class, 'evidencias'])->name('ordenes.evidencias');
         Route::patch('ordenes/{orden}/estado', [MecanicoOrdenController::class, 'cambiarEstado'])->name('ordenes.estado');
         Route::patch('ordenes/{orden}/finalizar', [MecanicoOrdenController::class, 'finalizar'])->name('ordenes.finalizar');
+    });
+
+    // Notificaciones
+    Route::prefix('notificaciones')->name('notificaciones.')->group(function () {
+        Route::get('/', [NotificacionController::class, 'index'])->name('index');
+        Route::get('no-leidas', [NotificacionController::class, 'noLeidas'])->name('no-leidas');
+        Route::patch('{id}/leer', [NotificacionController::class, 'marcarLeida'])->name('marcar-leida');
+        Route::patch('leer-todas', [NotificacionController::class, 'marcarTodasLeidas'])->name('marcar-todas');
     });
 });

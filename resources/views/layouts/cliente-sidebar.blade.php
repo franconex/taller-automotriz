@@ -113,6 +113,7 @@
                 </div>
 
                 <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
+                    <x-notificaciones-campana />
                     <div class="dropdown">
                         <button class="admin-navbar__user dropdown-toggle"
                                 type="button"

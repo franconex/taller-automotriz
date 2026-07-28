@@ -89,6 +89,7 @@
                 </div>
 
                 <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
+                    <x-notificaciones-campana />
                     @if ($usuario->sucursal)
                         <span class="admin-navbar__branch d-none d-md-inline-flex" title="Sucursal activa">
                             <i class="bi bi-geo-alt" aria-hidden="true"></i>

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrdenTrabajo extends Model
@@ -103,5 +104,30 @@ class OrdenTrabajo extends Model
     public function estimaciones(): HasMany
     {
         return $this->hasMany(EstimacionOrden::class);
+    }
+
+    public function diagnosticos(): HasMany
+    {
+        return $this->hasMany(DiagnosticoOrden::class);
+    }
+
+    public function avances(): HasMany
+    {
+        return $this->hasMany(AvanceOrden::class);
+    }
+
+    public function serviciosMecanico(): HasMany
+    {
+        return $this->hasMany(OrdenServicio::class);
+    }
+
+    public function repuestosMecanico(): HasMany
+    {
+        return $this->hasMany(OrdenRepuesto::class);
+    }
+
+    public function evidenciasTrabajo(): HasManyThrough
+    {
+        return $this->hasManyThrough(EvidenciaTrabajo::class, AsignacionTrabajo::class, 'orden_trabajo_id', 'asignacion_trabajo_id');
     }
 }

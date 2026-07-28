@@ -17,6 +17,7 @@ use App\Models\Servicio;
 use App\Models\Sucursal;
 use App\Models\TipoServicio;
 use App\Models\Vehiculo;
+use App\Notifications\OrdenAsignada;
 use App\Services\OrdenTrabajoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -581,6 +582,15 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
         ]);
 
         Mecanico::where('id', $mecanicoId)->update(['disponibilidad' => 'ocupado']);
+
+        $mecanico = Mecanico::with('empleado.user')->find($mecanicoId);
+        $user = $mecanico?->empleado?->user;
+        if ($user) {
+            $orden = OrdenTrabajo::find($ordenId);
+            if ($orden) {
+                $user->notify(new OrdenAsignada($orden));
+            }
+        }
     }
 
     private function reemplazarAsignacion(int $ordenId, int $mecanicoId, string $actividad): void

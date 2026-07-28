@@ -1,7 +1,6 @@
-@extends('layouts.admin')
+@extends('layouts.mecanico')
 
 @section('title', 'Mi Panel')
-@section('navbar-title', 'Mi Panel')
 
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -99,7 +98,7 @@
                                     </td>
                                     <td class="small">{{ $e ? $e->duracion_minima_minutos . '-' . $e->duracion_maxima_minutos . 'min' : '—' }}</td>
                                     <td>
-                                        <a href="{{ route('admin.ordenes.show', $o) }}" class="btn btn-sm btn-outline-secondary">
+                                        <a href="{{ route('mecanico.ordenes.show', $o) }}" class="btn btn-sm btn-outline-secondary">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                     </td>
@@ -133,7 +132,7 @@
                                     <td>{{ $o->vehiculo?->placa ?? '—' }}</td>
                                     <td class="small">{{ $a->fecha_finalizacion?->format('d/m/Y H:i') }}</td>
                                     <td><span class="badge bg-success">{{ $o->estado === 'entregada' ? 'Entregada' : 'Listo' }}</span></td>
-                                    <td><a href="{{ route('admin.ordenes.show', $o) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
+                                    <td><a href="{{ route('mecanico.ordenes.show', $o) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>
                                 </tr>
                             @endforeach
                         </tbody>

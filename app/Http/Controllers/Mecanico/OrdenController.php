@@ -12,6 +12,8 @@ use App\Models\OrdenRepuesto;
 use App\Models\OrdenServicio;
 use App\Models\OrdenTrabajo;
 use App\Models\Repuesto;
+use App\Notifications\AvanceReportado;
+use App\Notifications\PresupuestoDisponible;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -62,7 +64,7 @@ class OrdenController extends Controller
             ->first();
 
         $diagnostico = $orden->diagnosticos()->latest()->first();
-        $servicios = $orden->servicios()->get();
+        $servicios = $orden->serviciosMecanico()->get();
         $estimacion = $orden->estimaciones()->latest()->first();
         $avances = $orden->avances()->latest()->get();
         $repuestos = $orden->repuestosMecanico()->get();
@@ -146,8 +148,9 @@ class OrdenController extends Controller
             'nota_cliente' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        DB::transaction(function () use ($orden, $data) {
-            EstimacionOrden::create([
+        $estimacion = null;
+        DB::transaction(function () use ($orden, $data, &$estimacion) {
+            $estimacion = EstimacionOrden::create([
                 'orden_trabajo_id' => $orden->id,
                 'mecanico_id' => $this->mecanicoId(),
                 'duracion_minima_minutos' => $data['tiempo_minimo_minutos'],
@@ -157,6 +160,10 @@ class OrdenController extends Controller
                 'observacion_cliente' => $data['nota_cliente'] ?? null,
             ]);
         });
+
+        if ($estimacion && $orden->cliente?->user) {
+            $orden->cliente->user->notify(new PresupuestoDisponible($orden, $estimacion));
+        }
 
         return redirect()->route('mecanico.ordenes.show', $orden)
             ->with('success', 'Tiempo estimado guardado.');
@@ -175,7 +182,7 @@ class OrdenController extends Controller
             'visible_cliente' => 'boolean',
         ]);
 
-        AvanceOrden::create(array_merge($data, [
+        $avance = AvanceOrden::create(array_merge($data, [
             'orden_trabajo_id' => $orden->id,
             'mecanico_id' => $this->mecanicoId(),
             'estado' => $orden->estado,
@@ -185,6 +192,10 @@ class OrdenController extends Controller
         $asignacion = $this->asignacionActiva($orden);
         if ($asignacion) {
             $asignacion->update(['porcentaje_avance' => $data['porcentaje'] ?? $asignacion->porcentaje_avance]);
+        }
+
+        if ($avance->visible_cliente && $orden->cliente?->user) {
+            $orden->cliente->user->notify(new AvanceReportado($orden, $avance));
         }
 
         return redirect()->route('mecanico.ordenes.show', $orden)

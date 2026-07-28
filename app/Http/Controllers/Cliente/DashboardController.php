@@ -14,10 +14,13 @@ use App\Models\OrdenTrabajo;
 use App\Models\Pago;
 use App\Models\Servicio;
 use App\Models\Sucursal;
+use App\Models\User;
 use App\Models\Vehiculo;
+use App\Notifications\CitaSolicitada;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -162,7 +165,7 @@ class DashboardController extends Controller
     public function seguimiento(): View
     {
         $ordenActiva = OrdenTrabajo::where('cliente_id', $this->clienteId())
-            ->whereIn('estado', ['recibida', 'diagnostico', 'en_proceso', 'pausada'])
+            ->whereIn('estado', ['recibida', 'diagnostico', 'en_proceso', 'pausada', 'finalizada_mecanico', 'lista_entrega'])
             ->with([
                 'vehiculo',
                 'asignaciones.mecanico.empleado',
@@ -173,8 +176,11 @@ class DashboardController extends Controller
             ->first();
 
         $asignacion = $ordenActiva?->asignaciones->first();
+        $estimacion = $ordenActiva?->estimaciones()->latest()->first();
+        $avances = $ordenActiva?->avances()->where('visible_cliente', true)->latest()->get() ?? collect();
+        $diagnostico = $ordenActiva?->diagnosticos()->latest()->first();
 
-        return view('cliente.seguimiento', compact('ordenActiva', 'asignacion'));
+        return view('cliente.seguimiento', compact('ordenActiva', 'asignacion', 'estimacion', 'avances', 'diagnostico'));
     }
 
     public function historial(): View
@@ -287,10 +293,13 @@ class DashboardController extends Controller
         $vehiculos = Vehiculo::where('cliente_id', $this->clienteId())
             ->where('estado', true)->get();
 
-        $servicios = Servicio::where('estado', true)->orderBy('nombre')->get();
-        $sucursales = Sucursal::where('estado', true)->orderBy('nombre')->get();
+        $sucursales = Sucursal::where('estado', true)
+            ->whereNotNull('latitud')
+            ->whereNotNull('longitud')
+            ->orderBy('nombre')
+            ->get();
 
-        return view('cliente.cita-create', compact('vehiculos', 'servicios', 'sucursales'));
+        return view('cliente.cita-create', compact('vehiculos', 'sucursales'));
     }
 
     public function citaStore(CitaStoreRequest $request): RedirectResponse
@@ -303,7 +312,10 @@ class DashboardController extends Controller
         $data['deja_vehiculo'] = $request->boolean('deja_vehiculo');
         $data['descripcion_problema'] = trim($data['descripcion_problema'] ?? '') ?: 'Sin descripción';
 
-        Cita::create($data);
+        $cita = Cita::create($data);
+
+        $recepcionistas = User::whereHas('rol', fn ($q) => $q->where('nombre', 'Recepcionista'))->get();
+        Notification::send($recepcionistas, new CitaSolicitada($cita));
 
         return redirect()->route('cliente.citas')
             ->with('success', 'Cita solicitada correctamente. Recibirás la confirmación pronto.');
