@@ -33,6 +33,19 @@
         label="Dirección"
         :value="$empleado->direccion ?? null"
         icon="bi-geo-alt" />
+    <div class="admin-form-section" style="border:1px solid var(--border,#e2e8f0);border-radius:8px;padding:1rem;margin-top:0.5rem;">
+        <h3 class="admin-form-section__title" style="font-size:0.95rem;">Ubicación en el mapa</h3>
+        <input type="hidden" id="empleado-field-latitud" value="">
+        <input type="hidden" id="empleado-field-longitud" value="">
+        <div class="geocoder-box">
+            <input type="text" id="empleado-geocoder-input" placeholder="Ej: Plaza 24 de Septiembre, Santa Cruz" />
+            <button type="button" id="empleado-geocoder-btn">Buscar</button>
+            <button type="button" id="empleado-geocoder-ubicacion">Mi ubicación</button>
+        </div>
+        <div class="geocoder-result" id="empleado-geocoder-result"></div>
+        <div id="empleado-map" style="height: 260px; border-radius: 8px;"></div>
+        <div class="form-text">Haz clic en el mapa para marcar la ubicación o arrastra el marcador. La dirección se cargará automáticamente.</div>
+    </div>
 </div>
 
 <div class="admin-form-section">
@@ -94,10 +107,15 @@
 
     <x-admin.form-field
         name="especialidad"
-        label="Especialidad (opcional)"
-        :value="optional(optional($empleado)->mecanico)->especialidad?->nombre ?? old('especialidad')"
-        help="Ej: Mecánica General, Electricidad Automotriz, Motores Diesel..."
-        icon="bi-wrench" />
+        label="Especialidad"
+        type="select">
+        <option value="">— Selecciona una especialidad —</option>
+        @foreach (($especialidades ?? collect()) as $e)
+            <option value="{{ $e->id }}" @selected(old('especialidad', optional(optional($empleado)->mecanico)->especialidad_id) == $e->id)>
+                {{ $e->nombre }}
+            </option>
+        @endforeach
+    </x-admin.form-field>
     <x-admin.form-field
         name="disponibilidad"
         label="Disponibilidad"
@@ -130,7 +148,19 @@
 </div>
 
 @once
+    @push('styles')
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <style>
+            .geocoder-box { display: flex; gap: 0.375rem; margin-bottom: 0.5rem; }
+            .geocoder-box input { flex: 1; padding: 0.375rem 0.75rem; font-size: 0.875rem; border: 1px solid var(--border, #ced4da); border-radius: 6px; outline: none; }
+            .geocoder-box input:focus { border-color: var(--primary, #4361ee); box-shadow: 0 0 0 2px rgba(67,97,238,0.15); }
+            .geocoder-box button { padding: 0.375rem 0.75rem; font-size: 0.8rem; border: 1px solid var(--border, #ced4da); border-radius: 6px; background: var(--surface, #fff); cursor: pointer; white-space: nowrap; }
+            .geocoder-box button:hover { background: var(--bg-subtle, #f1f5f9); }
+            .geocoder-result { font-size: 0.8rem; color: var(--muted, #64748b); margin-bottom: 0.375rem; min-height: 1.2em; }
+        </style>
+    @endpush
     @push('scripts')
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
             (function () {
                 const selectRol = document.getElementById('field-rol_id');
@@ -151,6 +181,127 @@
                 selectRol.addEventListener('change', actualizar);
                 actualizar();
             })();
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const direccionInput = document.getElementById('field-direccion');
+                const latInput = document.getElementById('empleado-field-latitud');
+                const lngInput = document.getElementById('empleado-field-longitud');
+                const searchInput = document.getElementById('empleado-geocoder-input');
+                const searchBtn = document.getElementById('empleado-geocoder-btn');
+                const searchResult = document.getElementById('empleado-geocoder-result');
+                const ubicacionBtn = document.getElementById('empleado-geocoder-ubicacion');
+                const mapContainer = document.getElementById('empleado-map');
+
+                if (!mapContainer) return;
+
+                let lastReverseCall = 0;
+
+                function reverseGeocode(lat, lng) {
+                    const now = Date.now();
+                    if (now - lastReverseCall < 1200) return;
+                    lastReverseCall = now;
+
+                    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=es')
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            if (data && data.display_name) {
+                                if (direccionInput) direccionInput.value = data.display_name;
+                                if (searchResult) searchResult.textContent = data.display_name;
+                            }
+                        })
+                        .catch(function () {});
+                }
+
+                const defaultLat = -17.7838;
+                const defaultLng = -63.1823;
+
+                const map = L.map('empleado-map').setView([defaultLat, defaultLng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
+
+                const marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+
+                function alCambiarUbicacion(lat, lng) {
+                    if (latInput) latInput.value = lat.toFixed(7);
+                    if (lngInput) lngInput.value = lng.toFixed(7);
+                    reverseGeocode(lat, lng);
+                }
+
+                marker.on('dragend', function () {
+                    const pos = marker.getLatLng();
+                    alCambiarUbicacion(pos.lat, pos.lng);
+                });
+
+                map.on('click', function (e) {
+                    marker.setLatLng(e.latlng);
+                    alCambiarUbicacion(e.latlng.lat, e.latlng.lng);
+                });
+
+                if (searchBtn && searchInput) {
+                    searchBtn.addEventListener('click', function () {
+                        const q = searchInput.value.trim();
+                        if (!q) return;
+                        searchBtn.disabled = true;
+                        searchBtn.textContent = 'Buscando...';
+                        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&limit=1&accept-language=es')
+                            .then(function (r) { return r.json(); })
+                            .then(function (data) {
+                                if (data && data.length > 0) {
+                                    const r = data[0];
+                                    const latR = parseFloat(r.lat);
+                                    const lngR = parseFloat(r.lon);
+                                    marker.setLatLng([latR, lngR]);
+                                    map.setView([latR, lngR], 16);
+                                    if (direccionInput) direccionInput.value = r.display_name;
+                                    if (searchResult) searchResult.textContent = r.display_name;
+                                    if (latInput) latInput.value = latR.toFixed(7);
+                                    if (lngInput) lngInput.value = lngR.toFixed(7);
+                                } else {
+                                    if (searchResult) searchResult.textContent = 'No se encontró la dirección.';
+                                }
+                            })
+                            .catch(function () {
+                                if (searchResult) searchResult.textContent = 'Error al buscar.';
+                            })
+                            .finally(function () {
+                                searchBtn.disabled = false;
+                                searchBtn.textContent = 'Buscar';
+                            });
+                    });
+                    searchInput.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') searchBtn.click();
+                    });
+                }
+
+                if (ubicacionBtn) {
+                    ubicacionBtn.addEventListener('click', function () {
+                        if (!navigator.geolocation) {
+                            if (searchResult) searchResult.textContent = 'Geolocalización no disponible.';
+                            return;
+                        }
+                        ubicacionBtn.disabled = true;
+                        ubicacionBtn.textContent = 'Obteniendo...';
+                        navigator.geolocation.getCurrentPosition(
+                            function (pos) {
+                                const latR = pos.coords.latitude;
+                                const lngR = pos.coords.longitude;
+                                marker.setLatLng([latR, lngR]);
+                                map.setView([latR, lngR], 16);
+                                alCambiarUbicacion(latR, lngR);
+                                ubicacionBtn.disabled = false;
+                                ubicacionBtn.textContent = 'Mi ubicación';
+                            },
+                            function () {
+                                if (searchResult) searchResult.textContent = 'No se pudo obtener la ubicación.';
+                                ubicacionBtn.disabled = false;
+                                ubicacionBtn.textContent = 'Mi ubicación';
+                            }
+                        );
+                    });
+                }
+            });
         </script>
     @endpush
 @endonce

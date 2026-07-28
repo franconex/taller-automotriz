@@ -208,15 +208,12 @@ class EmpleadoController extends AdminController implements HasMiddleware
         return back()->with('success', 'El empleado y sus cuentas de acceso fueron eliminados correctamente.');
     }
 
-    private function obtenerEspecialidadId(?string $nombre): ?int
+    private function obtenerEspecialidadId($id): ?int
     {
-        if (! $nombre || trim($nombre) === '') {
+        if (! $id || (int) $id <= 0) {
             return null;
         }
-        return Especialidad::firstOrCreate(
-            ['nombre' => trim($nombre)],
-            ['descripcion' => 'Especialidad: ' . trim($nombre), 'estado' => true]
-        )->id;
+        return (int) $id;
     }
 
     public function toggle(Request $request, Empleado $empleado): RedirectResponse

@@ -99,4 +99,56 @@
             </div>
         @endif
     </div>
+
+    @if ($empleado->direccion)
+    <div class="admin-table-wrap mt-3 p-4">
+        <h2 class="h6 fw-bold mb-3">Ubicación</h2>
+        <div id="empleado-show-map" style="height: 300px; border-radius: 8px;"></div>
+        <div id="empleado-show-map-status" class="form-text mt-2"></div>
+    </div>
+    @endif
 @endsection
+
+@push('styles')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+@endpush
+
+@push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const direccion = @js($empleado->direccion);
+            const nombre = @js($empleado->nombre_completo);
+            const statusEl = document.getElementById('empleado-show-map-status');
+            if (!direccion) return;
+
+            const map = L.map('empleado-show-map').setView([-17.7838, -63.1823], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            if (statusEl) statusEl.textContent = 'Buscando dirección…';
+
+            fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(direccion) + '&limit=1&accept-language=es')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data && data.length > 0) {
+                        const r = data[0];
+                        const lat = parseFloat(r.lat);
+                        const lng = parseFloat(r.lon);
+                        map.setView([lat, lng], 16);
+                        L.marker([lat, lng]).addTo(map)
+                            .bindPopup('<strong>' + nombre + '</strong><br>' + direccion)
+                            .openPopup();
+                        if (statusEl) statusEl.textContent = 'Ubicación aproximada: ' + r.display_name;
+                    } else {
+                        if (statusEl) statusEl.textContent = 'No se pudo determinar la ubicación en el mapa.';
+                    }
+                })
+                .catch(function () {
+                    if (statusEl) statusEl.textContent = 'Error al buscar la ubicación.';
+                });
+        });
+    </script>
+@endpush
