@@ -588,6 +588,8 @@ import interactionPlugin from '@fullcalendar/interaction';
         const form = document.getElementById('formulario-cita');
         form.reset();
         form.classList.remove('was-validated');
+        form.querySelectorAll('.is-invalid').forEach(function (el) { el.classList.remove('is-invalid'); });
+        form.querySelectorAll('.invalid-feedback').forEach(function (el) { el.textContent = ''; });
         document.getElementById('formulario-errores').classList.add('d-none');
         document.getElementById('formulario-errores').innerHTML = '';
         document.getElementById('reprogramar-fields').classList.add('d-none');
@@ -679,7 +681,9 @@ import interactionPlugin from '@fullcalendar/interaction';
         const fecha = data.fecha;
         const hora = data.hora;
         if (fecha && hora && !citaId) {
-            const fechaHora = new Date(fecha + 'T' + hora);
+            const [y, m, d] = fecha.split('-').map(Number);
+            const [hh, mm] = hora.split(':').map(Number);
+            const fechaHora = new Date(y, m - 1, d, hh, mm);
             if (fechaHora < new Date()) {
                 mostrarError('No puedes agendar una cita en el pasado.');
                 return;
@@ -707,22 +711,33 @@ import interactionPlugin from '@fullcalendar/interaction';
                 credentials: 'same-origin',
                 body: JSON.stringify(data),
             });
-            const json = await res.json();
+
+            let json;
+            try {
+                json = await res.json();
+            } catch (parseError) {
+                erroresEl.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i> Error del servidor. Intenta de nuevo.';
+                erroresEl.classList.remove('d-none');
+                return;
+            }
+
             if (!res.ok) {
                 if (json.errors && typeof json.errors === 'object') {
                     Object.entries(json.errors).forEach(([field, msgs]) => {
                         const input = form.querySelector(`[name="${field}"]`);
                         if (input) {
                             input.classList.add('is-invalid');
-                            let fb = input.parentElement.querySelector('.invalid-feedback');
-                            if (!fb) { fb = document.createElement('div'); fb.className = 'invalid-feedback'; input.parentElement.appendChild(fb); }
+                            let container = input.closest('.input-group') || input.parentElement;
+                            let fb = container.querySelector('.invalid-feedback');
+                            if (!fb) { fb = document.createElement('div'); fb.className = 'invalid-feedback'; container.after(fb); }
                             fb.textContent = Array.isArray(msgs) ? msgs.join(', ') : String(msgs);
                         }
                     });
-                    erroresEl.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i> Revisa los datos.';
+                    erroresEl.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i> Revisa los datos marcados en rojo.';
                     erroresEl.classList.remove('d-none');
                 } else {
-                    mostrarError(json.message || 'Error al guardar.');
+                    erroresEl.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i> ' + (json.message || 'Error al guardar.');
+                    erroresEl.classList.remove('d-none');
                 }
                 return;
             }
@@ -731,7 +746,8 @@ import interactionPlugin from '@fullcalendar/interaction';
             mainCalendar?.refetchEvents();
             recargarTablas();
         } catch (err) {
-            mostrarError(err.message || 'Error de red.');
+            erroresEl.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i> Error inesperado. Revisa los datos e intenta de nuevo.';
+            erroresEl.classList.remove('d-none');
         }
     }
 

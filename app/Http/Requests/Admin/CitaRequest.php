@@ -81,8 +81,8 @@ class CitaRequest extends AdminFormRequest
             if (! $fecha || ! $hora || ! $horaFin) return;
 
             try {
-                $inicio = Carbon::createFromFormat('Y-m-d H:i', $fecha . ' ' . $hora);
-                $fin    = Carbon::createFromFormat('Y-m-d H:i', $fecha . ' ' . $horaFin);
+                $inicio = Carbon::parse($fecha . ' ' . $hora);
+                $fin    = Carbon::parse($fecha . ' ' . $horaFin);
             } catch (\Throwable $e) {
                 return;
             }
