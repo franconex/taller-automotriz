@@ -120,8 +120,17 @@
 
                     {{-- FOTO --}}
                     <div class="mb-2">
-                        <label class="form-label small">Foto del diagnóstico <small class="text-muted">(opcional, podés usar la cámara)</small></label>
-                        <input type="file" name="foto_diagnostico" class="form-control form-control-sm" accept="image/*" capture="environment">
+                        <label class="form-label small">Foto del diagnóstico <small class="text-muted">(opcional)</small></label>
+                        <div class="d-flex gap-2 mb-1">
+                            <input type="file" name="foto_diagnostico" id="fotoInput" class="form-control form-control-sm" accept="image/*" style="flex:1;">
+                            <button type="button" id="btnTomarFoto" class="btn btn-sm btn-outline-secondary" style="white-space:nowrap;">
+                                <i class="bi bi-camera"></i> Cámara
+                            </button>
+                        </div>
+                        <div id="fotoPreviewContainer" class="mt-1" style="display:none;">
+                            <img id="fotoPreview" src="" style="max-width:180px;max-height:135px;border:1px solid #d1d5db;" class="p-1">
+                            <small class="d-block text-muted mt-1" id="fotoPreviewLabel"></small>
+                        </div>
                     </div>
 
                     <div class="row g-2 mb-2">
@@ -231,6 +240,66 @@ document.getElementById('inputManoObra')?.addEventListener('input', function() {
     } else {
         row.style.display = 'none';
     }
+});
+
+// Cámara para foto diagnóstico
+document.getElementById('btnTomarFoto')?.addEventListener('click', function() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+        document.getElementById('fotoInput').click();
+        return;
+    }
+    var video = document.createElement('video');
+    video.setAttribute('autoplay', '');
+    video.setAttribute('playsinline', '');
+    video.style.cssText = 'width:100%;max-height:300px;background:#000;border:1px solid #d1d5db;';
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    var stream = null;
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:1056;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;padding:1rem;';
+    modal.innerHTML = '<div style="background:#fff;max-width:500px;width:100%;padding:1rem;">' +
+        '<div style="font-weight:600;margin-bottom:.5rem;color:#0B1D3A;">Tomar foto</div>' +
+        '<div id="camContainer"></div>' +
+        '<div style="display:flex;gap:.5rem;margin-top:.5rem;">' +
+            '<button id="btnCapture" class="btn btn-sm btn-success" style="flex:1;"><i class="bi bi-camera"></i> Capturar</button>' +
+            '<button id="btnCancelCam" class="btn btn-sm btn-outline-secondary" style="flex:1;">Cancelar</button>' +
+        '</div></div>';
+    document.body.appendChild(modal);
+    modal.querySelector('#camContainer').appendChild(video);
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } })
+        .then(function(s) { stream = s; video.srcObject = s; video.play(); })
+        .catch(function() {
+            navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } } })
+                .then(function(s) { stream = s; video.srcObject = s; video.play(); })
+                .catch(function(err) { alert('Cámara no disponible: ' + err.message); document.body.removeChild(modal); });
+        });
+
+    modal.querySelector('#btnCapture').addEventListener('click', function() {
+        if (!stream) return;
+        canvas.width = video.videoWidth || 1280;
+        canvas.height = video.videoHeight || 720;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function(blob) {
+            var file = new File([blob], 'diagnostico-' + Date.now() + '.jpg', { type: 'image/jpeg' });
+            var dt = new DataTransfer();
+            dt.items.add(file);
+            document.getElementById('fotoInput').files = dt.files;
+            var pv = document.getElementById('fotoPreview');
+            var pc = document.getElementById('fotoPreviewContainer');
+            var pl = document.getElementById('fotoPreviewLabel');
+            pv.src = URL.createObjectURL(blob);
+            pc.style.display = '';
+            pl.textContent = 'Foto capturada';
+            stream.getTracks().forEach(function(t) { t.stop(); });
+            document.body.removeChild(modal);
+        }, 'image/jpeg', 0.85);
+    });
+
+    modal.querySelector('#btnCancelCam').addEventListener('click', function() {
+        if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
+        document.body.removeChild(modal);
+    });
 });
 </script>
 
