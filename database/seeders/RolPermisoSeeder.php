@@ -75,6 +75,18 @@ class RolPermisoSeeder extends Seeder
                 'comprobantes.ver',
                 'comprobantes.editar',
                 'precios.ver',
+                'citas.confirmar',
+                'citas.asignar_mecanico',
+                'citas.registrar_llegada',
+                'ordenes.atencion_directa',
+                'ordenes.servicios_asignar',
+                'ordenes.repuestos_asignar',
+                'ordenes.estimar_tiempo',
+                'ordenes.ver_estimacion',
+                'subservicios.ver',
+                'subservicios.crear',
+                'subservicios.editar',
+                'estimaciones.supervisar',
             ])->pluck('id')
         );
 
@@ -104,6 +116,12 @@ class RolPermisoSeeder extends Seeder
                 'mecanicos.ver',
                 'metodos-pago.ver',
                 'comprobantes.ver',
+                'citas.confirmar',
+                'citas.asignar_mecanico',
+                'citas.registrar_llegada',
+                'ordenes.atencion_directa',
+                'ordenes.ver_estimacion',
+                'subservicios.ver',
             ])->pluck('id')
         );
 
@@ -122,6 +140,11 @@ class RolPermisoSeeder extends Seeder
                 'mecanicos.ver',
                 'metodos-pago.ver',
                 'comprobantes.ver',
+                'ordenes.estimar_tiempo',
+                'ordenes.ver_estimacion',
+                'subservicios.ver',
+                'ordenes.servicios_asignar',
+                'ordenes.repuestos_asignar',
             ])->pluck('id')
         );
     }

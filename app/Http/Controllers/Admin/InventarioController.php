@@ -21,6 +21,8 @@ class InventarioController extends AdminController implements HasMiddleware
     public static function middleware(): array
     {
         return [
+            new Middleware('permiso:inventario.ver', only: ['index', 'show']),
+            new Middleware('permiso:inventario.entrada', only: ['entradaRapida', 'registrarEntrada', 'crearDesdeEscaner']),
             new Middleware('permiso:inventario.ajustar', only: ['edit', 'update', 'toggle']),
             new Middleware('permiso:roles.editar', only: ['destroy']),
         ];
@@ -79,7 +81,7 @@ class InventarioController extends AdminController implements HasMiddleware
         ]);
 
         DB::transaction(function () use ($request) {
-            $inventario = Inventario::firstOrCreate(
+            $inventario = Inventario::lockForUpdate()->firstOrCreate(
                 ['repuesto_id' => $request->repuesto_id],
                 ['cantidad_actual' => 0, 'cantidad_reservada' => 0, 'fecha_actualizacion' => now()]
             );
@@ -170,7 +172,7 @@ class InventarioController extends AdminController implements HasMiddleware
         ]);
     }
 
-    public function crearDesdeEscaner(Request $request): RedirectResponse
+    public function crearDesdeEscaner(Request $request)
     {
         $request->validate([
             'codigo_barras' => ['nullable', 'string', 'max:50'],
@@ -214,18 +216,18 @@ class InventarioController extends AdminController implements HasMiddleware
             $sucursalId = $request->sucursal_id ?? $this->usuarioSucursalId();
 
             if ($cantidad > 0) {
-                $data = [
+                if (!$sucursalId) {
+                    $sucursalId = Sucursal::value('id');
+                }
+
+                $inv = Inventario::create([
                     'repuesto_id' => $r->id,
+                    'sucursal_id' => $sucursalId,
                     'cantidad_actual' => $cantidad,
                     'cantidad_reservada' => 0,
                     'costo_promedio' => $request->costo_compra ?? 0,
                     'fecha_actualizacion' => now(),
-                ];
-                if ($sucursalId) {
-                    $data['sucursal_id'] = $sucursalId;
-                }
-
-                $inv = Inventario::create($data);
+                ]);
 
                 MovimientoInventario::create([
                     'inventario_id' => $inv->id,
@@ -241,6 +243,13 @@ class InventarioController extends AdminController implements HasMiddleware
 
             return $r;
         });
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'exito' => true,
+                'mensaje' => "{$producto->nombre} registrado con éxito.",
+            ]);
+        }
 
         return redirect()->route('admin.inventario.index')
             ->with('success', "{$producto->nombre} registrado con éxito.");

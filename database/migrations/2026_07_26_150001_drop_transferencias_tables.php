@@ -2,17 +2,38 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        foreach (['transferencia_id', 'repuesto_id', 'sucursal_id'] as $col) {
+            $fk = "movimientos_inventario_{$col}_foreign";
+            try {
+                DB::statement("ALTER TABLE movimientos_inventario DROP FOREIGN KEY `{$fk}`");
+            } catch (\Exception $e) {
+                // FK may not exist — skip
+            }
+        }
+
         Schema::table('movimientos_inventario', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('transferencia_id');
-            $table->dropConstrainedForeignId('repuesto_id');
-            $table->dropConstrainedForeignId('sucursal_id');
-            $table->dropColumn('codigo');
+            if (Schema::hasColumn('movimientos_inventario', 'transferencia_id')) {
+                $table->dropColumn('transferencia_id');
+            }
+
+            if (Schema::hasColumn('movimientos_inventario', 'repuesto_id')) {
+                $table->dropColumn('repuesto_id');
+            }
+
+            if (Schema::hasColumn('movimientos_inventario', 'sucursal_id')) {
+                $table->dropColumn('sucursal_id');
+            }
+
+            if (Schema::hasColumn('movimientos_inventario', 'codigo')) {
+                $table->dropColumn('codigo');
+            }
         });
 
         Schema::dropIfExists('detalles_transferencia');

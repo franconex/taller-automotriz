@@ -19,6 +19,7 @@ class UsuarioController extends AdminController implements HasMiddleware
     public static function middleware(): array
     {
         return [
+            new Middleware('permiso:usuarios.ver', only: ['index', 'show']),
             new Middleware('permiso:usuarios.crear', only: ['create', 'store']),
             new Middleware('permiso:usuarios.editar', only: ['edit', 'update', 'restablecerPassword']),
             new Middleware('permiso:usuarios.desactivar', only: ['destroy', 'toggle']),

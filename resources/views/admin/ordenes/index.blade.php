@@ -60,6 +60,7 @@
                         <th>N° de orden</th>
                         <th>Cliente / Vehículo</th>
                         <th class="d-none d-md-table-cell">Emisión</th>
+                        <th class="d-none d-xl-table-cell">Mecánico</th>
                         <th class="d-none d-lg-table-cell text-end">Total</th>
                         <th>Estado</th>
                         <th class="col-actions">Acciones</th>
@@ -78,6 +79,19 @@
                             </td>
                             <td class="d-none d-md-table-cell cell-muted">
                                 {{ $o->fecha_emision?->format('d/m/Y H:i') ?? '—' }}
+                            </td>
+                            <td class="d-none d-xl-table-cell">
+                                @php $asignado = $o->asignaciones->first()?->mecanico?->empleado?->nombre_completo; @endphp
+                                @if ($asignado)
+                                    <span class="d-inline-flex align-items-center gap-1">
+                                        @if ($mecanicoActualId && $o->asignaciones->first()?->mecanico_id === $mecanicoActualId)
+                                            <i class="bi bi-tools text-danger" aria-hidden="true" title="Tu orden"></i>
+                                        @endif
+                                        {{ $asignado }}
+                                    </span>
+                                @else
+                                    <span class="cell-muted">—</span>
+                                @endif
                             </td>
                             <td class="d-none d-lg-table-cell text-end cell-strong">
                                 {{ number_format((float) $o->total_general, 2, ',', '.') }}

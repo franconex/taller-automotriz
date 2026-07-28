@@ -21,6 +21,9 @@ class AsignacionTrabajo extends Model
         'fecha_inicio',
         'fecha_finalizacion',
         'observaciones',
+        'porcentaje_avance',
+        'proximo_paso',
+        'diagnostico_mecanico',
     ];
 
     protected function casts(): array
@@ -29,6 +32,7 @@ class AsignacionTrabajo extends Model
             'fecha_asignacion' => 'datetime',
             'fecha_inicio' => 'datetime',
             'fecha_finalizacion' => 'datetime',
+            'porcentaje_avance' => 'integer',
         ];
     }
 
@@ -50,5 +54,20 @@ class AsignacionTrabajo extends Model
     public function detalles(): HasMany
     {
         return $this->hasMany(DetalleOrdenTrabajo::class);
+    }
+
+    public function notas(): HasMany
+    {
+        return $this->hasMany(NotaTrabajo::class);
+    }
+
+    public function evidencias(): HasMany
+    {
+        return $this->hasMany(EvidenciaTrabajo::class);
+    }
+
+    public function notasVisiblesCliente(): HasMany
+    {
+        return $this->hasMany(NotaTrabajo::class)->where('visible_cliente', true);
     }
 }

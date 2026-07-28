@@ -114,6 +114,26 @@ class PermisoSeeder extends Seeder
 
             // Precios
             ['nombre' => 'Ver Precios de Compra', 'codigo' => 'precios.ver', 'modulo' => 'repuestos'],
+
+            // Citas — acciones
+            ['nombre' => 'Confirmar Citas', 'codigo' => 'citas.confirmar', 'modulo' => 'citas'],
+            ['nombre' => 'Asignar Mecánico', 'codigo' => 'citas.asignar_mecanico', 'modulo' => 'citas'],
+            ['nombre' => 'Registrar Llegada', 'codigo' => 'citas.registrar_llegada', 'modulo' => 'citas'],
+
+            // Órdenes — acciones
+            ['nombre' => 'Atención Directa', 'codigo' => 'ordenes.atencion_directa', 'modulo' => 'ordenes'],
+            ['nombre' => 'Asignar Servicios', 'codigo' => 'ordenes.servicios_asignar', 'modulo' => 'ordenes'],
+            ['nombre' => 'Asignar Repuestos', 'codigo' => 'ordenes.repuestos_asignar', 'modulo' => 'ordenes'],
+            ['nombre' => 'Estimar Tiempo', 'codigo' => 'ordenes.estimar_tiempo', 'modulo' => 'ordenes'],
+            ['nombre' => 'Ver Estimación', 'codigo' => 'ordenes.ver_estimacion', 'modulo' => 'ordenes'],
+
+            // Subservicios
+            ['nombre' => 'Ver Subservicios', 'codigo' => 'subservicios.ver', 'modulo' => 'subservicios'],
+            ['nombre' => 'Crear Subservicios', 'codigo' => 'subservicios.crear', 'modulo' => 'subservicios'],
+            ['nombre' => 'Editar Subservicios', 'codigo' => 'subservicios.editar', 'modulo' => 'subservicios'],
+
+            // Estimaciones
+            ['nombre' => 'Supervisar Estimaciones', 'codigo' => 'estimaciones.supervisar', 'modulo' => 'ordenes'],
         ];
 
         foreach ($permisos as $permiso) {

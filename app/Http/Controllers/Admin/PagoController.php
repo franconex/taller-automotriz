@@ -16,7 +16,11 @@ class PagoController extends AdminController implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [new Middleware('permiso:pagos.anular', only: ['anular'])];
+        return [
+            new Middleware('permiso:pagos.ver', only: ['index', 'show']),
+            new Middleware('permiso:pagos.registrar', only: ['create', 'store']),
+            new Middleware('permiso:pagos.anular', only: ['anular']),
+        ];
     }
     public function index(Request $request): View
     {

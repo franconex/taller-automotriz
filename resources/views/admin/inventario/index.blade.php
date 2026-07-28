@@ -168,6 +168,8 @@
             <form method="POST" action="{{ route('admin.inventario.crear-desde-escaner') }}" id="formEscaner">
                 @csrf
                 <input type="hidden" name="codigo_barras" id="ef_codigo_barras">
+                <input type="hidden" name="tipo" value="repuesto">
+                <input type="hidden" name="sucursal_id" value="{{ auth()->user()->sucursal_id ?? '' }}">
                 <div class="modal-header">
                     <h2 class="modal-title h5">
                         <i class="bi bi-upc-scan text-primary"></i>
@@ -494,7 +496,60 @@
             document.getElementById('bc-input')?.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') { e.preventDefault(); buscarCodigoModal(); }
             });
+
+            /* Envío AJAX del formulario de registro rápido */
+            document.getElementById('formEscaner')?.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var btn = this.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Guardando…';
+
+                fetch(this.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: new FormData(this)
+                })
+                .then(function (r) {
+                    if (!r.ok) {
+                        if (r.status === 422) {
+                            return r.json().then(function (err) { throw { status: 422, errors: err.errors || err }; });
+                        }
+                        throw { status: r.status };
+                    }
+                    return r.json();
+                })
+                .then(function () {
+                    tpCerrar('modalFormEscaner');
+                    location.reload();
+                })
+                .catch(function (err) {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Guardar producto';
+                    if (err.status === 422 && err.errors) {
+                        mostrarErroresFormulario('formEscaner', err.errors);
+                    }
+                });
+            });
         });
+
+        window.mostrarErroresFormulario = function (formId, errors) {
+            document.querySelectorAll('#' + formId + ' .is-invalid').forEach(function (el) {
+                el.classList.remove('is-invalid');
+            });
+            document.querySelectorAll('#' + formId + ' .invalid-feedback').forEach(function (el) {
+                el.remove();
+            });
+            Object.keys(errors).forEach(function (field) {
+                var input = document.querySelector('#' + formId + ' [name="' + field + '"]');
+                if (input) {
+                    input.classList.add('is-invalid');
+                    var feedback = document.createElement('div');
+                    feedback.className = 'invalid-feedback';
+                    feedback.textContent = errors[field][0];
+                    input.parentNode.appendChild(feedback);
+                }
+            });
+        };
     })();
     </script>
 @endpush

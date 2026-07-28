@@ -352,6 +352,28 @@
     }
 }
 
+/* ===== TABS ===== */
+.login-tab {
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    color: var(--tp-text-secondary);
+    font-size: 1rem;
+    transition: color .2s, border-color .2s;
+    cursor: pointer;
+}
+.login-tab:hover {
+    color: var(--tp-text);
+}
+.login-tab.active {
+    color: var(--tp-red);
+    border-bottom-color: var(--tp-red);
+}
+.login-tab:focus-visible {
+    outline: 2px solid var(--tp-red);
+    outline-offset: 2px;
+}
+
 /* ===== ACCESSIBILITY ===== */
 @media (prefers-reduced-motion: reduce) {
     .login-submit,

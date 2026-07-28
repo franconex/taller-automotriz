@@ -93,4 +93,9 @@ class OrdenTrabajo extends Model
     {
         return $this->hasMany(Pago::class);
     }
+
+    public function estimaciones(): HasMany
+    {
+        return $this->hasMany(EstimacionOrden::class);
+    }
 }

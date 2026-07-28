@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Cliente extends Model
@@ -25,6 +26,11 @@ class Cliente extends Model
         return [
             'fecha_registro' => 'datetime',
         ];
+    }
+
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class, 'cliente_id');
     }
 
     public function vehiculos(): HasMany
