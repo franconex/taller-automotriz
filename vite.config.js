@@ -15,6 +15,8 @@ export default defineConfig({
                 'resources/js/admin.js',
                 'resources/js/admin/dashboard-charts.js',
                 'resources/js/admin/pago-stripe.js',
+                'resources/js/admin/pago-qr.js',
+                'resources/js/admin/pago-modal.js',
                 'resources/js/admin/citas-calendario.js',
             ],
             refresh: true,

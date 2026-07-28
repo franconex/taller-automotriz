@@ -147,13 +147,14 @@
                                     </a>
                                     @endif
                                     @if (!$esMecanico && $puedeCobrar)
-                                    <a href="{{ route('admin.pagos.create', ['orden_id' => $o->id]) }}"
+                                    <button type="button"
                                        class="btn btn-sm btn-success"
                                        title="Cobrar"
-                                       aria-label="Cobrar">
+                                       data-modal-cobrar
+                                       data-orden-id="{{ $o->id }}">
                                         <i class="bi bi-cash-coin" aria-hidden="true"></i>
                                         <span class="d-none d-lg-inline">Cobrar</span>
-                                    </a>
+                                    </button>
                                     @endif
                                     @if (!$esMecanico && $puedeFinalizar)
                                     <form method="POST"
@@ -202,4 +203,32 @@
             <x-admin.table-pagination :paginator="$ordenes" />
         </div>
     @endif
+
+{{-- MODAL COBRAR --}}
+<div class="modal fade" id="modalCobrar" tabindex="-1" aria-labelledby="modalCobrarLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="border:1px solid #d1d5db;border-radius:0;">
+      <div class="modal-header" style="background:#0B1D3A;color:#fff;border-bottom:0;padding:1rem 1.25rem;">
+        <h6 class="modal-title fw-bold" id="modalCobrarLabel"><i class="bi bi-cash-coin me-2"></i> Cobrar orden</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" id="modalCobrarBody" style="padding:1.25rem;">
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-cash-coin" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.3;"></i>
+          <p class="small mb-0">Cargando...</p>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid #e5e7eb;padding:.75rem 1.25rem;">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="modalCobrarCancelar" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-sm btn-success" id="modalCobrarConfirmar" disabled>
+          <i class="bi bi-check2-circle me-1"></i> Confirmar pago
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@push('scripts')
+    @vite(['resources/js/admin/pago-modal.js'])
+@endpush
 @endsection

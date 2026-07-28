@@ -6,10 +6,12 @@ use App\Http\Requests\Admin\PagoRequest;
 use App\Models\MetodoPago;
 use App\Models\OrdenTrabajo;
 use App\Models\Pago;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class PagoController extends AdminController implements HasMiddleware
@@ -80,6 +82,82 @@ class PagoController extends AdminController implements HasMiddleware
         Pago::create($datos);
 
         return $this->redirigirALista('admin.pagos.index', 'Pago registrado con éxito.');
+    }
+
+    public function modalData(Request $request, OrdenTrabajo $orden): JsonResponse
+    {
+        $orden->load([
+            'cliente',
+            'vehiculo',
+            'serviciosMecanico',
+            'repuestosMecanico.repuesto',
+        ]);
+
+        $totalServicios = $orden->serviciosMecanico->sum('precio_base');
+        $totalRepuestos = $orden->repuestosMecanico->sum(fn($r) => $r->cantidad * $r->precio_unitario_snapshot);
+        $totalGeneral = $totalServicios + $totalRepuestos;
+
+        $metodosPago = MetodoPago::where('estado', true)->orderBy('nombre')->get();
+
+        return response()->json([
+            'ok' => true,
+            'orden' => ['id' => $orden->id, 'numero_orden' => $orden->numero_orden],
+            'cliente' => $orden->cliente,
+            'vehiculo' => $orden->vehiculo,
+            'servicios' => $orden->serviciosMecanico,
+            'repuestos' => $orden->repuestosMecanico,
+            'total_general' => $totalGeneral,
+            'metodos_pago' => $metodosPago,
+            'metodo_default' => $metodosPago->first()?->id,
+        ]);
+    }
+
+    public function cobrarDesdeModal(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'orden_id' => ['required', 'exists:ordenes_trabajo,id'],
+            'metodo_pago_id' => ['required', 'exists:metodos_pago,id'],
+        ]);
+
+        $orden = OrdenTrabajo::with(['serviciosMecanico', 'repuestosMecanico'])->findOrFail($data['orden_id']);
+
+        if (! in_array($orden->estado, ['finalizada_mecanico', 'lista_entrega', 'finalizada', 'recibida', 'diagnostico', 'en_proceso'])) {
+            return response()->json(['ok' => false, 'mensaje' => 'La orden no está en un estado válido para cobrar.'], 422);
+        }
+
+        $yaPagado = $orden->pagos()->where('estado', 'confirmado')->sum('monto');
+        $totalServicios = $orden->serviciosMecanico->sum('precio_base');
+        $totalRepuestos = $orden->repuestosMecanico->sum(fn($r) => $r->cantidad * $r->precio_unitario_snapshot);
+        $totalGeneral = $totalServicios + $totalRepuestos;
+        $pendiente = max(0, $totalGeneral - $yaPagado);
+
+        if ($pendiente <= 0) {
+            return response()->json(['ok' => false, 'mensaje' => 'La orden ya está totalmente pagada.'], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($orden, $data, $pendiente) {
+                Pago::create([
+                    'orden_trabajo_id' => $orden->id,
+                    'metodo_pago_id' => $data['metodo_pago_id'],
+                    'usuario_id' => auth()->id(),
+                    'fecha_pago' => now(),
+                    'monto' => $pendiente,
+                    'estado' => 'confirmado',
+                ]);
+
+                if ($orden->estado === 'finalizada_mecanico' || $orden->estado === 'lista_entrega' || $orden->estado === 'finalizada') {
+                    $orden->update(['estado' => 'entregada', 'fecha_entrega' => now()]);
+                }
+            });
+
+            return response()->json([
+                'ok' => true,
+                'mensaje' => 'Pago de Bs ' . number_format($pendiente, 2) . ' registrado. Orden entregada.',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'mensaje' => 'Error al procesar pago: ' . $e->getMessage()], 500);
+        }
     }
 
     public function show(Pago $pago): View
