@@ -102,8 +102,20 @@
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-body p-3">
                 @php $tieneItems = $servicios->isNotEmpty() || $repuestos->isNotEmpty(); @endphp
-                <form method="POST" action="{{ route('mecanico.ordenes.cotizar-enviar', $orden) }}" id="formEnviar">
+                <form method="POST" action="{{ route('mecanico.ordenes.cotizar-enviar', $orden) }}" id="formEnviar" enctype="multipart/form-data">
                     @csrf
+                    {{-- DIAGNÓSTICO --}}
+                    <div class="mb-2">
+                        <label class="form-label small">Diagnóstico del mecánico <small class="text-muted">(problema encontrado, causa, recomendación)</small></label>
+                        <textarea name="diagnostico_mecanico" class="form-control form-control-sm" rows="3" placeholder="Describí el problema encontrado y la solución recomendada...">{{ old('diagnostico_mecanico') }}</textarea>
+                    </div>
+
+                    {{-- FOTO --}}
+                    <div class="mb-2">
+                        <label class="form-label small">Foto del diagnóstico <small class="text-muted">(opcional, podés usar la cámara)</small></label>
+                        <input type="file" name="foto_diagnostico" class="form-control form-control-sm" accept="image/*" capture="environment">
+                    </div>
+
                     <div class="row g-2 mb-2">
                         <div class="col-5">
                             <label class="form-label small">Tiempo estimado adicional</label>

@@ -68,31 +68,42 @@
                             <div class="mb-1"><span class="text-muted">Problema:</span> {{ $diagnostico->problema_encontrado ?? '—' }}</div>
                             <div class="mb-1"><span class="text-muted">Causa:</span> {{ $diagnostico->causa_probable ?? '—' }}</div>
                             @if ($diagnostico->recomendacion)<div class="mb-1"><span class="text-muted">Recomendación:</span> {{ $diagnostico->recomendacion }}</div>@endif
+                            @if ($diagnostico->observacion_cliente)
+                                <div class="mt-2 p-2 rounded" style="background:#fef2f2;">
+                                    <small><i class="bi bi-chat-quote text-danger"></i> {{ $diagnostico->observacion_cliente }}</small>
+                                </div>
+                            @endif
+                        </div>
+                    @elseif (in_array($orden->estado, ['en_proceso', 'esperando_repuesto', 'pausada', 'pendiente_autorizacion', 'finalizada_mecanico', 'lista_entrega']))
+                        <div class="small text-muted">
+                            <i class="bi bi-info-circle"></i> El diagnóstico se realizó en la cotización.
                         </div>
                     @endif
-                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="toggleForm('formDiagnostico')">
-                        <i class="bi bi-pencil"></i> {{ $diagnostico ? 'Actualizar diagnóstico' : 'Registrar diagnóstico' }}
-                    </button>
-                    <form method="POST" action="{{ route('mecanico.ordenes.diagnostico', $orden) }}" id="formDiagnostico" style="display:none;" class="mt-2">
-                        @csrf
-                        <div class="mb-2">
-                            <label class="form-label small">Problema encontrado</label>
-                            <textarea name="problema_encontrado" class="form-control form-control-sm" rows="2">{{ old('problema_encontrado') }}</textarea>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small">Causa probable</label>
-                            <input name="causa_probable" class="form-control form-control-sm" value="{{ old('causa_probable') }}">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small">Recomendación</label>
-                            <textarea name="recomendacion" class="form-control form-control-sm" rows="2">{{ old('recomendacion') }}</textarea>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label small">Observación para el cliente</label>
-                            <textarea name="observacion_cliente" class="form-control form-control-sm" rows="2" placeholder="Esto lo vera el cliente...">{{ old('observacion_cliente') }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-sm btn-primary">Guardar diagnóstico</button>
-                    </form>
+                    @if (!$diagnostico && in_array($orden->estado, ['recibida']))
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="toggleForm('formDiagnostico')">
+                            <i class="bi bi-pencil"></i> Registrar diagnóstico
+                        </button>
+                        <form method="POST" action="{{ route('mecanico.ordenes.diagnostico', $orden) }}" id="formDiagnostico" style="display:none;" class="mt-2">
+                            @csrf
+                            <div class="mb-2">
+                                <label class="form-label small">Problema encontrado</label>
+                                <textarea name="problema_encontrado" class="form-control form-control-sm" rows="2">{{ old('problema_encontrado') }}</textarea>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Causa probable</label>
+                                <input name="causa_probable" class="form-control form-control-sm" value="{{ old('causa_probable') }}">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Recomendación</label>
+                                <textarea name="recomendacion" class="form-control form-control-sm" rows="2">{{ old('recomendacion') }}</textarea>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Observación para el cliente</label>
+                                <textarea name="observacion_cliente" class="form-control form-control-sm" rows="2" placeholder="Esto lo vera el cliente...">{{ old('observacion_cliente') }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary">Guardar diagnóstico</button>
+                        </form>
+                    @endif
                 </div>
             </div>
 

@@ -302,6 +302,27 @@ class DashboardController extends Controller
                         ]);
                     }
 
+                    // Copiar diagnóstico de la cotización a la orden
+                    if ($autorizacione->diagnostico_mecanico) {
+                        \App\Models\DiagnosticoOrden::create([
+                            'orden_trabajo_id'    => $orden->id,
+                            'mecanico_id'          => $mecanicoId,
+                            'problema_encontrado'  => $autorizacione->diagnostico_mecanico,
+                            'observacion_cliente'  => $autorizacione->descripcion,
+                        ]);
+                    }
+
+                    // Copiar foto de diagnóstico a la primera asignación
+                    $asignacionCreada = $orden->asignaciones()->whereNull('fecha_finalizacion')->first();
+                    if ($autorizacione->foto_diagnostico && $asignacionCreada) {
+                        \App\Models\EvidenciaTrabajo::create([
+                            'asignacion_trabajo_id' => $asignacionCreada->id,
+                            'usuario_id'            => $autorizacione->usuario_solicitante_id,
+                            'archivo'               => $autorizacione->foto_diagnostico,
+                            'descripcion'           => 'Foto de diagnóstico de cotización',
+                        ]);
+                    }
+
                     // Cita → atendida
                     if ($cita) {
                         $cita->update(['estado' => 'atendida', 'estado_anterior' => $cita->estado]);

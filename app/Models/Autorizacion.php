@@ -15,6 +15,8 @@ class Autorizacion extends Model
         'usuario_solicitante_id',
         'titulo',
         'descripcion',
+        'diagnostico_mecanico',
+        'foto_diagnostico',
         'importe',
         'tiempo_estimado_minutos',
         'tiempo_estimado_unidad',

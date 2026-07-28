@@ -267,8 +267,16 @@ class CotizacionController extends Controller
         };
         $tiempoMinutos = $tiempoValor > 0 ? min((int) round($tiempoValor * $multiplicador), 43800) : null;
 
+        // Guardar foto si se subió
+        $fotoPath = $autorizacion->foto_diagnostico;
+        if ($request->hasFile('foto_diagnostico')) {
+            $fotoPath = $request->file('foto_diagnostico')->store('cotizaciones', 'public');
+        }
+
         $autorizacion->update([
             'importe' => $importe,
+            'diagnostico_mecanico' => $request->input('diagnostico_mecanico'),
+            'foto_diagnostico' => $fotoPath,
             'mano_de_obra' => $manoDeObra > 0 ? $manoDeObra : null,
             'tiempo_estimado_minutos' => $tiempoMinutos,
             'tiempo_estimado_unidad' => $tiempoValor > 0 ? $tiempoUnidad : null,
@@ -352,12 +360,20 @@ class CotizacionController extends Controller
         };
         $tiempoMinutos = $tiempoValor > 0 ? min((int) round($tiempoValor * $multiplicador), 43800) : null;
 
-        DB::transaction(function () use ($orden, $importe, $manoDeObra, $tiempoMinutos, $tiempoUnidad, $tiempoValor) {
+        // Guardar foto si se subió
+        $fotoPath = null;
+        if ($request->hasFile('foto_diagnostico')) {
+            $fotoPath = $request->file('foto_diagnostico')->store('cotizaciones', 'public');
+        }
+
+        DB::transaction(function () use ($orden, $request, $importe, $manoDeObra, $tiempoMinutos, $tiempoUnidad, $tiempoValor, $fotoPath) {
             \App\Models\Autorizacion::create([
                 'orden_trabajo_id'            => $orden->id,
                 'usuario_solicitante_id'      => Auth::id(),
                 'titulo'                      => 'Cotización adicional - ' . $orden->numero_orden,
                 'descripcion'                 => 'Nuevos trabajos detectados en la orden ' . $orden->numero_orden,
+                'diagnostico_mecanico'        => $request->input('diagnostico_mecanico'),
+                'foto_diagnostico'            => $fotoPath,
                 'importe'                     => $importe,
                 'mano_de_obra'                => $manoDeObra > 0 ? $manoDeObra : null,
                 'tiempo_estimado_minutos'     => $tiempoMinutos,

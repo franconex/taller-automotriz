@@ -106,7 +106,7 @@
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-body p-3">
                 @php $tieneItems = $servicios->isNotEmpty() || $repuestos->isNotEmpty(); @endphp
-                <form method="POST" action="{{ route('mecanico.cotizacion.enviar', $autorizacion) }}" id="formEnviar">
+                <form method="POST" action="{{ route('mecanico.cotizacion.enviar', $autorizacion) }}" id="formEnviar" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-2">
                         <label class="form-label small">Título de la cotización</label>
@@ -115,6 +115,24 @@
                     <div class="mb-2">
                         <label class="form-label small">Descripción / Detalle para el cliente</label>
                         <textarea name="descripcion" class="form-control form-control-sm" rows="3">{{ $autorizacion->descripcion }}</textarea>
+                    </div>
+
+                    {{-- DIAGNÓSTICO DEL MECÁNICO --}}
+                    <div class="mb-2">
+                        <label class="form-label small">Diagnóstico del mecánico <small class="text-muted">(problema encontrado, causa, recomendación)</small></label>
+                        <textarea name="diagnostico_mecanico" class="form-control form-control-sm" rows="3" placeholder="Describí el problema encontrado y la solución recomendada...">{{ old('diagnostico_mecanico', $autorizacion->diagnostico_mecanico) }}</textarea>
+                    </div>
+
+                    {{-- FOTO --}}
+                    <div class="mb-2">
+                        <label class="form-label small">Foto del diagnóstico <small class="text-muted">(opcional)</small></label>
+                        <input type="file" name="foto_diagnostico" class="form-control form-control-sm" accept="image/*" capture="environment">
+                        @if ($autorizacion->foto_diagnostico)
+                            <div class="mt-1">
+                                <img src="{{ Storage::url($autorizacion->foto_diagnostico) }}" style="max-width:150px;border-radius:6px;" class="border">
+                                <small class="d-block text-muted">Foto actual</small>
+                            </div>
+                        @endif
                     </div>
 
                     {{-- TIEMPO ESTIMADO --}}
