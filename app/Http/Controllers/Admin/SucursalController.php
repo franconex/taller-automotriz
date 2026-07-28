@@ -15,6 +15,7 @@ class SucursalController extends AdminController implements HasMiddleware
     public static function middleware(): array
     {
         return [
+            new Middleware('permiso:sucursales.ver', only: ['index', 'show']),
             new Middleware('permiso:sucursales.crear', only: ['create', 'store']),
             new Middleware('permiso:sucursales.editar', only: ['edit', 'update', 'destroy', 'toggle']),
         ];

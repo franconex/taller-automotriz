@@ -29,10 +29,13 @@ import interactionPlugin from '@fullcalendar/interaction';
     const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     const DIAS_SEMANA = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
     const COLORES = {
-        confirmada: '#16A34A',
+        solicitada: '#6B7280',
+        propuesta:  '#F59E0B',
         pendiente:  '#F59E0B',
+        confirmada: '#16A34A',
         atendida:   '#0891B2',
         cancelada:  '#9CA3AF',
+        rechazada:  '#DC2626',
         no_asistio: '#B91C1C',
     };
 

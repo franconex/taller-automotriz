@@ -7,7 +7,10 @@ use App\Http\Requests\Admin\OrdenTrabajoRequest;
 use App\Models\AsignacionTrabajo;
 use App\Models\Cliente;
 use App\Models\DetalleOrdenTrabajo;
+use App\Models\EstimacionOrden;
+use App\Models\EvidenciaTrabajo;
 use App\Models\Mecanico;
+use App\Models\NotaTrabajo;
 use App\Models\OrdenTrabajo;
 use App\Models\Repuesto;
 use App\Models\Servicio;
@@ -19,7 +22,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
@@ -28,9 +32,10 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
     public static function middleware(): array
     {
         return [
+            new Middleware('permiso:ordenes.ver', only: ['index', 'show']),
             new Middleware('permiso:ordenes.crear', only: ['create', 'store']),
             new Middleware('permiso:ordenes.editar', only: ['edit', 'update']),
-            new Middleware('permiso:ordenes.actualizar_estado', only: ['toggle', 'cambiarEstadoOrden', 'actualizarMiEstado', 'agregarObservacionMecanico', 'subirFoto', 'agregarServicioMecanico', 'finalizarTrabajo']),
+            new Middleware('permiso:ordenes.actualizar_estado', only: ['toggle', 'cambiarEstadoOrden', 'actualizarMiEstado', 'agregarObservacionMecanico', 'subirFoto', 'agregarServicioMecanico', 'finalizarTrabajo', 'iniciarTrabajo', 'registrarDiagnosticoMecanico', 'avanceMecanico', 'pausarMecanico', 'reanudarMecanico', 'finalizarMecanico', 'estimarTiempoMecanico']),
             new Middleware('permiso:ordenes.cancelar', only: ['cancelar']),
             new Middleware('permiso:roles.editar', only: ['destroy']),
         ];
@@ -154,6 +159,8 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
 
     public function show(OrdenTrabajo $ordene): View
     {
+        Gate::authorize('view', $ordene);
+
         $ordene->load([
             'cliente',
             'vehiculo.modelo.marcaVehiculo',
@@ -586,5 +593,226 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
         }
 
         $this->crearAsignacion($ordenId, $mecanicoId, $actividad);
+    }
+
+    /* =============================================================
+       ACCIONES DEL MECÁNICO (migradas desde MecanicoPanelController)
+       ============================================================= */
+
+    public function iniciarTrabajo(OrdenTrabajo $ordene): RedirectResponse
+    {
+        if ($ordene->estado === 'programada') {
+            return redirect()->route('admin.ordenes.show', $ordene)
+                ->with('error', 'El vehículo aún no ha llegado al taller.');
+        }
+
+        Gate::authorize('work', $ordene);
+
+        $this->transicionMecanico($ordene, 'diagnostico');
+
+        $asignacion = $this->asignacionDelMecanico($ordene);
+        if ($asignacion && ! $asignacion->fecha_inicio) {
+            $asignacion->update(['fecha_inicio' => now()]);
+        }
+
+        return redirect()->route('admin.ordenes.show', $ordene)
+            ->with('success', 'Trabajo iniciado.');
+    }
+
+    public function registrarDiagnosticoMecanico(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        Gate::authorize('work', $ordene);
+
+        $data = $request->validate(['diagnostico_mecanico' => 'required|string|max:5000']);
+
+        $asignacion = $this->asignacionDelMecanico($ordene);
+        $asignacion?->update(['diagnostico_mecanico' => $data['diagnostico_mecanico']]);
+        $ordene->update(['diagnostico_general' => $data['diagnostico_mecanico']]);
+
+        $this->transicionMecanico($ordene, 'en_proceso');
+
+        return redirect()->route('admin.ordenes.show', $ordene)
+            ->with('success', 'Diagnóstico registrado.');
+    }
+
+    public function avanceMecanico(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        Gate::authorize('work', $ordene);
+
+        $data = $request->validate([
+            'porcentaje_avance' => 'required|integer|min:0|max:100',
+            'proximo_paso' => 'nullable|string|max:2000',
+        ]);
+
+        $asignacion = $this->asignacionDelMecanico($ordene);
+        $asignacion?->update([
+            'porcentaje_avance' => $data['porcentaje_avance'],
+            'proximo_paso' => $data['proximo_paso'] ?? $asignacion->proximo_paso,
+        ]);
+
+        return redirect()->route('admin.ordenes.show', $ordene)
+            ->with('success', 'Avance registrado.');
+    }
+
+    public function pausarMecanico(OrdenTrabajo $ordene): RedirectResponse
+    {
+        Gate::authorize('work', $ordene);
+        $this->transicionMecanico($ordene, 'pausada');
+        return redirect()->route('admin.ordenes.show', $ordene)
+            ->with('success', 'Trabajo pausado.');
+    }
+
+    public function reanudarMecanico(OrdenTrabajo $ordene): RedirectResponse
+    {
+        Gate::authorize('work', $ordene);
+
+        $mecanicoId = Auth::user()->empleado?->mecanico?->id;
+        $ultimoEstado = $ordene->asignaciones()->where('mecanico_id', $mecanicoId)->value('diagnostico_mecanico');
+        $estadoDestino = $ultimoEstado ? 'en_proceso' : 'diagnostico';
+        $this->transicionMecanico($ordene, $estadoDestino);
+
+        return redirect()->route('admin.ordenes.show', $ordene)
+            ->with('success', 'Trabajo reanudado.');
+    }
+
+    public function finalizarMecanico(OrdenTrabajo $ordene): RedirectResponse
+    {
+        Gate::authorize('work', $ordene);
+
+        $this->transicionMecanico($ordene, 'finalizada');
+
+        $asignacion = $this->asignacionDelMecanico($ordene);
+        $asignacion?->update(['fecha_finalizacion' => now(), 'porcentaje_avance' => 100]);
+
+        return redirect()->route('admin.ordenes.index')
+            ->with('success', 'Trabajo finalizado correctamente.');
+    }
+
+    public function estimarTiempoMecanico(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        Gate::authorize('work', $ordene);
+
+        $data = $request->validate([
+            'duracion_minima_minutos' => ['required', 'integer', 'min:1', 'max:14400'],
+            'duracion_maxima_minutos' => ['required', 'integer', 'min:1', 'max:14400', 'gte:duracion_minima_minutos'],
+            'fecha_estimada_entrega' => ['nullable', 'date'],
+            'observacion_cliente' => ['nullable', 'string', 'max:1000'],
+            'motivo' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $asignacion = $this->asignacionDelMecanico($ordene);
+        if (! $asignacion) {
+            return back()->with('error', 'No tienes una asignación activa en esta orden.');
+        }
+
+        $mecanicoId = Auth::user()->empleado?->mecanico?->id;
+
+        DB::transaction(function () use ($ordene, $mecanicoId, $data) {
+            EstimacionOrden::create([
+                'orden_trabajo_id' => $ordene->id,
+                'mecanico_id' => $mecanicoId,
+                'duracion_minima_minutos' => $data['duracion_minima_minutos'],
+                'duracion_maxima_minutos' => $data['duracion_maxima_minutos'],
+                'fecha_estimada_entrega' => $data['fecha_estimada_entrega'] ?? null,
+                'observacion_cliente' => $data['observacion_cliente'] ?? null,
+                'motivo' => $data['motivo'] ?? null,
+            ]);
+        });
+
+        return redirect()->route('admin.ordenes.show', $ordene)
+            ->with('success', 'Tiempo estimado guardado.');
+    }
+
+    public function guardarNotaMecanico(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        Gate::authorize('createNote', $ordene);
+
+        $data = $request->validate([
+            'contenido' => 'required|string|max:5000',
+            'visible_cliente' => 'boolean',
+        ]);
+
+        $asignacion = $this->asignacionDelMecanico($ordene);
+        if (! $asignacion) {
+            return back()->with('error', 'No tienes una asignación activa en esta orden.');
+        }
+
+        NotaTrabajo::create([
+            'asignacion_trabajo_id' => $asignacion->id,
+            'usuario_id' => Auth::id(),
+            'contenido' => $data['contenido'],
+            'visible_cliente' => $request->boolean('visible_cliente'),
+        ]);
+
+        return redirect()->route('admin.ordenes.show', $ordene)
+            ->with('success', 'Nota guardada.');
+    }
+
+    public function subirEvidenciaMecanico(Request $request, OrdenTrabajo $ordene): RedirectResponse
+    {
+        Gate::authorize('uploadEvidence', $ordene);
+
+        $data = $request->validate([
+            'archivo' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
+            'descripcion' => 'nullable|string|max:255',
+        ]);
+
+        $asignacion = $this->asignacionDelMecanico($ordene);
+        if (! $asignacion) {
+            return back()->with('error', 'No tienes una asignación activa en esta orden.');
+        }
+
+        $ruta = $request->file('archivo')->store('evidencias', 'public');
+
+        EvidenciaTrabajo::create([
+            'asignacion_trabajo_id' => $asignacion->id,
+            'usuario_id' => Auth::id(),
+            'archivo' => $ruta,
+            'descripcion' => $data['descripcion'] ?? null,
+        ]);
+
+        return redirect()->route('admin.ordenes.show', $ordene)
+            ->with('success', 'Evidencia subida.');
+    }
+
+    private function asignacionDelMecanico(OrdenTrabajo $ordene): ?AsignacionTrabajo
+    {
+        $mecanicoId = Auth::user()->empleado?->mecanico?->id;
+        return $ordene->asignaciones()
+            ->where('mecanico_id', $mecanicoId)
+            ->whereNull('fecha_finalizacion')
+            ->first();
+    }
+
+    private function transicionMecanico(OrdenTrabajo $ordene, string $destino): void
+    {
+        $origen = $ordene->estado;
+
+        if ($origen === 'programada') {
+            abort(422, 'El vehículo aún no ha llegado. No puedes cambiar el estado.');
+        }
+
+        $transiciones = [
+            'recibida' => ['diagnostico'],
+            'diagnostico' => ['en_proceso', 'pausada'],
+            'en_proceso' => ['pausada', 'finalizada'],
+            'pausada' => ['diagnostico', 'en_proceso'],
+        ];
+
+        if (! isset($transiciones[$origen]) || ! in_array($destino, $transiciones[$origen])) {
+            abort(422, "Transición de '{$origen}' a '{$destino}' no permitida.");
+        }
+
+        $cambios = ['estado' => $destino];
+
+        if ($destino === 'en_proceso' && ! $ordene->fecha_inicio) {
+            $cambios['fecha_inicio'] = now();
+        }
+
+        if ($destino === 'finalizada' && ! $ordene->fecha_fin) {
+            $cambios['fecha_fin'] = now();
+        }
+
+        $ordene->update($cambios);
     }
 }

@@ -99,4 +99,9 @@ class OrdenTrabajo extends Model
     {
         return $this->hasMany(OrdenTrabajoFoto::class, 'orden_trabajo_id');
     }
+
+    public function estimaciones(): HasMany
+    {
+        return $this->hasMany(EstimacionOrden::class);
+    }
 }

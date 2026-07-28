@@ -6,6 +6,9 @@ use App\Models\Repuesto;
 use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\User;
+use Database\Seeders\PermisoSeeder;
+use Database\Seeders\RolPermisoSeeder;
+use Database\Seeders\RolSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -19,8 +22,10 @@ class EscanerRepuestoTest extends TestCase
     {
         parent::setUp();
 
+        $this->seed([RolSeeder::class, PermisoSeeder::class, RolPermisoSeeder::class]);
+
         $sucursal = Sucursal::inRandomOrder()->first() ?? Sucursal::factory()->create();
-        $rolAdmin = Rol::where('nombre', 'Administrador')->first() ?? Rol::factory()->create(['nombre' => 'Administrador']);
+        $rolAdmin = Rol::where('nombre', 'Administrador')->firstOrFail();
 
         $this->usuario = User::factory()->create([
             'sucursal_id' => $sucursal->id,

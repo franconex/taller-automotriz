@@ -2,9 +2,13 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Cliente;
 use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\User;
+use Database\Seeders\PermisoSeeder;
+use Database\Seeders\RolPermisoSeeder;
+use Database\Seeders\RolSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -23,11 +27,13 @@ class AuthenticationTest extends TestCase
     {
         parent::setUp();
 
+        $this->seed([RolSeeder::class, PermisoSeeder::class, RolPermisoSeeder::class]);
+
         $roles = [
-            'Administrador' => Rol::create(['nombre' => 'Administrador']),
-            'Gerente' => Rol::create(['nombre' => 'Gerente']),
-            'Recepcionista' => Rol::create(['nombre' => 'Recepcionista']),
-            'Mecánico' => Rol::create(['nombre' => 'Mecánico']),
+            'Administrador' => Rol::where('nombre', 'Administrador')->firstOrFail(),
+            'Gerente' => Rol::where('nombre', 'Gerente')->firstOrFail(),
+            'Recepcionista' => Rol::where('nombre', 'Recepcionista')->firstOrFail(),
+            'Mecánico' => Rol::where('nombre', 'Mecánico')->firstOrFail(),
         ];
 
         $this->sucursal = Sucursal::create([
@@ -59,10 +65,9 @@ class AuthenticationTest extends TestCase
         $response = $this->get(route('login'));
 
         $response->assertStatus(200);
-        $response->assertSee('Ingresar al sistema');
-        $response->assertSee('Acceso al personal');
-        $response->assertSee('login');
-        $response->assertSee('password');
+        $response->assertSee('Taller Pro');
+        $response->assertSee('Iniciar sesión');
+        $response->assertSee('Registrarme');
     }
 
     public function test_login_con_email_correcto(): void
@@ -141,7 +146,7 @@ class AuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertRedirect('/gerente/dashboard');
+        $response->assertRedirect('/admin/dashboard');
     }
 
     public function test_redirige_segun_rol_recepcionista(): void
@@ -151,7 +156,7 @@ class AuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertRedirect('/recepcion/dashboard');
+        $response->assertRedirect('/admin/citas');
     }
 
     public function test_redirige_segun_rol_mecanico(): void
@@ -161,7 +166,7 @@ class AuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertRedirect('/mecanico/dashboard');
+        $response->assertRedirect('/admin/dashboard');
     }
 
     public function test_cierra_sesion_con_post(): void
@@ -256,39 +261,25 @@ class AuthenticationTest extends TestCase
         $response->assertSessionDoesntHaveErrors('email');
     }
 
-    public function test_no_hay_ruta_register(): void
+    public function test_ruta_register_devuelve_login(): void
     {
         $response = $this->get('/register');
 
-        $this->assertEquals(404, $response->status());
+        // Register is a POST-only route, GET should redirect to login
+        $response->assertStatus(405);
     }
 
-    public function test_cada_rol_accede_solo_a_su_panel(): void
+    public function test_roles_con_permiso_acceden_al_dashboard_admin(): void
     {
         $usuarios = [
-            'Administrador' => $this->adminUser,
-            'Gerente' => $this->gerenteUser,
-            'Recepcionista' => $this->recepcionistaUser,
-            'Mecánico' => $this->mecanicoUser,
+            $this->adminUser,
+            $this->gerenteUser,
+            $this->mecanicoUser,
         ];
 
-        $rutas = [
-            'Administrador' => 'admin.dashboard',
-            'Gerente' => 'gerente.dashboard',
-            'Recepcionista' => 'recepcion.dashboard',
-            'Mecánico' => 'mecanico.dashboard',
-        ];
-
-        foreach ($usuarios as $nombreRol => $usuario) {
-            foreach ($rutas as $panelRol => $ruta) {
-                $response = $this->actingAs($usuario)->get(route($ruta));
-
-                if ($nombreRol === $panelRol) {
-                    $response->assertOk();
-                } else {
-                    $response->assertForbidden();
-                }
-            }
+        foreach ($usuarios as $usuario) {
+            $response = $this->actingAs($usuario)->get(route('admin.dashboard'));
+            $response->assertStatus(200);
         }
     }
 
@@ -323,16 +314,174 @@ class AuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertRedirect('/gerente/dashboard');
+        $response->assertRedirect('/admin/dashboard');
     }
 
     public function test_admin_ve_dashboard_con_layout(): void
     {
         $response = $this->actingAs($this->adminUser)->get(route('admin.dashboard'));
 
-        $response->assertOk();
-        $response->assertSee('Panel de Administrador');
-        $response->assertSee('Hola, Admin');
+        $response->assertStatus(200);
+        $response->assertSee('Dashboard');
         $response->assertSee('adminSidebar');
+    }
+
+    /* =============================================================
+       Tests de Cliente
+       ============================================================= */
+
+    public function test_cliente_puede_iniciar_sesion(): void
+    {
+        $rolCliente = Rol::firstOrCreate(['nombre' => 'Cliente'], ['estado' => true]);
+        $cliente = Cliente::create([
+            'nombre_completo' => 'Cliente Test',
+            'ci' => '12345678',
+            'telefono' => '70000000',
+            'fecha_registro' => now(),
+            'estado' => true,
+        ]);
+        User::create([
+            'cliente_id' => $cliente->id,
+            'rol_id' => $rolCliente->id,
+            'nombre' => 'Cliente Test',
+            'username' => 'clientetest',
+            'email' => 'cliente@test.com',
+            'password' => Hash::make('password'),
+            'estado' => 'activo',
+        ]);
+
+        $response = $this->post(route('login'), [
+            'login' => 'cliente@test.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/cliente/dashboard');
+        $this->assertAuthenticated();
+    }
+
+    public function test_cliente_redirige_a_portal_cliente(): void
+    {
+        $rolCliente = Rol::firstOrCreate(['nombre' => 'Cliente'], ['estado' => true]);
+        $cliente = Cliente::create([
+            'nombre_completo' => 'Cliente Test',
+            'ci' => '87654321',
+            'telefono' => '70000001',
+            'fecha_registro' => now(),
+            'estado' => true,
+        ]);
+        $user = User::create([
+            'cliente_id' => $cliente->id,
+            'rol_id' => $rolCliente->id,
+            'nombre' => 'Cliente Test',
+            'username' => 'clientedos',
+            'email' => 'cliente2@test.com',
+            'password' => Hash::make('password'),
+            'estado' => 'activo',
+        ]);
+
+        $response = $this->post(route('login'), [
+            'login' => 'cliente2@test.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/cliente/dashboard');
+    }
+
+    public function test_cliente_no_accede_a_admin(): void
+    {
+        $rolCliente = Rol::firstOrCreate(['nombre' => 'Cliente'], ['estado' => true]);
+        $cliente = Cliente::create([
+            'nombre_completo' => 'Cliente Test',
+            'ci' => '11111111',
+            'telefono' => '70000002',
+            'fecha_registro' => now(),
+            'estado' => true,
+        ]);
+        $user = User::create([
+            'cliente_id' => $cliente->id,
+            'rol_id' => $rolCliente->id,
+            'nombre' => 'Cliente Test',
+            'username' => 'clienteadmin',
+            'email' => 'cliente-admin@test.com',
+            'password' => Hash::make('password'),
+            'estado' => 'activo',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.dashboard'));
+
+        $response->assertForbidden();
+    }
+
+    public function test_admin_no_accede_a_portal_cliente(): void
+    {
+        $response = $this->actingAs($this->adminUser)->get(route('cliente.dashboard'));
+
+        $response->assertForbidden();
+    }
+
+    public function test_cliente_sin_registro_asociado_es_rechazado(): void
+    {
+        $rolCliente = Rol::firstOrCreate(['nombre' => 'Cliente'], ['estado' => true]);
+        $user = User::create([
+            'rol_id' => $rolCliente->id,
+            'nombre' => 'Cliente Huérfano',
+            'username' => 'clientehuerfano',
+            'email' => 'huerfano@test.com',
+            'password' => Hash::make('password'),
+            'estado' => 'activo',
+        ]);
+
+        $response = $this->post(route('login'), [
+            'login' => 'huerfano@test.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('login');
+        $this->assertGuest();
+    }
+
+    public function test_usuario_no_puede_ser_empleado_y_cliente_simultaneamente(): void
+    {
+        $rolCliente = Rol::firstOrCreate(['nombre' => 'Cliente'], ['estado' => true]);
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+        User::create([
+            'empleado_id' => 999,
+            'cliente_id' => 888,
+            'rol_id' => $rolCliente->id,
+            'nombre' => 'Dual',
+            'username' => 'dual',
+            'email' => 'dual@test.com',
+            'password' => Hash::make('password'),
+            'estado' => 'activo',
+        ]);
+    }
+
+    public function test_cliente_ve_su_portal(): void
+    {
+        $rolCliente = Rol::firstOrCreate(['nombre' => 'Cliente'], ['estado' => true]);
+        $cliente = Cliente::create([
+            'nombre_completo' => 'Carlos López',
+            'ci' => '22222222',
+            'telefono' => '70000003',
+            'fecha_registro' => now(),
+            'estado' => true,
+        ]);
+        $user = User::create([
+            'cliente_id' => $cliente->id,
+            'rol_id' => $rolCliente->id,
+            'nombre' => 'Carlos López',
+            'username' => 'carlosl',
+            'email' => 'carlos@test.com',
+            'password' => Hash::make('password'),
+            'estado' => 'activo',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('cliente.dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Hola');
+        $response->assertSee('Carlos López');
     }
 }

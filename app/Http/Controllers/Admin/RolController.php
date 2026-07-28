@@ -16,6 +16,7 @@ class RolController extends AdminController implements HasMiddleware
     public static function middleware(): array
     {
         return [
+            new Middleware('permiso:roles.ver', only: ['index', 'show']),
             new Middleware('permiso:roles.editar', only: ['create', 'store', 'edit', 'update', 'destroy', 'toggle']),
             new Middleware('permiso:permisos.asignar', only: ['permisos', 'actualizarPermisos']),
         ];

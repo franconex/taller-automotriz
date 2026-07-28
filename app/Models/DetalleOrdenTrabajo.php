@@ -13,12 +13,14 @@ class DetalleOrdenTrabajo extends Model
         'orden_trabajo_id',
         'tipo',
         'servicio_id',
+        'subservicio_id',
         'repuesto_id',
         'asignacion_trabajo_id',
         'descripcion',
         'cantidad',
         'precio_unitario',
         'subtotal',
+        'estado_autorizacion',
         'observaciones',
     ];
 
@@ -39,6 +41,11 @@ class DetalleOrdenTrabajo extends Model
     public function servicio(): BelongsTo
     {
         return $this->belongsTo(Servicio::class);
+    }
+
+    public function subservicio(): BelongsTo
+    {
+        return $this->belongsTo(Subservicio::class);
     }
 
     public function repuesto(): BelongsTo
