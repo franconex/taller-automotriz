@@ -248,7 +248,7 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
     public function cambiarEstadoOrden(Request $request, OrdenTrabajo $ordene): RedirectResponse
     {
         $request->validate([
-            'estado' => ['required', 'in:recibida,diagnostico,en_proceso,finalizada,entregada,anulada'],
+            'estado' => ['required', 'in:recibida,diagnostico,en_proceso,finalizada_mecanico,lista_entrega,finalizada,entregada,anulada'],
         ], [
             'required' => 'El campo :attribute es obligatorio.',
             'in' => 'El :attribute seleccionado no es válido.',

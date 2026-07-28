@@ -33,6 +33,9 @@
                 <option value="diagnostico" @selected(request('estado') === 'diagnostico')>En diagnóstico</option>
                 <option value="en_proceso" @selected(request('estado') === 'en_proceso')>En proceso</option>
                 <option value="esperando_repuestos" @selected(request('estado') === 'esperando_repuestos')>Esperando repuestos</option>
+                <option value="pendiente_autorizacion" @selected(request('estado') === 'pendiente_autorizacion')>Pendiente autorización</option>
+                <option value="finalizada_mecanico" @selected(request('estado') === 'finalizada_mecanico')>Finalizada (mecánico)</option>
+                <option value="lista_entrega" @selected(request('estado') === 'lista_entrega')>Lista para entrega</option>
                 <option value="finalizada" @selected(request('estado') === 'finalizada')>Finalizada</option>
                 <option value="entregada" @selected(request('estado') === 'entregada')>Entregada</option>
                 <option value="anulada" @selected(request('estado') === 'anulada')>Anulada</option>
@@ -76,9 +79,11 @@
                 </thead>
                 <tbody>
                     @forelse ($ordenes as $o)
-                        @php
-                            $asignacion = $o->asignaciones->first();
-                        @endphp
+                    @php
+                        $asignacion = $o->asignaciones->first();
+                        $puedeCobrar = in_array($o->estado, ['finalizada_mecanico', 'lista_entrega', 'finalizada']);
+                        $puedeFinalizar = in_array($o->estado, ['recibida', 'diagnostico', 'en_proceso', 'esperando_repuesto', 'pausada', 'pendiente_autorizacion']);
+                    @endphp
                         <tr>
                             <td>
                                 <div class="cell-strong">{{ $o->numero_orden }}</div>
@@ -100,6 +105,8 @@
                                         'recibida' => 'info',
                                         'diagnostico' => 'warning',
                                         'en_proceso' => 'warning',
+                                        'finalizada_mecanico' => 'success',
+                                        'lista_entrega' => 'success',
                                         'finalizada' => 'success',
                                         'entregada' => 'success',
                                         'anulada' => 'danger',
@@ -109,6 +116,8 @@
                                         'recibida' => 'bi-inbox-fill',
                                         'diagnostico' => 'bi-search',
                                         'en_proceso' => 'bi-gear-fill',
+                                        'finalizada_mecanico' => 'bi-check-circle-fill',
+                                        'lista_entrega' => 'bi-check-circle-fill',
                                         'finalizada' => 'bi-check-circle-fill',
                                         'entregada' => 'bi-truck',
                                         'anulada' => 'bi-x-circle-fill',
@@ -136,6 +145,32 @@
                                        aria-label="Editar">
                                         <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                     </a>
+                                    @endif
+                                    @if (!$esMecanico && $puedeCobrar)
+                                    <a href="{{ route('admin.pagos.create', ['orden_id' => $o->id]) }}"
+                                       class="btn btn-sm btn-success"
+                                       title="Cobrar"
+                                       aria-label="Cobrar">
+                                        <i class="bi bi-cash-coin" aria-hidden="true"></i>
+                                        <span class="d-none d-lg-inline">Cobrar</span>
+                                    </a>
+                                    @endif
+                                    @if (!$esMecanico && $puedeFinalizar)
+                                    <form method="POST"
+                                          action="{{ route('admin.ordenes.cambiar-estado', $o) }}"
+                                          class="d-inline"
+                                          onsubmit="return confirm('¿Finalizar esta orden? Se marcará como completada.')">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="estado" value="finalizada">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                title="Finalizar orden"
+                                                aria-label="Finalizar">
+                                            <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                                            <span class="d-none d-lg-inline">Finalizar</span>
+                                        </button>
+                                    </form>
                                     @endif
                                     @if (!$esMecanico && $o->estado !== 'anulada')
                                     <form method="POST"
