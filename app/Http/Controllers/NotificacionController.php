@@ -19,8 +19,15 @@ class NotificacionController extends Controller
     public function noLeidas(): JsonResponse
     {
         $user = Auth::user();
-        $notificaciones = $user->unreadNotifications()->latest()->limit(5)->get();
-        $total = $user->unreadNotifications()->count();
+
+        // Auto-limpiar notificaciones viejas (>7 días) marcándolas como leídas
+        $user->unreadNotifications()->where('created_at', '<', now()->subDays(7))->update(['read_at' => now()]);
+
+        // Solo notificaciones de los últimos 3 días
+        $query = $user->unreadNotifications()->where('created_at', '>=', now()->subDays(3));
+
+        $notificaciones = (clone $query)->latest()->limit(5)->get();
+        $total = (clone $query)->count();
 
         return response()->json([
             'total' => $total,
