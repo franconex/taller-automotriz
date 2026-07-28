@@ -166,7 +166,7 @@
     @stack('offcanvas')
     @stack('scripts')
     <script>
-    // Búsqueda en selects con filtro (global para todos los paneles admin)
+    // Búsqueda en selects con filtro: oculta options que no coinciden
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.search-select-input').forEach(function(input) {
             input.addEventListener('keyup', function() {
@@ -176,7 +176,7 @@
                 var q = this.value.toLowerCase();
                 Array.from(select.options).forEach(function(opt) {
                     if (!opt.value) return;
-                    opt.style.display = opt.text.toLowerCase().includes(q) ? '' : 'none';
+                    opt.hidden = !opt.text.toLowerCase().includes(q);
                 });
             });
         });

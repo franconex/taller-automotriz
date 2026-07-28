@@ -175,7 +175,7 @@
                             <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                             <input type="text" class="form-control search-select-input" placeholder="Buscar servicio…" data-target="selectServicio">
                         </div>
-                        <select name="servicio_id" id="selectServicio" class="form-select form-select-sm mb-1" required size="5">
+                        <select name="servicio_id" id="selectServicio" class="form-select form-select-sm mb-1" required>
                             <option value="">— Seleccionar servicio —</option>
                             @foreach (\App\Models\Servicio::where('estado', true)->get() as $s)
                                 <option value="{{ $s->id }}">{{ $s->nombre }}</option>
@@ -211,7 +211,7 @@
                             <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                             <input type="text" class="form-control search-select-input" placeholder="Buscar repuesto…" data-target="selectRepuesto">
                         </div>
-                        <select name="repuesto_id" id="selectRepuesto" class="form-select form-select-sm mb-1" required size="5">
+                        <select name="repuesto_id" id="selectRepuesto" class="form-select form-select-sm mb-1" required>
                             <option value="">— Seleccionar repuesto —</option>
                             @foreach (\App\Models\Repuesto::where('estado', true)->get() as $r)
                                 <option value="{{ $r->id }}">{{ $r->nombre }} ({{ $r->codigo }})</option>
