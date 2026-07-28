@@ -1,10 +1,11 @@
-@extends('layouts.mecanico')
+@extends('layouts.admin')
 
 @section('title', 'Orden #' . $orden->numero_orden)
+@section('navbar-title', 'Orden #' . $orden->numero_orden)
 
 @section('content')
     <div class="mb-3">
-        <a href="{{ route('mecanico.ordenes.index') }}" class="text-decoration-none small" style="color:var(--mec-text-muted);">
+        <a href="{{ route('mecanico.ordenes.index') }}" class="text-decoration-none small text-muted">
             <i class="bi bi-arrow-left"></i> Volver a mis órdenes
         </a>
     </div>
@@ -15,14 +16,17 @@
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <div>
                     <h5 class="mb-1 fw-bold">{{ $orden->numero_orden }}</h5>
-                    <div class="small" style="color:var(--mec-text-muted);">
+                    <div class="small text-muted">
                         {{ $orden->descripcion_problema ?? 'Sin descripción' }}
                     </div>
                 </div>
-                <div>
+                <div class="d-flex gap-2 align-items-center">
                     @php
                         $colores = ['programada'=>'secondary','recibida'=>'info','diagnostico'=>'warning','en_proceso'=>'primary','esperando_repuesto'=>'secondary','pausada'=>'dark','pendiente_autorizacion'=>'danger','finalizada_mecanico'=>'success','lista_entrega'=>'success','entregada'=>'secondary','anulada'=>'danger'];
                     @endphp
+                    <a href="{{ route('mecanico.ordenes.cotizar-nueva', $orden) }}" class="btn btn-sm btn-outline-warning">
+                        <i class="bi bi-cash-coin"></i> Nueva cotización
+                    </a>
                     <span class="badge fs-6 px-3 py-1 bg-{{ $colores[$orden->estado] ?? 'secondary' }}">
                         {{ ucfirst(str_replace('_', ' ', $orden->estado)) }}
                     </span>
@@ -30,14 +34,14 @@
             </div>
             <hr class="my-2">
             <div class="row g-2 small">
-                <div class="col-md-3"><span style="color:var(--mec-text-muted);">Cliente:</span> <strong>{{ $orden->cliente?->nombre_completo ?? '—' }}</strong></div>
-                <div class="col-md-3"><span style="color:var(--mec-text-muted);">Vehículo:</span> <strong>{{ $orden->vehiculo?->marca ?? '' }} {{ $orden->vehiculo?->modelo ?? '' }} ({{ $orden->vehiculo?->placa ?? '—' }})</strong></div>
-                <div class="col-md-3"><span style="color:var(--mec-text-muted);">Ingreso:</span> <strong>{{ $orden->fecha_emision?->format('d/m/Y H:i') }}</strong></div>
-                <div class="col-md-3"><span style="color:var(--mec-text-muted);">Sucursal:</span> <strong>{{ $orden->sucursal?->nombre ?? '—' }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Cliente:</span> <strong>{{ $orden->cliente?->nombre_completo ?? '—' }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Vehículo:</span> <strong>{{ $orden->vehiculo?->marca ?? '' }} {{ $orden->vehiculo?->modelo ?? '' }} ({{ $orden->vehiculo?->placa ?? '—' }})</strong></div>
+                <div class="col-md-3"><span class="text-muted">Ingreso:</span> <strong>{{ $orden->fecha_emision?->format('d/m/Y H:i') }}</strong></div>
+                <div class="col-md-3"><span class="text-muted">Sucursal:</span> <strong>{{ $orden->sucursal?->nombre ?? '—' }}</strong></div>
             </div>
             @if ($asignacion)
                 <div class="mt-2 small">
-                    <span style="color:var(--mec-text-muted);">Avance:</span>
+                    <span class="text-muted">Avance:</span>
                     <div class="progress" style="height:8px;max-width:300px;">
                         <div class="progress-bar bg-success" style="width:{{ $asignacion->porcentaje_avance ?? 0 }}%;" role="progressbar"></div>
                     </div>
@@ -61,9 +65,9 @@
                 <div class="card-body p-3">
                     @if ($diagnostico)
                         <div class="small">
-                            <div class="mb-1"><span style="color:var(--mec-text-muted);">Problema:</span> {{ $diagnostico->problema_encontrado ?? '—' }}</div>
-                            <div class="mb-1"><span style="color:var(--mec-text-muted);">Causa:</span> {{ $diagnostico->causa_probable ?? '—' }}</div>
-                            @if ($diagnostico->recomendacion)<div class="mb-1"><span style="color:var(--mec-text-muted);">Recomendación:</span> {{ $diagnostico->recomendacion }}</div>@endif
+                            <div class="mb-1"><span class="text-muted">Problema:</span> {{ $diagnostico->problema_encontrado ?? '—' }}</div>
+                            <div class="mb-1"><span class="text-muted">Causa:</span> {{ $diagnostico->causa_probable ?? '—' }}</div>
+                            @if ($diagnostico->recomendacion)<div class="mb-1"><span class="text-muted">Recomendación:</span> {{ $diagnostico->recomendacion }}</div>@endif
                         </div>
                     @endif
                     <button class="btn btn-sm btn-outline-primary mt-2" onclick="toggleForm('formDiagnostico')">
@@ -136,17 +140,17 @@
                             @foreach ($avances as $a)
                                 <div class="d-flex gap-2 mb-2 p-2 rounded" style="background:#f8fafc;">
                                     <div class="text-center" style="min-width:36px;">
-                                        <div class="fw-bold small" style="color:var(--mec-sidebar-active);">{{ $a->porcentaje ?? '?' }}%</div>
+                                        <div class="fw-bold small text-primary">{{ $a->porcentaje ?? '?' }}%</div>
                                     </div>
                                     <div class="small flex-fill">
                                         <strong>{{ $a->titulo }}</strong>
-                                        @if ($a->descripcion)<div style="color:var(--mec-text-muted);">{{ $a->descripcion }}</div>@endif
+                                        @if ($a->descripcion)<div class="text-muted">{{ $a->descripcion }}</div>@endif
                                         @if ($a->nota_cliente && $a->visible_cliente)
                                             <div class="mt-1 p-1 rounded" style="background:#eef2ff;font-size:.8rem;">
                                                 <i class="bi bi-chat-quote text-primary"></i> {{ $a->nota_cliente }}
                                             </div>
                                         @endif
-                                        <div style="font-size:.7rem;color:var(--mec-text-muted);margin-top:2px;">
+                                        <div style="font-size:.7rem;color:#64748b;margin-top:2px;">
                                             {{ $a->created_at->format('d/m H:i') }}
                                         </div>
                                     </div>
@@ -195,11 +199,11 @@
                 <div class="card-body p-3">
                     @if ($estimacion)
                         <div class="small mb-2">
-                            <div><span style="color:var(--mec-text-muted);">Duración:</span>
+                            <div><span class="text-muted">Duración:</span>
                                 <strong>{{ $estimacion->duracion_minima_minutos }} - {{ $estimacion->duracion_maxima_minutos }} min</strong>
                             </div>
                             @if ($estimacion->observacion_cliente)
-                                <div><span style="color:var(--mec-text-muted);">Nota al cliente:</span> {{ $estimacion->observacion_cliente }}</div>
+                                <div><span class="text-muted">Nota al cliente:</span> {{ $estimacion->observacion_cliente }}</div>
                             @endif
                         </div>
                     @endif
@@ -245,12 +249,12 @@
                             @foreach ($servicios as $s)
                                 <li class="d-flex justify-content-between py-1 border-bottom">
                                     <span>{{ $s->nombre_servicio }} @if($s->nombre_subservicio)/ {{ $s->nombre_subservicio }}@endif</span>
-                                    <span style="color:var(--mec-text-muted);">{{ $s->tiempo_estimado_minutos }}min</span>
+                                    <span class="text-muted">{{ $s->tiempo_estimado_minutos }}min</span>
                                 </li>
                             @endforeach
                         </ul>
                     @else
-                        <div class="small" style="color:var(--mec-text-muted);">Sin servicios registrados</div>
+                        <div class="small text-muted">Sin servicios registrados</div>
                     @endif
                     <form method="POST" action="{{ route('mecanico.ordenes.servicios', $orden) }}" id="formServicio" style="display:none;" class="mt-2">
                         @csrf
@@ -282,7 +286,7 @@
                             @endforeach
                         </ul>
                     @else
-                        <div class="small" style="color:var(--mec-text-muted);">Sin repuestos solicitados</div>
+                        <div class="small text-muted">Sin repuestos solicitados</div>
                     @endif
                     <form method="POST" action="{{ route('mecanico.ordenes.repuestos', $orden) }}" id="formRepuesto" style="display:none;" class="mt-2">
                         @csrf
@@ -302,6 +306,71 @@
                 </div>
             </div>
 
+            {{-- COTIZACIÓN --}}
+            @php
+                $totalServicios = $orden->serviciosMecanico()->sum('precio_base');
+                $totalRepuestos = $orden->repuestosMecanico()->sum(DB::raw('cantidad * precio_unitario_snapshot'));
+                $totalCotizacion = $totalServicios + $totalRepuestos;
+                $tieneServicios = $servicios->isNotEmpty();
+                $tieneRepuestos = $repuestos->isNotEmpty();
+                $estadoPermiteCotizar = in_array($orden->estado, ['programada', 'recibida', 'diagnostico', 'en_proceso', 'esperando_repuesto']);
+            @endphp
+
+            @if ($estadoPermiteCotizar)
+                <div class="card border-0 shadow-sm mb-3" style="border-radius:10px; border-left:3px solid #0d6efd !important;">
+                    <div class="card-header bg-white py-2 px-3">
+                        <strong class="small"><i class="bi bi-calculator"></i> Cotización</strong>
+                    </div>
+                    <div class="card-body p-3">
+                        @if ($tieneServicios || $tieneRepuestos)
+                            <div class="mb-2 small">
+                                <div class="d-flex justify-content-between">
+                                    <span>Servicios:</span>
+                                    <span class="fw-semibold">${{ number_format($totalServicios, 2) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Repuestos:</span>
+                                    <span class="fw-semibold">${{ number_format($totalRepuestos, 2) }}</span>
+                                </div>
+                                <hr class="my-1">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">Total estimado:</span>
+                                    <span class="fw-bold text-primary">${{ number_format($totalCotizacion, 2) }}</span>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-sm btn-outline-primary w-100" onclick="toggleForm('formCotizacion')">
+                                <i class="bi bi-send"></i> Enviar cotización al cliente
+                            </button>
+
+                            <form method="POST" action="{{ route('mecanico.ordenes.cotizacion', $orden) }}" id="formCotizacion" style="display:none;" class="mt-2">
+                                @csrf
+                                <div class="mb-2">
+                                    <label class="form-label small">Título de la cotización</label>
+                                    <input name="titulo" class="form-control form-control-sm" value="Reparación {{ $orden->vehiculo?->placa ?? '' }}" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Descripción / Detalle</label>
+                                    <textarea name="descripcion" class="form-control form-control-sm" rows="3" required>Se requiere la siguiente reparación:
+- Servicios: {{ $servicios->count() }} items
+- Repuestos: {{ $repuestos->count() }} items
+- Tiempo estimado: {{ $estimacion ? $estimacion->duracion_minima_minutos . 'min' : 'Pendiente' }}
+
+Total: ${{ number_format($totalCotizacion, 2) }}</textarea>
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-primary w-100">
+                                    <i class="bi bi-check2"></i> Generar y enviar
+                                </button>
+                            </form>
+                        @else
+                            <div class="small text-muted text-center">
+                                <i class="bi bi-info-circle"></i> Agrega servicios y repuestos para generar la cotización.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             {{-- EVIDENCIAS --}}
             <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;">
                 <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
@@ -318,7 +387,7 @@
                             @endforeach
                         </div>
                     @else
-                        <div class="small" style="color:var(--mec-text-muted);">Sin evidencias</div>
+                        <div class="small text-muted">Sin evidencias</div>
                     @endif
                     <form method="POST" action="{{ route('mecanico.ordenes.evidencias', $orden) }}" id="formEvidencia" enctype="multipart/form-data" style="display:none;" class="mt-2">
                         @csrf

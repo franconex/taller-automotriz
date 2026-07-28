@@ -32,9 +32,37 @@
         </div>
     </div>
 
+    {{-- BANDEJA DE SOLICITUDES --}}
+    @if ($solicitudes->isNotEmpty())
+        <div class="admin-table-wrap mb-4">
+            <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-warning"><i class="bi bi-inbox"></i> Solicitudes de citas ({{ $solicitudes->count() }})</h6>
+                <a href="{{ route('admin.citas.index', ['estado' => 'solicitada']) }}" class="small">Ver todas</a>
+            </div>
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vehículo</th><th>Servicio</th><th>Estado</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach ($solicitudes as $c)
+                            <tr>
+                                <td>{{ $c->fecha?->format('d/m/Y') }}</td>
+                                <td>{{ $c->hora ? \Carbon\Carbon::parse($c->hora)->format('H:i') : '—' }}</td>
+                                <td class="fw-semibold">{{ $c->cliente?->nombre_completo ?? '—' }}</td>
+                                <td>{{ $c->vehiculo?->placa ?? '—' }}</td>
+                                <td>{{ $c->servicio?->nombre ?? $c->tipo ?? '—' }}</td>
+                                <td><span class="badge bg-warning">{{ $c->estado_label }}</span></td>
+                                <td><a href="{{ route('admin.citas.index') }}?cita={{ $c->id }}" class="btn btn-sm btn-primary">Revisar</a></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
     {{-- TARJETAS --}}
     <section class="admin-stats mb-4">
-        <div class="admin-stats__item" style="border-left:3px solid var(--tp-warning);"><span class="admin-stats__label">Citas solicitadas</span><span class="admin-stats__value">{{ $citasSolicitadas }}</span></div>
+        <div class="admin-stats__item" style="border-left:3px solid var(--tp-warning);"><span class="admin-stats__label">Solicitudes nuevas</span><span class="admin-stats__value">{{ $citasSolicitadas }}</span></div>
         <div class="admin-stats__item" style="border-left:3px solid var(--tp-success);"><span class="admin-stats__label">Confirmadas hoy</span><span class="admin-stats__value">{{ $citasConfirmadasHoy }}</span></div>
         <div class="admin-stats__item"><span class="admin-stats__label">Órdenes esperando mec.</span><span class="admin-stats__value">{{ $ordenesEsperando }}</span></div>
         <div class="admin-stats__item" style="border-left:3px solid var(--tp-info);"><span class="admin-stats__label">Vehículos listos</span><span class="admin-stats__value">{{ $vehiculosListos }}</span></div>
@@ -73,6 +101,62 @@
                     </div>
                 @endif
             </div>
+
+            {{-- PRÓXIMAS CITAS CONFIRMADAS --}}
+            @if ($proximasConfirmadas->isNotEmpty())
+                <div class="admin-table-wrap mt-3">
+                    <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0 text-success"><i class="bi bi-calendar-check"></i> Próximas citas confirmadas</h6>
+                        <a href="{{ route('admin.citas.index') }}" class="small">Ver calendario</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vehículo</th><th>Servicio</th><th>Mecánico</th></tr></thead>
+                            <tbody>
+                                @foreach ($proximasConfirmadas as $c)
+                                    <tr>
+                                        <td>{{ $c->fecha?->format('d/m/Y') }}</td>
+                                        <td>{{ $c->hora ? \Carbon\Carbon::parse($c->hora)->format('H:i') : '—' }}</td>
+                                        <td class="fw-semibold">{{ $c->cliente?->nombre_completo ?? '—' }}</td>
+                                        <td>{{ $c->vehiculo?->placa ?? '—' }}</td>
+                                        <td>{{ $c->servicio?->nombre ?? $c->tipo ?? '—' }}</td>
+                                        <td>{{ $c->mecanico?->empleado?->nombre_completo ?? '—' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+
+            {{-- COTIZACIONES PENDIENTES --}}
+            @if ($cotizacionesPendientes->isNotEmpty())
+                <div class="admin-table-wrap mt-3">
+                    <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0 text-warning"><i class="bi bi-file-earmark-text"></i> Cotizaciones pendientes de respuesta del cliente</h6>
+                        <span class="badge bg-warning text-dark">{{ $cotizacionesPendientes->count() }}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead><tr><th>Fecha</th><th>Cliente</th><th>Vehículo</th><th>Mecánico</th><th>Importe</th><th>Tiempo</th><th></th></tr></thead>
+                            <tbody>
+                                @foreach ($cotizacionesPendientes as $a)
+                                    @php $t = $a->tiempo_estimado_minutos; @endphp
+                                    <tr>
+                                        <td class="small">{{ $a->fecha_solicitud?->format('d/m H:i') }}</td>
+                                        <td class="fw-semibold">{{ $a->cita?->cliente?->nombre_completo ?? '—' }}</td>
+                                        <td>{{ $a->cita?->vehiculo?->placa ?? '—' }}</td>
+                                        <td>{{ $a->cita?->mecanico?->empleado?->nombre_completo ?? '—' }}</td>
+                                        <td class="fw-semibold" style="color:#E31E24;">Bs {{ number_format($a->importe, 2) }}</td>
+                                        <td class="small">{{ $a->tiempo_estimado_label }}</td>
+                                        <td><a href="{{ route('admin.autorizaciones.show', $a) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
         </div>
 
         {{-- MECÁNICOS DISPONIBLES --}}

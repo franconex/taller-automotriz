@@ -19,10 +19,11 @@ class AutorizacionController extends AdminController
         $query = Autorizacion::with([
             'ordenTrabajo.cliente',
             'ordenTrabajo.vehiculo',
+            'cita.cliente:id,nombre_completo',
+            'cita.vehiculo:id,placa,marca,modelo',
+            'cita.mecanico.empleado:id,nombre_completo',
             'usuarioSolicitante',
         ])->latest('fecha_solicitud');
-
-        $this->scopeSucursal($query, 'orden_trabajo_id', 'App\Models\OrdenTrabajo', 'sucursal_id');
 
         return view('admin.autorizaciones.index', [
             'autorizaciones' => $query->paginate(20),
@@ -87,6 +88,11 @@ class AutorizacionController extends AdminController
         $autorizacione->load([
             'ordenTrabajo.cliente',
             'ordenTrabajo.vehiculo',
+            'cita.cliente:id,nombre_completo,telefono',
+            'cita.vehiculo:id,placa,marca,modelo',
+            'cita.mecanico.empleado:id,nombre_completo',
+            'servicios',
+            'repuestos.repuesto',
             'usuarioSolicitante',
             'respondidoPor',
         ]);

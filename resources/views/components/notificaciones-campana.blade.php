@@ -65,7 +65,8 @@
                 var html = '';
                 items.forEach(function (n) {
                     var icono = n.icono || 'bi-bell';
-                    html += '<div class="dropdown-item p-2 border-bottom notif-item" data-id="' + n.id + '" style="cursor:pointer;">' +
+                    var notifUrl = n.url || '#';
+                    html += '<div class="dropdown-item p-2 border-bottom notif-item" data-id="' + n.id + '" data-url="' + escHtml(notifUrl) + '" style="cursor:pointer;">' +
                         '<div class="d-flex gap-2">' +
                             '<div style="font-size:1.1rem;color:#E31E24;"><i class="bi ' + icono + '"></i></div>' +
                             '<div class="flex-fill" style="min-width:0;">' +
@@ -82,9 +83,16 @@
                 lista.querySelectorAll('.notif-item').forEach(function (el) {
                     el.addEventListener('click', function () {
                         var id = this.getAttribute('data-id');
+                        var url = this.getAttribute('data-url');
                         fetch(baseUrl + '/' + id + '/leer', { method: 'PATCH', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '' } })
-                            .then(function () { cargarNoLeidas(); })
-                            .catch(function () {});
+                            .then(function (r) {
+                                if (r.ok && url && url !== '#' && url !== '' && url.startsWith('/')) {
+                                    window.location.href = url;
+                                } else {
+                                    cargarNoLeidas();
+                                }
+                            })
+                            .catch(function () { cargarNoLeidas(); });
                     });
                 });
             }

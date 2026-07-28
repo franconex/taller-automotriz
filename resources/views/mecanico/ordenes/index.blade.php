@@ -1,6 +1,7 @@
-@extends('layouts.mecanico')
+@extends('layouts.admin')
 
 @section('title', 'Mis órdenes')
+@section('navbar-title', 'Mis órdenes')
 
 @section('content')
     @if ($ordenes->isEmpty())
@@ -23,7 +24,7 @@
                             <td>{{ $o->vehiculo?->placa ?? '—' }}</td>
                             <td class="small">{{ $o->fecha_emision?->format('d/m/Y H:i') }}</td>
                             <td>
-                                @php $colores = ['programada'=>'secondary','recibida'=>'info','en_diagnostico'=>'warning','en_proceso'=>'primary','esperando_repuesto'=>'purple','pausada'=>'dark','pendiente_autorizacion'=>'danger','finalizada_mecanico'=>'success','lista_entrega'=>'success','entregada'=>'secondary','cancelada'=>'danger']; @endphp
+                                @php $colores = ['programada'=>'secondary','recibida'=>'info','diagnostico'=>'warning','en_proceso'=>'primary','esperando_repuesto'=>'purple','pausada'=>'dark','pendiente_autorizacion'=>'danger','finalizada_mecanico'=>'success','lista_entrega'=>'success','entregada'=>'secondary','cancelada'=>'danger']; @endphp
                                 <span class="badge bg-{{ $colores[$o->estado] ?? 'secondary' }}">{{ ucfirst(str_replace('_', ' ', $o->estado)) }}</span>
                             </td>
                             <td><a href="{{ route('mecanico.ordenes.show', $o) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a></td>

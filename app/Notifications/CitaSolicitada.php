@@ -7,7 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class CitaSolicitada extends Notification implements ShouldQueue
+class CitaSolicitada extends Notification
 {
     use Queueable;
 
@@ -25,7 +25,7 @@ class CitaSolicitada extends Notification implements ShouldQueue
             'mensaje' => 'El cliente ' . ($this->cita->cliente?->nombre_completo ?? '—') .
                 ' ha solicitado una cita para el ' . $this->cita->fecha?->format('d/m/Y') .
                 ' a las ' . $this->cita->hora . '.',
-            'url' => route('admin.citas.index', ['estado' => 'solicitada']),
+            'url' => route('admin.citas.index') . '?cita=' . $this->cita->id,
             'icono' => 'bi-calendar-plus',
         ];
     }

@@ -10,9 +10,6 @@ class PermisoSeeder extends Seeder
     public function run(): void
     {
         $permisos = [
-            // Dashboard
-            ['nombre' => 'Ver Dashboard', 'codigo' => 'dashboard.ver', 'modulo' => 'dashboard'],
-
             // Sucursales
             ['nombre' => 'Ver Sucursales', 'codigo' => 'sucursales.ver', 'modulo' => 'sucursales'],
             ['nombre' => 'Crear Sucursales', 'codigo' => 'sucursales.crear', 'modulo' => 'sucursales'],

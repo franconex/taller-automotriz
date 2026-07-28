@@ -4,10 +4,9 @@ namespace App\Notifications;
 
 use App\Models\OrdenTrabajo;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class OrdenAsignada extends Notification
+class VehiculoRecibido extends Notification
 {
     use Queueable;
 
@@ -21,11 +20,11 @@ class OrdenAsignada extends Notification
     public function toDatabase(object $notifiable): array
     {
         return [
-            'titulo' => 'Nueva orden asignada',
-            'mensaje' => 'Se te ha asignado la orden ' . $this->orden->numero_orden .
-                ' para el vehículo ' . ($this->orden->vehiculo?->placa ?? '—') . '.',
+            'titulo' => 'Vehículo recibido en taller',
+            'mensaje' => 'El vehículo ' . ($this->orden->vehiculo?->placa ?? '—') .
+                ' de la orden ' . $this->orden->numero_orden . ' ya llegó al taller.',
             'url' => route('mecanico.ordenes.show', $this->orden),
-            'icono' => 'bi-clipboard-check',
+            'icono' => 'bi-car-front',
         ];
     }
 

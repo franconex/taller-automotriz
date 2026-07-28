@@ -77,10 +77,12 @@
             </div>
         </div>
         <div class="col-md-3 col-6">
-            <div class="card border-0 shadow-sm text-center p-3 h-100">
-                <div class="h4 mb-0 fw-bold">0</div>
-                <small class="text-muted">Autorizaciones</small>
-            </div>
+            <a href="{{ route('cliente.autorizaciones') }}" class="text-decoration-none text-reset">
+                <div class="card border-0 shadow-sm text-center p-3 h-100">
+                    <div class="h4 mb-0 fw-bold" style="color:{{ $autorizacionesPendientes > 0 ? '#E31E24' : 'inherit' }}">{{ $autorizacionesPendientes }}</div>
+                    <small class="text-muted">Autorizaciones {!! $autorizacionesPendientes > 0 ? '<span class="badge bg-danger ms-1">pendientes</span>' : '' !!}</small>
+                </div>
+            </a>
         </div>
     </div>
 

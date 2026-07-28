@@ -1,6 +1,5 @@
 @php
     $layout = match(true) {
-        Auth::user()?->tieneRol('Mecánico') => 'layouts.mecanico',
         Auth::user()?->tieneRol('Cliente') => 'layouts.cliente-sidebar',
         default => 'layouts.admin',
     };

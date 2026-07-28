@@ -76,6 +76,7 @@ class AuthenticatedSessionController extends Controller
     {
         return match ($user->rol->nombre) {
             'Recepcionista' => route('admin.citas.index'),
+            'Mecánico' => route('mecanico.dashboard'),
             'Cliente' => route('cliente.dashboard'),
             default => route('admin.dashboard'),
         };
@@ -98,6 +99,10 @@ class AuthenticatedSessionController extends Controller
 
         if ($user->esCliente()) {
             return str_contains($path, '/cliente/');
+        }
+
+        if ($user->tieneRol('Mecánico')) {
+            return str_contains($path, '/mecanico/');
         }
 
         return str_contains($path, '/admin/');

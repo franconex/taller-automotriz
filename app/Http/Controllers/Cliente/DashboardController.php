@@ -16,13 +16,14 @@ use App\Models\Servicio;
 use App\Models\Sucursal;
 use App\Models\User;
 use App\Models\Vehiculo;
+use App\Notifications\AutorizacionAprobada;
 use App\Notifications\CitaSolicitada;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -80,9 +81,17 @@ class DashboardController extends Controller
 
         $cliente = Auth::user()->cliente;
 
+        $autorizacionesPendientes = Autorizacion::where('estado', 'pendiente')
+            ->where(function ($q) use ($clienteId) {
+                $q->whereHas('ordenTrabajo', fn ($sq) => $sq->where('cliente_id', $clienteId))
+                  ->orWhereHas('cita', fn ($sq) => $sq->where('cliente_id', $clienteId));
+            })
+            ->count();
+
         return view('cliente.dashboard', compact(
             'cliente', 'proximaCita', 'vehiculos', 'ordenActiva',
-            'avance', 'ultimaActualizacion', 'enTaller', 'saldoPendiente'
+            'avance', 'ultimaActualizacion', 'enTaller', 'saldoPendiente',
+            'autorizacionesPendientes'
         ));
     }
 
@@ -164,7 +173,9 @@ class DashboardController extends Controller
 
     public function seguimiento(): View
     {
-        $ordenActiva = OrdenTrabajo::where('cliente_id', $this->clienteId())
+        $clienteId = $this->clienteId();
+
+        $ordenActiva = OrdenTrabajo::where('cliente_id', $clienteId)
             ->whereIn('estado', ['recibida', 'diagnostico', 'en_proceso', 'pausada', 'finalizada_mecanico', 'lista_entrega'])
             ->with([
                 'vehiculo',
@@ -172,6 +183,8 @@ class DashboardController extends Controller
                 'asignaciones.notasVisiblesCliente',
                 'detalles.servicio',
                 'detalles.repuesto',
+                'serviciosMecanico',
+                'repuestosMecanico.repuesto',
             ])
             ->first();
 
@@ -180,7 +193,19 @@ class DashboardController extends Controller
         $avances = $ordenActiva?->avances()->where('visible_cliente', true)->latest()->get() ?? collect();
         $diagnostico = $ordenActiva?->diagnosticos()->latest()->first();
 
-        return view('cliente.seguimiento', compact('ordenActiva', 'asignacion', 'estimacion', 'avances', 'diagnostico'));
+        // Autorizaciones pendientes del cliente (cotizaciones)
+        $cotizacionesPendientes = Autorizacion::where('estado', 'pendiente')
+            ->where(function ($q) use ($clienteId) {
+                $q->whereHas('ordenTrabajo', fn ($sq) => $sq->where('cliente_id', $clienteId))
+                  ->orWhereHas('cita', fn ($sq) => $sq->where('cliente_id', $clienteId));
+            })
+            ->with(['cita.vehiculo', 'cita.mecanico.empleado:id,nombre_completo', 'servicios', 'repuestos.repuesto'])
+            ->orderByDesc('fecha_solicitud')
+            ->get();
+
+        return view('cliente.seguimiento', compact(
+            'ordenActiva', 'asignacion', 'estimacion', 'avances', 'diagnostico', 'cotizacionesPendientes'
+        ));
     }
 
     public function historial(): View
@@ -196,8 +221,13 @@ class DashboardController extends Controller
 
     public function autorizaciones(): View
     {
-        $autorizaciones = Autorizacion::whereHas('ordenTrabajo', fn ($q) => $q->where('cliente_id', $this->clienteId()))
-            ->with(['ordenTrabajo.vehiculo', 'usuarioSolicitante'])
+        $clienteId = $this->clienteId();
+
+        $autorizaciones = Autorizacion::where(function ($q) use ($clienteId) {
+                $q->whereHas('ordenTrabajo', fn ($sq) => $sq->where('cliente_id', $clienteId))
+                  ->orWhereHas('cita', fn ($sq) => $sq->where('cliente_id', $clienteId));
+            })
+            ->with(['ordenTrabajo.vehiculo', 'cita.vehiculo', 'cita.mecanico.empleado:id,nombre_completo', 'usuarioSolicitante'])
             ->latest('fecha_solicitud')
             ->get();
 
@@ -213,7 +243,9 @@ class DashboardController extends Controller
             'comentario_cliente' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        DB::transaction(function () use ($request, $autorizacione, $data) {
+        $ordenCreada = null;
+
+        DB::transaction(function () use ($request, $autorizacione, $data, &$ordenCreada) {
             $estadoAnterior = $autorizacione->estado;
 
             $autorizacione->update([
@@ -222,6 +254,70 @@ class DashboardController extends Controller
                 'fecha_respuesta' => now(),
                 'respondido_por_id' => Auth::id(),
             ]);
+
+            // Si autoriza: crear orden si no existe, o cambiar estado si ya existe
+            if ($data['accion'] === 'autorizada') {
+                $orden = $autorizacione->ordenTrabajo;
+
+                if (! $orden && $autorizacione->cita_id) {
+                    // Cotización desde cita → crear orden + asignación
+                    $cita = $autorizacione->cita;
+                    $mecanicoId = $cita?->mecanico_id ?? $autorizacione->usuario_solicitante?->empleado?->mecanico?->id;
+
+                    $siguienteId = (\App\Models\OrdenTrabajo::withTrashed()->max('id') ?? 0) + 1;
+                    $numeroOrden = 'OT-' . str_pad((string) $siguienteId, 6, '0', STR_PAD_LEFT);
+
+                    $orden = \App\Models\OrdenTrabajo::create([
+                        'numero_orden'          => $numeroOrden,
+                        'cliente_id'            => $cita?->cliente_id ?? $autorizacione->cita?->cliente_id,
+                        'vehiculo_id'           => $cita?->vehiculo_id,
+                        'sucursal_id'           => $cita?->sucursal_id,
+                        'usuario_recepcion_id'  => $autorizacione->usuario_solicitante_id,
+                        'cita_id'               => $cita?->id,
+                        'fecha_emision'         => now(),
+                        'descripcion_problema'  => $autorizacione->descripcion,
+                        'estado'                => 'recibida',
+                        'descuento'             => 0,
+                        'kilometraje_ingreso'   => 0,
+                    ]);
+
+                    // Mover servicios de la cotización a la orden
+                    \App\Models\OrdenServicio::where('autorizacion_id', $autorizacione->id)
+                        ->update(['orden_trabajo_id' => $orden->id, 'autorizacion_id' => null]);
+
+                    // Mover repuestos de la cotización a la orden
+                    \App\Models\OrdenRepuesto::where('autorizacion_id', $autorizacione->id)
+                        ->update(['orden_trabajo_id' => $orden->id, 'autorizacion_id' => null]);
+
+                    // Asignar al mecánico
+                    if ($mecanicoId) {
+                        \App\Models\AsignacionTrabajo::create([
+                            'orden_trabajo_id'     => $orden->id,
+                            'mecanico_id'          => $mecanicoId,
+                            'usuario_asignador_id' => $autorizacione->usuario_solicitante_id,
+                            'actividad_asignada'   => $autorizacione->titulo,
+                            'prioridad'            => 'normal',
+                            'estado'               => 'pendiente',
+                            'fecha_asignacion'     => now(),
+                        ]);
+                    }
+
+                    // Cita → atendida
+                    if ($cita) {
+                        $cita->update(['estado' => 'atendida', 'estado_anterior' => $cita->estado]);
+                    }
+
+                    // Vincular autorización con la orden
+                    $autorizacione->update(['orden_trabajo_id' => $orden->id]);
+
+                    $ordenCreada = $orden;
+                } elseif ($orden) {
+                    // Ya existía orden → cambiar estado
+                    if (in_array($orden->estado, ['programada', 'recibida', 'diagnostico', 'pendiente_autorizacion'])) {
+                        $orden->update(['estado' => 'en_proceso']);
+                    }
+                }
+            }
 
             Auditoria::create([
                 'usuario_id' => Auth::id(),
@@ -237,8 +333,31 @@ class DashboardController extends Controller
             ]);
         });
 
+        // Notificar al mecánico si autorizó
+        if ($data['accion'] === 'autorizada') {
+            $orden = $ordenCreada ?? $autorizacione->ordenTrabajo;
+            if ($orden) {
+                $asignacion = $orden->asignaciones()->whereNull('fecha_finalizacion')->first();
+                $mecanico = $asignacion?->mecanico;
+                $userMecanico = $mecanico?->empleado?->user;
+                if (! $userMecanico) {
+                    $userMecanico = \App\Models\User::where('empleado_id', $mecanico?->empleado_id)->first();
+                }
+                if ($userMecanico) {
+                    $userMecanico->notify(new AutorizacionAprobada($autorizacione));
+                }
+            }
+        }
+
+        $mensaje = match($data['accion']) {
+            'autorizada' => 'Autorizaste la cotización. ' . ($ordenCreada ? 'La orden fue creada y el mecánico comenzará a trabajar.' : 'El mecánico comenzará a trabajar.'),
+            'rechazada' => 'Rechazaste la cotización.',
+            'requiere_informacion' => 'Solicitaste más información.',
+            default => 'Respuesta registrada.',
+        };
+
         return redirect()->route('cliente.autorizaciones')
-            ->with('success', 'Respuesta registrada correctamente.');
+            ->with('success', $mensaje);
     }
 
     public function ordenShow(OrdenTrabajo $ordene): View
@@ -267,7 +386,17 @@ class DashboardController extends Controller
             ->orderByDesc('fecha_emision')
             ->get();
 
-        return view('cliente.pagos', compact('ordenesConPagos'));
+        $ordenesPendientes = OrdenTrabajo::where('cliente_id', $this->clienteId())
+            ->whereNotIn('estado', ['entregada', 'anulada'])
+            ->with('vehiculo')
+            ->orderByDesc('fecha_emision')
+            ->get()
+            ->filter(function ($o) {
+                $pagado = $o->pagos()->where('estado', 'confirmado')->sum('monto');
+                return (float) $o->total_general > (float) $pagado;
+            });
+
+        return view('cliente.pagos', compact('ordenesConPagos', 'ordenesPendientes'));
     }
 
     public function pagoShow(Pago $pago): View

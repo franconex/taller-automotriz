@@ -11,6 +11,8 @@ class OrdenServicio extends Model
 
     protected $fillable = [
         'orden_trabajo_id',
+        'autorizacion_id',
+        'mecanico_id',
         'servicio_id',
         'subservicio_id',
         'nombre_servicio',
@@ -32,6 +34,11 @@ class OrdenServicio extends Model
         return $this->belongsTo(OrdenTrabajo::class);
     }
 
+    public function autorizacion(): BelongsTo
+    {
+        return $this->belongsTo(Autorizacion::class);
+    }
+
     public function servicio(): BelongsTo
     {
         return $this->belongsTo(Servicio::class);
@@ -40,5 +47,10 @@ class OrdenServicio extends Model
     public function subservicio(): BelongsTo
     {
         return $this->belongsTo(Subservicio::class);
+    }
+
+    public function mecanico(): BelongsTo
+    {
+        return $this->belongsTo(Mecanico::class);
     }
 }

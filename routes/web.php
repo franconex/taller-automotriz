@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\VehiculoController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\GoogleSocialiteController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Mecanico\CotizacionController as MecanicoCotizacionController;
 use App\Http\Controllers\Mecanico\DashboardController as MecanicoDashboardController;
 use App\Http\Controllers\Mecanico\OrdenController as MecanicoOrdenController;
 use App\Http\Controllers\NotificacionController;
@@ -85,7 +86,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('admin')->middleware('rol:Administrador,Gerente,Recepcionista,Mecánico')->name('admin.')->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('permiso:dashboard.ver')->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('sucursales', SucursalController::class);
         Route::patch('sucursales/{sucursale}/toggle', [SucursalController::class, 'toggle'])->name('sucursales.toggle');
@@ -190,16 +191,7 @@ Route::middleware('auth')->group(function () {
             return $tipoServicio->servicios()->where('estado', true)->orderBy('nombre')->get(['id', 'nombre', 'precio_base', 'duracion_estimada_minutos']);
         })->name('servicios.por-tipo');
 
-        Route::patch('ordenes/{ordene}/mi-estado', [OrdenTrabajoController::class, 'actualizarMiEstado'])
-            ->name('ordenes.actualizar-mi-estado');
-        Route::post('ordenes/{ordene}/observacion', [OrdenTrabajoController::class, 'agregarObservacionMecanico'])
-            ->name('ordenes.observacion');
-        Route::post('ordenes/{ordene}/foto', [OrdenTrabajoController::class, 'subirFoto'])
-            ->name('ordenes.foto');
-        Route::post('ordenes/{ordene}/servicio-mecanico', [OrdenTrabajoController::class, 'agregarServicioMecanico'])
-            ->name('ordenes.servicio-mecanico');
-        Route::post('ordenes/{ordene}/finalizar', [OrdenTrabajoController::class, 'finalizarTrabajo'])
-            ->name('ordenes.finalizar');
+
 
         // Registrar llegada (recepcionista)
         Route::patch('citas/{cita}/registrar-llegada', [\App\Http\Controllers\Admin\CitaController::class, 'registrarLlegada'])->name('citas.registrar-llegada');
@@ -226,6 +218,12 @@ Route::middleware('auth')->group(function () {
         Route::put('citas/{cita}', [CitaController::class, 'update'])->middleware('permiso:citas.editar')->name('citas.update');
     });
 
+    // Autorizaciones / Cotizaciones (admin / recepción)
+    Route::prefix('admin')->name('admin.')->middleware('permiso:ordenes.ver')->group(function () {
+        Route::get('cotizaciones', [\App\Http\Controllers\Admin\AutorizacionController::class, 'index'])->name('autorizaciones.index');
+        Route::get('cotizaciones/{autorizacione}', [\App\Http\Controllers\Admin\AutorizacionController::class, 'show'])->name('autorizaciones.show');
+    });
+
     // Portal del Mecánico
     Route::prefix('mecanico')->middleware('rol:Mecánico')->name('mecanico.')->group(function () {
         Route::get('dashboard', [MecanicoDashboardController::class, 'index'])->name('dashboard');
@@ -237,8 +235,19 @@ Route::middleware('auth')->group(function () {
         Route::post('ordenes/{orden}/avances', [MecanicoOrdenController::class, 'avances'])->name('ordenes.avances');
         Route::post('ordenes/{orden}/repuestos', [MecanicoOrdenController::class, 'repuestos'])->name('ordenes.repuestos');
         Route::post('ordenes/{orden}/evidencias', [MecanicoOrdenController::class, 'evidencias'])->name('ordenes.evidencias');
+        Route::post('ordenes/{orden}/cotizacion', [MecanicoOrdenController::class, 'cotizacion'])->name('ordenes.cotizacion');
         Route::patch('ordenes/{orden}/estado', [MecanicoOrdenController::class, 'cambiarEstado'])->name('ordenes.estado');
         Route::patch('ordenes/{orden}/finalizar', [MecanicoOrdenController::class, 'finalizar'])->name('ordenes.finalizar');
+        Route::post('ordenes/{orden}/tomar', [MecanicoOrdenController::class, 'tomar'])->name('ordenes.tomar');
+        // Cotización desde orden (nueva)
+        Route::get('ordenes/{orden}/cotizar', [MecanicoCotizacionController::class, 'ordenCreate'])->name('ordenes.cotizar-nueva');
+        Route::post('ordenes/{orden}/cotizar/enviar', [MecanicoCotizacionController::class, 'ordenEnviar'])->name('ordenes.cotizar-enviar');
+        // Cotización desde cita (sin orden)
+        Route::post('citas/{cita}/iniciar', [MecanicoCotizacionController::class, 'iniciarTrabajo'])->name('citas.iniciar');
+        Route::get('citas/{cita}/cotizar', [MecanicoCotizacionController::class, 'create'])->name('cotizacion.create');
+        Route::post('cotizacion/{autorizacion}/servicios', [MecanicoCotizacionController::class, 'addServicio'])->name('cotizacion.servicios');
+        Route::post('cotizacion/{autorizacion}/repuestos', [MecanicoCotizacionController::class, 'addRepuesto'])->name('cotizacion.repuestos');
+        Route::post('cotizacion/{autorizacion}/enviar', [MecanicoCotizacionController::class, 'enviar'])->name('cotizacion.enviar');
     });
 
     // Notificaciones

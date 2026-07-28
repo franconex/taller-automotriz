@@ -14,11 +14,14 @@ use App\Models\OrdenTrabajo;
 use App\Models\Repuesto;
 use App\Notifications\AvanceReportado;
 use App\Notifications\PresupuestoDisponible;
+use App\Notifications\TrabajoFinalizado;
+use App\Notifications\CitaConfirmada;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -307,8 +310,88 @@ class OrdenController extends Controller
             }
         });
 
+        // Notificar a recepcionistas de la sucursal
+        $recepcionistas = \App\Models\User::whereHas('rol', fn ($q) => $q->where('nombre', 'Recepcionista'))
+            ->where('sucursal_id', $orden->sucursal_id)
+            ->where('estado', 'activo')
+            ->get();
+        Notification::send($recepcionistas, new TrabajoFinalizado($orden));
+
+        // Notificar al cliente
+        if ($orden->cliente?->user) {
+            $orden->cliente->user->notify(new TrabajoFinalizado($orden));
+        }
+
         return redirect()->route('mecanico.ordenes.index')
             ->with('success', 'Trabajo finalizado correctamente. El vehículo está listo para entrega.');
+    }
+
+    public function cotizacion(Request $request, OrdenTrabajo $orden): RedirectResponse
+    {
+        $this->ordenAsignada($orden);
+
+        $data = $request->validate([
+            'titulo' => ['required', 'string', 'max:200'],
+            'descripcion' => ['required', 'string', 'max:5000'],
+        ]);
+
+        // Calcular total de servicios y repuestos
+        $totalServicios = $orden->serviciosMecanico()->sum('precio_base');
+        $totalRepuestos = $orden->repuestosMecanico()->sum(DB::raw('cantidad * precio_unitario_snapshot'));
+        $importeTotal = $totalServicios + $totalRepuestos;
+
+        if ($importeTotal <= 0) {
+            return back()->with('error', 'Debes agregar al menos un servicio o repuesto para generar la cotización.');
+        }
+
+        DB::transaction(function () use ($orden, $data, $importeTotal) {
+            \App\Models\Autorizacion::create([
+                'orden_trabajo_id' => $orden->id,
+                'usuario_solicitante_id' => Auth::id(),
+                'titulo' => $data['titulo'],
+                'descripcion' => $data['descripcion'],
+                'importe' => $importeTotal,
+                'estado' => 'pendiente',
+                'fecha_solicitud' => now(),
+            ]);
+
+            $orden->update(['estado' => 'pendiente_autorizacion']);
+        });
+
+        // Notificar al cliente
+        $autorizacion = $orden->autorizaciones()->latest()->first();
+        if ($orden->cliente?->user && $autorizacion) {
+            $orden->cliente->user->notify(new \App\Notifications\CotizacionEnviada($autorizacion, $orden->cita ?? new \App\Models\Cita()));
+        }
+
+        return redirect()->route('mecanico.ordenes.show', $orden)
+            ->with('success', 'Cotización enviada al cliente. Esperando aprobación.');
+    }
+
+    public function tomar(Request $request, OrdenTrabajo $orden): RedirectResponse
+    {
+        // Solo mecánicos de la misma sucursal
+        $mecanicoId = $this->mecanicoId();
+        if (! $mecanicoId) {
+            return redirect()->route('mecanico.dashboard')->with('error', 'No se encontró tu perfil de mecánico.');
+        }
+
+        $yaAsignada = $orden->asignaciones()->whereNull('fecha_finalizacion')->exists();
+        if ($yaAsignada) {
+            return redirect()->route('mecanico.ordenes.show', $orden)->with('error', 'Esta orden ya fue tomada por otro mecánico.');
+        }
+
+        $orden->asignaciones()->create([
+            'mecanico_id' => $mecanicoId,
+            'usuario_asignador_id' => Auth::id(),
+            'actividad_asignada' => $orden->descripcion_problema ?? 'Atención de orden',
+            'prioridad' => 'normal',
+            'estado' => 'pendiente',
+            'fecha_asignacion' => now(),
+        ]);
+
+        return redirect()->route('mecanico.ordenes.show', $orden)
+            ->with('success', 'Orden tomada. Ya está en tu panel de trabajos.');
     }
 
     private function asignacionActiva(OrdenTrabajo $orden): ?AsignacionTrabajo

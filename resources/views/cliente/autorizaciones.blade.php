@@ -12,12 +12,16 @@
     @else
         <div class="row g-3">
             @foreach ($autorizaciones as $a)
+                @php
+                    $vehiculo = $a->ordenTrabajo?->vehiculo ?? $a->cita?->vehiculo;
+                    $t = $a->tiempo_estimado_minutos;
+                @endphp
                 <div class="col-12">
                     <div class="card border-0 shadow-sm">
                         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="mb-0">{{ $a->titulo }}</h6>
-                                <small class="text-muted">{{ $a->ordenTrabajo?->numero_orden }} · {{ $a->ordenTrabajo?->vehiculo?->placa }}</small>
+                                <small class="text-muted">{{ $vehiculo?->placa ?? '—' }}</small>
                             </div>
                             <span class="badge fs-6 bg-{{ $a->estado === 'autorizada' ? 'success' : ($a->estado === 'rechazada' || $a->estado === 'cancelada' ? 'danger' : ($a->estado === 'pendiente' ? 'warning' : 'info')) }}">
                                 {{ $a->estado_label }}
@@ -27,7 +31,11 @@
                             <p>{{ $a->descripcion }}</p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>Importe:</strong> <span style="color:#E31E24;">${{ number_format($a->importe, 2) }}</span>
+                                    <strong>Importe:</strong> <span style="color:#E31E24;">Bs {{ number_format($a->importe, 2) }}</span>
+                                    @if ($t)
+                                        &middot;
+                                        <strong>Tiempo est.:</strong> {{ $a->tiempo_estimado_label }}
+                                    @endif
                                     &middot;
                                     <small class="text-muted">{{ $a->fecha_solicitud?->format('d/m/Y H:i') }}</small>
                                 </div>

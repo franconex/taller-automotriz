@@ -7,10 +7,15 @@ use App\Models\User;
 
 class AutorizacionPolicy
 {
+    private function clienteId(Autorizacion $a): ?int
+    {
+        return $a->ordenTrabajo?->cliente_id ?? $a->cita?->cliente_id;
+    }
+
     public function view(User $user, Autorizacion $autorizacion): bool
     {
         if ($user->esCliente()) {
-            return $user->cliente_id === $autorizacion->ordenTrabajo?->cliente_id;
+            return $user->cliente_id === $this->clienteId($autorizacion);
         }
         return $user->tienePermiso('ordenes.ver');
     }
@@ -21,7 +26,7 @@ class AutorizacionPolicy
             return false;
         }
         if ($user->esCliente()) {
-            return $user->cliente_id === $autorizacion->ordenTrabajo?->cliente_id;
+            return $user->cliente_id === $this->clienteId($autorizacion);
         }
         return false;
     }

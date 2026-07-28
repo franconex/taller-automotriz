@@ -38,7 +38,11 @@
                 <img src="{{ asset('img/logo-modo-oscuro.png') }}" alt="Taller Pro">
             </div>
             <div class="admin-sidebar__nav-wrap">
-                @include('layouts.partials.sidebar-menu')
+                @if ($usuario->tieneRol('Mecánico'))
+                    @include('layouts.partials.sidebar-mecanico')
+                @else
+                    @include('layouts.partials.sidebar-menu')
+                @endif
             </div>
         </aside>
 
@@ -55,7 +59,11 @@
                 <div class="admin-mobile-drawer__brand">
                     <img src="{{ asset('img/logo-modo-oscuro.png') }}" alt="Taller Pro">
                 </div>
+                @if ($usuario->tieneRol('Mecánico'))
+                    @include('layouts.partials.sidebar-mecanico')
+                @else
                     @include('layouts.partials.sidebar-menu')
+                @endif
                 </div>
             </aside>
 

@@ -27,6 +27,10 @@ class DashboardController extends AdminController
 
         $rol = $usuario->rol->nombre;
 
+        if ($rol === 'Mecánico') {
+            return redirect()->route('mecanico.dashboard');
+        }
+
         if ($rol === 'Recepcionista') {
             return $this->recepcionistaDashboard($sucursalId, $hoy, $usuario);
         }
@@ -175,18 +179,43 @@ class DashboardController extends AdminController
 
     private function recepcionistaDashboard($sucursalId, $hoy, $usuario): View
     {
-        $citasSolicitadas = Cita::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))->whereIn('estado',['solicitada','pendiente'])->whereDate('fecha','>=',$hoy)->count();
-        $citasConfirmadasHoy = Cita::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))->whereDate('fecha',$hoy)->where('estado','confirmada')->count();
+        $citasSolicitadas = Cita::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))->whereIn('estado',['solicitada','propuesta','pendiente'])->whereDate('fecha','>=',$hoy)->count();
+        $citasConfirmadasHoy = Cita::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))->whereDate('fecha',$hoy)->whereIn('estado',['confirmada','atendida'])->count();
         $ordenesEsperando = OrdenTrabajo::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))->where('estado','recibida')->count();
         $vehiculosListos = OrdenTrabajo::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))->where('estado','finalizada')->count();
         $autorizacionesPendientes = \App\Models\Autorizacion::whereHas('ordenTrabajo',fn($q)=>$q->when($sucursalId,fn($sq)=>$sq->where('sucursal_id',$sucursalId)))->where('estado','pendiente')->count();
         $pagosPendientes = OrdenTrabajo::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))->whereNotIn('estado',['entregada','anulada'])->get()->filter(fn($o)=>(float)$o->total_general > $o->pagos()->where('estado','confirmado')->sum('monto'))->count();
         $entregasHoy = OrdenTrabajo::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))->whereIn('estado',['finalizada','entregada'])->whereDate('fecha_fin',$hoy)->count();
 
+        $solicitudes = Cita::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))
+            ->whereIn('estado',['solicitada','propuesta','pendiente'])
+            ->whereDate('fecha','>=',$hoy)
+            ->with(['cliente:id,nombre_completo','vehiculo:id,placa','servicio:id,nombre','sucursal:id,nombre'])
+            ->orderBy('fecha')->orderBy('hora')
+            ->get();
+
         $agenda = Cita::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))
             ->whereDate('fecha',$hoy)
+            ->whereIn('estado',['confirmada','atendida'])
             ->with(['cliente:id,nombre_completo','vehiculo:id,placa','servicio:id,nombre','mecanico.empleado:id,nombre_completo'])
             ->orderBy('hora')->get();
+
+        $proximasConfirmadas = Cita::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))
+            ->whereDate('fecha','>=',$hoy)
+            ->where('estado','confirmada')
+            ->with(['cliente:id,nombre_completo','vehiculo:id,placa','servicio:id,nombre','mecanico.empleado:id,nombre_completo'])
+            ->orderBy('fecha')->orderBy('hora')
+            ->limit(10)
+            ->get();
+
+        $cotizacionesPendientes = \App\Models\Autorizacion::where('estado', 'pendiente')
+            ->whereNotNull('cita_id')
+            ->whereNull('orden_trabajo_id')
+            ->whereHas('cita', fn($q) => $q->when($sucursalId, fn($sq) => $sq->where('sucursal_id', $sucursalId)))
+            ->with(['cita.cliente:id,nombre_completo', 'cita.vehiculo:id,placa', 'cita.mecanico.empleado:id,nombre_completo'])
+            ->orderByDesc('fecha_solicitud')
+            ->limit(10)
+            ->get();
 
         $mecanicos = Mecanico::with('empleado')
             ->whereHas('empleado',fn($q)=>$q->when($sucursalId,fn($sq)=>$sq->where('sucursal_id',$sucursalId)))
@@ -201,7 +230,7 @@ class DashboardController extends AdminController
         return view('admin.dashboard-recepcionista', compact(
             'usuario', 'citasSolicitadas', 'citasConfirmadasHoy', 'ordenesEsperando',
             'vehiculosListos', 'autorizacionesPendientes', 'pagosPendientes', 'entregasHoy',
-            'agenda', 'mecanicos'
+            'solicitudes', 'agenda', 'proximasConfirmadas', 'cotizacionesPendientes', 'mecanicos'
         ));
     }
 }

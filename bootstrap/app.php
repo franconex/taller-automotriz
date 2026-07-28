@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     'Administrador'  => route('admin.dashboard'),
                     'Gerente'        => route('admin.dashboard'),
                     'Recepcionista'  => route('admin.citas.index'),
-                    'Mecánico'       => route('admin.dashboard'),
+                    'Mecánico'       => route('mecanico.dashboard'),
                     'Cliente'        => route('cliente.dashboard'),
                     default          => route('admin.dashboard'),
                 };
