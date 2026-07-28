@@ -54,59 +54,6 @@
     <div class="row g-3">
         {{-- COLUMNA IZQUIERDA --}}
         <div class="col-lg-7">
-            {{-- DIAGNÓSTICO --}}
-            <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;">
-                <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
-                    <strong class="small"><i class="bi bi-search"></i> Diagnóstico</strong>
-                    @if (!$diagnostico)
-                        <span class="badge bg-warning text-dark">Pendiente</span>
-                    @endif
-                </div>
-                <div class="card-body p-3">
-                    @if ($diagnostico)
-                        <div class="small">
-                            <div class="mb-1"><span class="text-muted">Problema:</span> {{ $diagnostico->problema_encontrado ?? '—' }}</div>
-                            <div class="mb-1"><span class="text-muted">Causa:</span> {{ $diagnostico->causa_probable ?? '—' }}</div>
-                            @if ($diagnostico->recomendacion)<div class="mb-1"><span class="text-muted">Recomendación:</span> {{ $diagnostico->recomendacion }}</div>@endif
-                            @if ($diagnostico->observacion_cliente)
-                                <div class="mt-2 p-2 rounded" style="background:#fef2f2;">
-                                    <small><i class="bi bi-chat-quote text-danger"></i> {{ $diagnostico->observacion_cliente }}</small>
-                                </div>
-                            @endif
-                        </div>
-                    @elseif (in_array($orden->estado, ['en_proceso', 'esperando_repuesto', 'pausada', 'pendiente_autorizacion', 'finalizada_mecanico', 'lista_entrega']))
-                        <div class="small text-muted">
-                            <i class="bi bi-info-circle"></i> El diagnóstico se realizó en la cotización.
-                        </div>
-                    @endif
-                    @if (!$diagnostico && in_array($orden->estado, ['recibida']))
-                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="toggleForm('formDiagnostico')">
-                            <i class="bi bi-pencil"></i> Registrar diagnóstico
-                        </button>
-                        <form method="POST" action="{{ route('mecanico.ordenes.diagnostico', $orden) }}" id="formDiagnostico" style="display:none;" class="mt-2">
-                            @csrf
-                            <div class="mb-2">
-                                <label class="form-label small">Problema encontrado</label>
-                                <textarea name="problema_encontrado" class="form-control form-control-sm" rows="2">{{ old('problema_encontrado') }}</textarea>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">Causa probable</label>
-                                <input name="causa_probable" class="form-control form-control-sm" value="{{ old('causa_probable') }}">
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">Recomendación</label>
-                                <textarea name="recomendacion" class="form-control form-control-sm" rows="2">{{ old('recomendacion') }}</textarea>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">Observación para el cliente</label>
-                                <textarea name="observacion_cliente" class="form-control form-control-sm" rows="2" placeholder="Esto lo vera el cliente...">{{ old('observacion_cliente') }}</textarea>
-                            </div>
-                            <button type="submit" class="btn btn-sm btn-primary">Guardar diagnóstico</button>
-                        </form>
-                    @endif
-                </div>
-            </div>
-
             {{-- AVANCE Y PROGRESO --}}
             <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;">
                 <div class="card-header bg-white py-2 px-3">
@@ -202,52 +149,6 @@
 
         {{-- COLUMNA DERECHA --}}
         <div class="col-lg-5">
-            {{-- TIEMPO ESTIMADO --}}
-            <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;">
-                <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
-                    <strong class="small"><i class="bi bi-clock"></i> Tiempo estimado</strong>
-                </div>
-                <div class="card-body p-3">
-                    @if ($estimacion)
-                        <div class="small mb-2">
-                            <div><span class="text-muted">Duración:</span>
-                                <strong>{{ $estimacion->duracion_minima_minutos }} - {{ $estimacion->duracion_maxima_minutos }} min</strong>
-                            </div>
-                            @if ($estimacion->observacion_cliente)
-                                <div><span class="text-muted">Nota al cliente:</span> {{ $estimacion->observacion_cliente }}</div>
-                            @endif
-                        </div>
-                    @endif
-                    <button class="btn btn-sm btn-outline-primary" onclick="toggleForm('formTiempo')">
-                        <i class="bi bi-clock"></i> {{ $estimacion ? 'Actualizar estimación' : 'Estimar tiempo' }}
-                    </button>
-                    <form method="POST" action="{{ route('mecanico.ordenes.tiempo', $orden) }}" id="formTiempo" style="display:none;" class="mt-2">
-                        @csrf
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <label class="form-label small">Mínimo (min) <span class="text-danger">*</span></label>
-                                <input type="number" name="tiempo_minimo_minutos" class="form-control form-control-sm" min="1" value="{{ old('tiempo_minimo_minutos', $estimacion->duracion_minima_minutos ?? '') }}" required>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label small">Máximo (min) <span class="text-danger">*</span></label>
-                                <input type="number" name="tiempo_maximo_minutos" class="form-control form-control-sm" min="1" value="{{ old('tiempo_maximo_minutos', $estimacion->duracion_maxima_minutos ?? '') }}" required>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label small">Motivo (opcional)</label>
-                                <input name="motivo" class="form-control form-control-sm" placeholder="Ej: Espera de repuesto" value="{{ old('motivo', $estimacion->motivo ?? '') }}">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label small">Nota para el cliente</label>
-                                <textarea name="nota_cliente" class="form-control form-control-sm" rows="2" placeholder="Lo que vera el cliente...">{{ old('nota_cliente', $estimacion->observacion_cliente ?? '') }}</textarea>
-                            </div>
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-sm btn-primary">Guardar</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             {{-- SERVICIOS --}}
             <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;">
                 <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
@@ -316,71 +217,6 @@
                     </form>
                 </div>
             </div>
-
-            {{-- COTIZACIÓN --}}
-            @php
-                $totalServicios = $orden->serviciosMecanico()->sum('precio_base');
-                $totalRepuestos = $orden->repuestosMecanico()->sum(DB::raw('cantidad * precio_unitario_snapshot'));
-                $totalCotizacion = $totalServicios + $totalRepuestos;
-                $tieneServicios = $servicios->isNotEmpty();
-                $tieneRepuestos = $repuestos->isNotEmpty();
-                $estadoPermiteCotizar = in_array($orden->estado, ['programada', 'recibida', 'diagnostico', 'en_proceso', 'esperando_repuesto']);
-            @endphp
-
-            @if ($estadoPermiteCotizar)
-                <div class="card border-0 shadow-sm mb-3" style="border-radius:10px; border-left:3px solid #0d6efd !important;">
-                    <div class="card-header bg-white py-2 px-3">
-                        <strong class="small"><i class="bi bi-calculator"></i> Cotización</strong>
-                    </div>
-                    <div class="card-body p-3">
-                        @if ($tieneServicios || $tieneRepuestos)
-                            <div class="mb-2 small">
-                                <div class="d-flex justify-content-between">
-                                    <span>Servicios:</span>
-                                    <span class="fw-semibold">${{ number_format($totalServicios, 2) }}</span>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Repuestos:</span>
-                                    <span class="fw-semibold">${{ number_format($totalRepuestos, 2) }}</span>
-                                </div>
-                                <hr class="my-1">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">Total estimado:</span>
-                                    <span class="fw-bold text-primary">${{ number_format($totalCotizacion, 2) }}</span>
-                                </div>
-                            </div>
-
-                            <button class="btn btn-sm btn-outline-primary w-100" onclick="toggleForm('formCotizacion')">
-                                <i class="bi bi-send"></i> Enviar cotización al cliente
-                            </button>
-
-                            <form method="POST" action="{{ route('mecanico.ordenes.cotizacion', $orden) }}" id="formCotizacion" style="display:none;" class="mt-2">
-                                @csrf
-                                <div class="mb-2">
-                                    <label class="form-label small">Título de la cotización</label>
-                                    <input name="titulo" class="form-control form-control-sm" value="Reparación {{ $orden->vehiculo?->placa ?? '' }}" required>
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label small">Descripción / Detalle</label>
-                                    <textarea name="descripcion" class="form-control form-control-sm" rows="3" required>Se requiere la siguiente reparación:
-- Servicios: {{ $servicios->count() }} items
-- Repuestos: {{ $repuestos->count() }} items
-- Tiempo estimado: {{ $estimacion ? $estimacion->duracion_minima_minutos . 'min' : 'Pendiente' }}
-
-Total: ${{ number_format($totalCotizacion, 2) }}</textarea>
-                                </div>
-                                <button type="submit" class="btn btn-sm btn-primary w-100">
-                                    <i class="bi bi-check2"></i> Generar y enviar
-                                </button>
-                            </form>
-                        @else
-                            <div class="small text-muted text-center">
-                                <i class="bi bi-info-circle"></i> Agrega servicios y repuestos para generar la cotización.
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            @endif
 
             {{-- EVIDENCIAS --}}
             <div class="card border-0 shadow-sm mb-3" style="border-radius:10px;">
