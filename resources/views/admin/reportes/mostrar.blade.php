@@ -29,6 +29,26 @@
         </x-slot:actions>
     </x-admin.page-header>
 
+    <form method="GET" action="{{ route('admin.reportes.mostrar', $tipo) }}" class="row g-2 mb-4 align-items-end">
+        <div class="col-auto">
+            <label class="form-label small mb-1" for="filter-desde">Desde</label>
+            <input type="date" id="filter-desde" name="desde" class="form-control form-control-sm" value="{{ request('desde', $desde?->format('Y-m-d')) }}">
+        </div>
+        <div class="col-auto">
+            <label class="form-label small mb-1" for="filter-hasta">Hasta</label>
+            <input type="date" id="filter-hasta" name="hasta" class="form-control form-control-sm" value="{{ request('hasta', $hasta?->format('Y-m-d')) }}">
+        </div>
+        <div class="col-auto d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-funnel" aria-hidden="true"></i>
+                Filtrar
+            </button>
+            <a href="{{ route('admin.reportes.mostrar', $tipo) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </a>
+        </div>
+    </form>
+
     @if ($tipo === 'ingresos')
         <section class="admin-stats mb-4">
             <div class="admin-stats__item">

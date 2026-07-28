@@ -9,7 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('inventarios', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('ubicacion_id');
+            if (Schema::hasColumn('inventarios', 'ubicacion_id')) {
+                $table->dropConstrainedForeignId('ubicacion_id');
+            }
         });
 
         Schema::dropIfExists('ubicaciones_inventario');

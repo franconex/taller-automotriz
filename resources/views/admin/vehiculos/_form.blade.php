@@ -19,6 +19,7 @@
         </div>
         <div class="col-md-4">
             <x-admin.form-field name="placa" label="Placa" :value="$vehiculo->placa ?? null" required icon="bi-upc" />
+            <div class="small text-success d-none" id="vehiculo-verificacion-ok"></div>
         </div>
         <div class="col-md-4">
             <x-admin.form-field name="anio" type="number" label="Año" :value="$vehiculo->anio ?? null" />
@@ -85,6 +86,50 @@
 
 @push('scripts')
 <script>
+document.getElementById('placa')?.addEventListener('blur', async function () {
+    const placa = this.value.trim();
+    if (placa.length < 3) return;
+
+    const verificarBtn = document.getElementById('btn-verificar-placa');
+    if (verificarBtn) verificarBtn.disabled = true;
+
+    try {
+        const res = await fetch('{{ route("admin.vehiculos.verificar-placa") }}?placa=' + encodeURIComponent(placa));
+        const data = await res.json();
+
+        if (data.existente) {
+            const msg = 'Este vehículo ya está registrado. Cliente: ' + (data.vehiculo.cliente_nombre || 'N/A');
+            if (!confirm(msg + '\n\n¿Redirigir a la edición del vehículo?')) return;
+            window.location.href = '{{ url("admin/vehiculos") }}/' + data.vehiculo.id + '/edit';
+            return;
+        }
+
+        if (data.vehiculo.marca) {
+            const marcaInput = document.getElementById('marca');
+            const modeloInput = document.getElementById('modelo');
+            const anioInput = document.getElementById('anio');
+            const colorInput = document.getElementById('color');
+            const chasisInput = document.getElementById('numero_chasis');
+
+            if (marcaInput && !marcaInput.value) marcaInput.value = data.vehiculo.marca;
+            if (modeloInput && !modeloInput.value) modeloInput.value = data.vehiculo.modelo;
+            if (anioInput && !anioInput.value && data.vehiculo.anio) anioInput.value = data.vehiculo.anio;
+            if (colorInput && !colorInput.value && data.vehiculo.color) colorInput.value = data.vehiculo.color;
+            if (chasisInput && !chasisInput.value && data.vehiculo.numero_chasis) chasisInput.value = data.vehiculo.numero_chasis;
+
+            const okEl = document.getElementById('vehiculo-verificacion-ok');
+            if (okEl) {
+                okEl.textContent = '✓ Datos obtenidos de verificación';
+                okEl.classList.remove('d-none');
+            }
+        }
+    } catch (e) {
+        console.error('Error al verificar placa:', e);
+    } finally {
+        if (verificarBtn) verificarBtn.disabled = false;
+    }
+});
+
 document.getElementById('btn-camara-vehiculo')?.addEventListener('click', async function () {
     const container = document.getElementById('camara-vehiculo-container');
     const video = document.getElementById('camara-vehiculo-video');

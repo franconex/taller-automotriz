@@ -9,10 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('movimientos_inventario', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('transferencia_id');
-            $table->dropConstrainedForeignId('repuesto_id');
-            $table->dropConstrainedForeignId('sucursal_id');
-            $table->dropColumn('codigo');
+            if (Schema::hasColumn('movimientos_inventario', 'transferencia_id')) {
+                $table->dropConstrainedForeignId('transferencia_id');
+            }
+            if (Schema::hasColumn('movimientos_inventario', 'repuesto_id')) {
+                $table->dropConstrainedForeignId('repuesto_id');
+            }
+            if (Schema::hasColumn('movimientos_inventario', 'sucursal_id')) {
+                $table->dropConstrainedForeignId('sucursal_id');
+            }
+            if (Schema::hasColumn('movimientos_inventario', 'codigo')) {
+                $table->dropColumn('codigo');
+            }
         });
 
         Schema::dropIfExists('detalles_transferencia');

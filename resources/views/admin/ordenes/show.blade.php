@@ -68,6 +68,7 @@
                     <dt>Inicio</dt><dd>{{ $orden->fecha_inicio?->format('d/m/Y H:i') ?? '—' }}</dd>
                     <dt>Fin</dt><dd>{{ $orden->fecha_fin?->format('d/m/Y H:i') ?? '—' }}</dd>
                     <dt>Entrega</dt><dd>{{ $orden->fecha_entrega?->format('d/m/Y H:i') ?? '—' }}</dd>
+                    <dt>Tiempo estimado</dt><dd>{{ $orden->tiempo_estimado_horas ? $orden->tiempo_estimado_horas . ' h' : '—' }}</dd>
                     <dt>Estado</dt>
                     <dd>
                         <x-admin.status-badge

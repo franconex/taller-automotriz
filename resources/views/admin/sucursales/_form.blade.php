@@ -32,27 +32,9 @@
 </div>
 
 <div class="admin-form-section">
-    <h3 class="admin-form-section__title">Coordenadas (para el mapa de rutas)</h3>
-    <div class="row g-3">
-        <div class="col-md-6">
-            <x-admin.form-field
-                name="latitud"
-                label="Latitud"
-                type="text"
-                :value="$sucursal->latitud ?? null"
-                icon="bi-geo"
-                placeholder="-17.7838" />
-        </div>
-        <div class="col-md-6">
-            <x-admin.form-field
-                name="longitud"
-                label="Longitud"
-                type="text"
-                :value="$sucursal->longitud ?? null"
-                icon="bi-geo"
-                placeholder="-63.1823" />
-        </div>
-    </div>
+    <h3 class="admin-form-section__title">Ubicación en el mapa</h3>
+    <input type="hidden" name="latitud" id="field-latitud" value="{{ old('latitud', $sucursal->latitud ?? '') }}">
+    <input type="hidden" name="longitud" id="field-longitud" value="{{ old('longitud', $sucursal->longitud ?? '') }}">
     <div class="geocoder-box">
         <input type="text" id="geocoder-input" placeholder="Ej: Plaza 24 de Septiembre, Santa Cruz" />
         <button type="button" id="geocoder-btn">Buscar</button>
@@ -96,10 +78,31 @@
         document.addEventListener('DOMContentLoaded', function () {
             const latInput = document.getElementById('field-latitud');
             const lngInput = document.getElementById('field-longitud');
+            const direccionInput = document.getElementById('field-direccion');
             const searchInput = document.getElementById('geocoder-input');
             const searchBtn = document.getElementById('geocoder-btn');
             const searchResult = document.getElementById('geocoder-result');
             const ubicacionBtn = document.getElementById('geocoder-ubicacion');
+
+            let lastReverseCall = 0;
+
+            function reverseGeocode(lat, lng) {
+                const now = Date.now();
+                if (now - lastReverseCall < 1200) return;
+                lastReverseCall = now;
+
+                fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=es')
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data && data.display_name) {
+                            if (direccionInput) {
+                                direccionInput.value = data.display_name;
+                            }
+                            if (searchResult) searchResult.textContent = data.display_name;
+                        }
+                    })
+                    .catch(function () {});
+            }
 
             const defaultLat = -17.7838;
             const defaultLng = -63.1823;
@@ -119,14 +122,19 @@
                 lngInput.value = lng.toFixed(7);
             }
 
+            function alCambiarUbicacion(lat, lng) {
+                actualizarCoordenadas(lat, lng);
+                reverseGeocode(lat, lng);
+            }
+
             marker.on('dragend', function () {
                 const pos = marker.getLatLng();
-                actualizarCoordenadas(pos.lat, pos.lng);
+                alCambiarUbicacion(pos.lat, pos.lng);
             });
 
             map.on('click', function (e) {
                 marker.setLatLng(e.latlng);
-                actualizarCoordenadas(e.latlng.lat, e.latlng.lng);
+                alCambiarUbicacion(e.latlng.lat, e.latlng.lng);
             });
 
             latInput?.addEventListener('change', function () {
@@ -160,8 +168,9 @@
                                 const lngR = parseFloat(r.lon);
                                 marker.setLatLng([latR, lngR]);
                                 map.setView([latR, lngR], 16);
-                                actualizarCoordenadas(latR, lngR);
+                                if (direccionInput) direccionInput.value = r.display_name;
                                 if (searchResult) searchResult.textContent = r.display_name;
+                                actualizarCoordenadas(latR, lngR);
                             } else {
                                 if (searchResult) searchResult.textContent = 'No se encontró la dirección.';
                             }
@@ -193,8 +202,7 @@
                             const lngR = pos.coords.longitude;
                             marker.setLatLng([latR, lngR]);
                             map.setView([latR, lngR], 16);
-                            actualizarCoordenadas(latR, lngR);
-                            if (searchResult) searchResult.textContent = 'Ubicación actual (' + latR.toFixed(4) + ', ' + lngR.toFixed(4) + ')';
+                            alCambiarUbicacion(latR, lngR);
                             ubicacionBtn.disabled = false;
                             ubicacionBtn.textContent = 'Mi ubicación';
                         },

@@ -25,6 +25,7 @@ class OrdenTrabajo extends Model
         'fecha_fin',
         'fecha_entrega',
         'kilometraje_ingreso',
+        'tiempo_estimado_horas',
         'descripcion_problema',
         'diagnostico_general',
         'estado',

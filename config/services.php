@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'placa_verification' => [
+        'base_url' => env('PLACA_API_URL', 'https://api.example.com'),
+        'api_key' => env('PLACA_API_KEY'),
+    ],
+
 ];

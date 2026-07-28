@@ -55,4 +55,34 @@
             </div>
         </div>
     </div>
+
+    @if ($sucursal->latitud && $sucursal->longitud)
+    <div class="admin-table-wrap mt-3 p-4">
+        <h2 class="h6 fw-bold mb-3">Ubicación</h2>
+        <div id="sucursal-show-map" style="height: 350px; border-radius: 8px;"></div>
+    </div>
+    @endif
 @endsection
+
+@push('styles')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+@endpush
+
+@push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const lat = {{ $sucursal->latitud ?? 'null' }};
+            const lng = {{ $sucursal->longitud ?? 'null' }};
+            if (lat !== null && lng !== null) {
+                const map = L.map('sucursal-show-map').setView([lat, lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
+                L.marker([lat, lng]).addTo(map)
+                    .bindPopup('<strong>{{ $sucursal->nombre }}</strong><br>{{ $sucursal->direccion }}');
+            }
+        });
+    </script>
+@endpush

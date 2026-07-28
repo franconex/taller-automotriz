@@ -9,14 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('repuestos', function (Blueprint $table) {
-            $table->foreign('categoria_id')->references('id')->on('categorias')->nullOnDelete();
+            if (!Schema::hasColumn('repuestos', 'categoria_id')) {
+                $table->foreignId('categoria_id')->nullable()->constrained('categorias')->nullOnDelete();
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('repuestos', function (Blueprint $table) {
-            $table->dropForeign(['categoria_id']);
+            if (Schema::hasColumn('repuestos', 'categoria_id')) {
+                $table->dropConstrainedForeignId('categoria_id');
+            }
         });
     }
 };

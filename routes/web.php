@@ -110,6 +110,10 @@ Route::middleware('auth')->group(function () {
             Route::resource('vehiculos', VehiculoController::class);
             Route::patch('vehiculos/{vehiculo}/toggle', [VehiculoController::class, 'toggle'])
                 ->name('vehiculos.toggle');
+            Route::get('vehiculos/verificar-placa', [VehiculoController::class, 'verificarPlaca'])
+                ->name('vehiculos.verificar-placa');
+            Route::get('vehiculos/buscar-por-placa', [VehiculoController::class, 'buscarPorPlaca'])
+                ->name('vehiculos.buscar-por-placa');
 
             // (citas movido fuera del grupo admin, ver bloque más abajo)
 

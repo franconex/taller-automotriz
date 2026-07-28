@@ -10,7 +10,9 @@ use App\Models\DetalleOrdenTrabajo;
 use App\Models\Mecanico;
 use App\Models\OrdenTrabajo;
 use App\Models\Repuesto;
+use App\Models\Servicio;
 use App\Models\Sucursal;
+use App\Models\TipoServicio;
 use App\Models\Vehiculo;
 use App\Services\OrdenTrabajoService;
 use Illuminate\Http\RedirectResponse;
@@ -93,12 +95,17 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             ->orderBy('nombre')
             ->get();
         $mecanicos = $this->mecanicosDisponibles();
+        $tiposServicio = TipoServicio::with(['servicios' => fn ($q) => $q->where('estado', true)->orderBy('nombre')])
+            ->where('estado', true)
+            ->orderBy('nombre')
+            ->get();
 
         return view('admin.ordenes.create', [
             'clientes' => $clientes,
             'vehiculos' => $vehiculos,
             'sucursales' => $sucursales,
             'mecanicos' => $mecanicos,
+            'tiposServicio' => $tiposServicio,
             'orden' => new \App\Models\OrdenTrabajo(),
         ]);
     }
@@ -113,9 +120,29 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
         $datos['descuento'] = $datos['descuento'] ?? 0;
 
         $mecanicoId = $request->input('mecanico_id');
+        $serviciosIds = $request->input('servicios_ids', []);
 
-        DB::transaction(function () use ($datos, $mecanicoId) {
+        DB::transaction(function () use ($datos, $mecanicoId, $serviciosIds) {
             $orden = OrdenTrabajo::create($datos);
+
+            if (!empty($serviciosIds)) {
+                $servicios = Servicio::whereIn('id', $serviciosIds)->get();
+                $subtotalServicios = 0;
+                foreach ($servicios as $servicio) {
+                    $orden->detalles()->create([
+                        'tipo' => 'servicio',
+                        'servicio_id' => $servicio->id,
+                        'descripcion' => $servicio->nombre,
+                        'cantidad' => 1,
+                        'precio_unitario' => (float) $servicio->precio_base,
+                        'subtotal' => (float) $servicio->precio_base,
+                    ]);
+                    $subtotalServicios += (float) $servicio->precio_base;
+                }
+                $orden->subtotal_servicios = $subtotalServicios;
+                $orden->total_general = $subtotalServicios + (float) ($orden->subtotal_repuestos ?? 0) - (float) ($orden->descuento ?? 0);
+                $orden->save();
+            }
 
             if ($mecanicoId) {
                 $this->crearAsignacion($orden->id, (int) $mecanicoId, $datos['descripcion_problema'] ?? 'Trabajo asignado');
@@ -157,6 +184,10 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             ->orderBy('nombre')
             ->get();
         $mecanicos = $this->mecanicosDisponibles(null, $ordene->id);
+        $tiposServicio = TipoServicio::with(['servicios' => fn ($q) => $q->where('estado', true)->orderBy('nombre')])
+            ->where('estado', true)
+            ->orderBy('nombre')
+            ->get();
 
         return view('admin.ordenes.edit', [
             'orden' => $ordene,
@@ -164,6 +195,7 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             'vehiculos' => $vehiculos,
             'sucursales' => $sucursales,
             'mecanicos' => $mecanicos,
+            'tiposServicio' => $tiposServicio,
         ]);
     }
 
@@ -511,10 +543,16 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
     {
         $sucursalId = $sucursalId ?: $this->usuarioSucursalId();
 
+        $idsOcupados = AsignacionTrabajo::whereIn('estado', ['pendiente', 'en_proceso', 'esperando_repuestos'])
+            ->when($exceptoOrdenId, fn ($q) => $q->where('orden_trabajo_id', '!=', $exceptoOrdenId))
+            ->pluck('mecanico_id')
+            ->unique();
+
         return Mecanico::with('empleado')
             ->whereHas('empleado', fn ($q) => $q->where('sucursal_id', $sucursalId))
-            ->where(function ($q) use ($exceptoOrdenId) {
-                $q->where('disponibilidad', 'disponible');
+            ->where(function ($q) use ($exceptoOrdenId, $idsOcupados) {
+                $q->where('disponibilidad', 'disponible')
+                  ->whereNotIn('id', $idsOcupados);
                 if ($exceptoOrdenId) {
                     $q->orWhereHas('asignaciones', fn ($aq) => $aq->where('orden_trabajo_id', $exceptoOrdenId));
                 }

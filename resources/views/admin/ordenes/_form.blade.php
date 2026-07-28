@@ -26,6 +26,44 @@
 </div>
 
 <div class="admin-form-section">
+    <h3 class="admin-form-section__title">Tiempo estimado</h3>
+    <x-admin.form-field name="tiempo_estimado_horas" type="number" label="Tiempo estimado (horas)" :value="$orden->tiempo_estimado_horas ?? null" help="Tiempo estimado para completar la reparación" step="0.5" min="0" max="999.9" />
+</div>
+
+@if (isset($tiposServicio) && $tiposServicio->isNotEmpty())
+<div class="admin-form-section">
+    <h3 class="admin-form-section__title">Servicios a realizar</h3>
+    <div class="row g-2">
+        @foreach ($tiposServicio as $tipo)
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="card border">
+                    <div class="card-header py-2 px-3">
+                        <strong class="small">{{ $tipo->nombre }}</strong>
+                    </div>
+                    <div class="card-body py-2 px-3" style="max-height:180px;overflow-y:auto;">
+                        @forelse ($tipo->servicios as $servicio)
+                            <div class="form-check">
+                                <input class="form-check-input servicio-checkbox" type="checkbox"
+                                    name="servicios_ids[]" value="{{ $servicio->id }}"
+                                    id="servicio_{{ $servicio->id }}">
+                                <label class="form-check-label small" for="servicio_{{ $servicio->id }}">
+                                    {{ $servicio->nombre }}
+                                    <span class="text-muted">(Bs. {{ number_format((float) $servicio->precio_base, 2, ',', '.') }})</span>
+                                </label>
+                            </div>
+                        @empty
+                            <span class="text-muted small">Sin servicios disponibles</span>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+    <div class="form-text">Selecciona los servicios que se realizarán en esta orden. Los montos se agregarán automáticamente al total.</div>
+</div>
+@endif
+
+<div class="admin-form-section">
     <h3 class="admin-form-section__title">Asignación de mecánico</h3>
     <x-admin.form-field name="mecanico_id" label="Mecánico asignado" type="select" required>
         <option value="">— Selecciona un mecánico disponible —</option>

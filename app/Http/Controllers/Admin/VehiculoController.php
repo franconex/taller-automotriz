@@ -8,6 +8,8 @@ use App\Models\ModeloVehiculo;
 use App\Models\TipoVehiculo;
 use App\Models\TipoUso;
 use App\Models\Vehiculo;
+use App\Services\PlacaVerificationService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -103,6 +105,67 @@ class VehiculoController extends AdminController implements HasMiddleware
         $vehiculo->delete();
 
         return $this->redirigirConExito('vehículos', 'eliminado');
+    }
+
+    public function verificarPlaca(Request $request, PlacaVerificationService $service): JsonResponse
+    {
+        $request->validate([
+            'placa' => ['required', 'string', 'max:20'],
+        ]);
+
+        $placa = strtoupper(trim($request->input('placa')));
+        $existente = Vehiculo::where('placa', $placa)->with('cliente')->first();
+
+        if ($existente) {
+            return response()->json([
+                'encontrado' => true,
+                'existente' => true,
+                'vehiculo' => [
+                    'id' => $existente->id,
+                    'placa' => $existente->placa,
+                    'marca' => $existente->marca,
+                    'modelo' => $existente->modelo,
+                    'anio' => $existente->anio,
+                    'color' => $existente->color,
+                    'numero_chasis' => $existente->numero_chasis,
+                    'cliente_id' => $existente->cliente_id,
+                    'cliente_nombre' => $existente->cliente?->nombre_completo,
+                ],
+                'mensaje' => 'Este vehículo ya está registrado.',
+            ]);
+        }
+
+        $datos = $service->verify($placa);
+
+        return response()->json([
+            'encontrado' => true,
+            'existente' => false,
+            'vehiculo' => $datos,
+            'mensaje' => $datos['marca'] ? 'Datos obtenidos de verificación.' : 'No se encontraron datos para esta placa.',
+        ]);
+    }
+
+    public function buscarPorPlaca(Request $request): JsonResponse
+    {
+        $request->validate([
+            'q' => ['required', 'string', 'max:20'],
+        ]);
+
+        $vehiculos = Vehiculo::with('cliente')
+            ->where('placa', 'like', '%' . $request->input('q') . '%')
+            ->orderBy('placa')
+            ->limit(10)
+            ->get()
+            ->map(fn ($v) => [
+                'id' => $v->id,
+                'placa' => $v->placa,
+                'marca' => $v->marca,
+                'modelo' => $v->modelo,
+                'cliente_nombre' => $v->cliente?->nombre_completo,
+                'label' => "{$v->placa} - {$v->marca} {$v->modelo} ({$v->cliente?->nombre_completo})",
+            ]);
+
+        return response()->json($vehiculos);
     }
 
     public function toggle(Request $request, Vehiculo $vehiculo): RedirectResponse
