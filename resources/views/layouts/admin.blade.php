@@ -165,6 +165,23 @@
     @stack('modals')
     @stack('offcanvas')
     @stack('scripts')
+    <script>
+    // Búsqueda en selects con filtro (global para todos los paneles admin)
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.search-select-input').forEach(function(input) {
+            input.addEventListener('keyup', function() {
+                var targetId = this.dataset.target;
+                var select = document.getElementById(targetId);
+                if (!select) return;
+                var q = this.value.toLowerCase();
+                Array.from(select.options).forEach(function(opt) {
+                    if (!opt.value) return;
+                    opt.style.display = opt.text.toLowerCase().includes(q) ? '' : 'none';
+                });
+            });
+        });
+    });
+    </script>
 </body>
 </html>
 

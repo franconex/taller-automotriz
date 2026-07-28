@@ -47,13 +47,17 @@
                 @endif
                 <form method="POST" action="{{ route('mecanico.ordenes.servicios', $orden) }}" id="formServicio" style="display:none;" class="mt-2">
                     @csrf
-                    <select name="servicio_id" class="form-select form-select-sm mb-1" required>
-                        <option value="">Seleccionar servicio</option>
+                    <div class="input-group input-group-sm mb-1">
+                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control search-select-input" placeholder="Buscar servicio…" data-target="selectServicio">
+                    </div>
+                    <select name="servicio_id" id="selectServicio" class="form-select form-select-sm mb-1" required size="5">
+                        <option value="">— Seleccionar servicio —</option>
                         @foreach (\App\Models\Servicio::where('estado', true)->get() as $s)
                             <option value="{{ $s->id }}">{{ $s->nombre }} — Bs {{ number_format($s->precio_base ?? 0, 2) }} · {{ $s->duracion_estimada_minutos ?? '?' }}min</option>
                         @endforeach
                     </select>
-                    <button type="submit" class="btn btn-sm btn-success">Agregar</button>
+                    <button type="submit" class="btn btn-sm btn-success w-100"><i class="bi bi-plus-lg"></i> Agregar servicio</button>
                 </form>
             </div>
         </div>
@@ -83,10 +87,14 @@
                 @endif
                 <form method="POST" action="{{ route('mecanico.ordenes.repuestos', $orden) }}" id="formRepuesto" style="display:none;" class="mt-2">
                     @csrf
-                    <select name="repuesto_id" class="form-select form-select-sm mb-1" required>
-                        <option value="">Seleccionar repuesto</option>
+                    <div class="input-group input-group-sm mb-1">
+                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control search-select-input" placeholder="Buscar repuesto…" data-target="selectRepuesto">
+                    </div>
+                    <select name="repuesto_id" id="selectRepuesto" class="form-select form-select-sm mb-1" required size="5">
+                        <option value="">— Seleccionar repuesto —</option>
                         @foreach (\App\Models\Repuesto::where('estado', true)->get() as $r)
-                            <option value="{{ $r->id }}">{{ $r->nombre }} ({{ $r->codigo }}) — Bs {{ number_format($r->precio_venta ?? 0, 2) }}</option>
+                            <option value="{{ $r->id }}">{{ $r->nombre }} ({{ $r->codigo }}) · Bs {{ number_format($r->precio_venta ?? 0, 2) }}</option>
                         @endforeach
                     </select>
                     <div class="input-group input-group-sm mb-1">
@@ -197,7 +205,18 @@ function toggleForm(id) {
     const el = document.getElementById(id);
     if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
 }
-
+document.querySelectorAll('.search-select-input').forEach(input => {
+    input.addEventListener('keyup', function() {
+        const targetId = this.dataset.target;
+        const select = document.getElementById(targetId);
+        if (!select) return;
+        const q = this.value.toLowerCase();
+        Array.from(select.options).forEach(opt => {
+            if (!opt.value) return;
+            opt.style.display = opt.text.toLowerCase().includes(q) ? '' : 'none';
+        });
+    });
+});
 document.getElementById('inputManoObra')?.addEventListener('input', function() {
     const serv = {{ $totalServicios }};
     const rep  = {{ $totalRepuestos }};

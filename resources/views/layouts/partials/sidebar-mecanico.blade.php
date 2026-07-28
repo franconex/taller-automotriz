@@ -2,13 +2,13 @@
     use Illuminate\Support\Facades\Route;
 
     $items = [
-        ['route' => 'mecanico.dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Panel'],
-        ['route' => 'mecanico.ordenes.index', 'icon' => 'bi-clipboard-check', 'label' => 'Mis órdenes'],
+        ['route' => 'mecanico.dashboard', 'icon' => 'bi-grid-1x2-fill', 'label' => 'Panel'],
+        ['route' => 'mecanico.ordenes.index', 'icon' => 'bi-journal-text', 'label' => 'Mis órdenes'],
     ];
 
     $consulta = [
-        ['route' => 'admin.inventario.index', 'permission' => 'inventario.ver', 'icon' => 'bi-boxes', 'label' => 'Inventario'],
-        ['route' => 'admin.servicios.index', 'permission' => 'servicios.ver', 'icon' => 'bi-gear', 'label' => 'Servicios'],
+        ['route' => 'admin.inventario.index', 'permission' => 'inventario.ver', 'icon' => 'bi-box-seam-fill', 'label' => 'Inventario'],
+        ['route' => 'admin.servicios.index', 'permission' => 'servicios.ver', 'icon' => 'bi-gear-wide-connected', 'label' => 'Servicios'],
     ];
 
     $hasVisible = function (array $list): bool {
@@ -34,11 +34,11 @@
     <ul class="list-unstyled m-0">
         <x-admin.sidebar-item
             routeName="mecanico.dashboard"
-            icon="bi-speedometer2"
+            icon="bi-grid-1x2-fill"
             label="Panel" />
         <x-admin.sidebar-item
             routeName="mecanico.ordenes.index"
-            icon="bi-clipboard-check"
+            icon="bi-journal-text"
             label="Mis órdenes" />
     </ul>
 
@@ -46,7 +46,7 @@
     @if ($trabajosActivos > 0)
         <div class="px-3 py-2">
             <a href="{{ route('mecanico.ordenes.index') }}" class="d-flex align-items-center justify-content-between text-decoration-none rounded px-2 py-2" style="background:#eef2ff;">
-                <span class="small text-primary fw-semibold"><i class="bi bi-wrench me-1"></i> Trabajos activos</span>
+                <span class="small text-primary fw-semibold"><i class="bi bi-tools me-1"></i> Trabajos activos</span>
                 <span class="badge bg-primary">{{ $trabajosActivos }}</span>
             </a>
         </div>
