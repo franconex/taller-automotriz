@@ -134,7 +134,7 @@
                 clearTimeout(debounceTimer);
                 var val = this.value.replace(/\D/g, '');
                 this.value = val;
-                if (val.length < 5) { nitResult.innerHTML = ''; return; }
+                if (val.length < 9) { nitResult.innerHTML = ''; return; }
                 debounceTimer = setTimeout(function () {
                     nitResult.innerHTML = '<span style="color:#6B7280;"><i class="bi bi-arrow-clockwise"></i> Verificando...</span>';
                     fetch('/admin/verificar-nit?nit=' + val, {
@@ -156,7 +156,7 @@
                     });
                 }, 600);
             });
-            if (nitInput.value.length >= 5) {
+            if (nitInput.value.length >= 9) {
                 nitInput.dispatchEvent(new Event('input'));
             }
         }

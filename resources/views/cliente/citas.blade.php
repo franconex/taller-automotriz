@@ -45,6 +45,7 @@
                                 </span>
                             </td>
                             <td>
+                                @can('view', $c)
                                 @if ($c->esPasableCancelar())
                                     <form method="POST" action="{{ route('cliente.citas.cancelar', $c) }}" class="d-inline" onsubmit="return confirm('¿Cancelar esta cita?')">
                                         @csrf @method('PATCH')
@@ -53,6 +54,7 @@
                                         </button>
                                     </form>
                                 @endif
+                                @endcan
                             </td>
                         </tr>
                     @endforeach

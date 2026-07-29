@@ -21,7 +21,7 @@ class SiatNitService
         $nit = preg_replace('/\D/', '', $nit);
 
         if (! $this->validarFormato($nit)) {
-            return ['valido' => false, 'error' => 'NIT debe tener entre 7 y 15 dígitos numéricos.'];
+            return ['valido' => false, 'error' => 'NIT debe tener entre 9 y 12 dígitos numéricos.'];
         }
 
         $nitUsuario = Setting::obtener('nit', '');
@@ -48,7 +48,7 @@ class SiatNitService
 
     private function validarFormato(string $nit): bool
     {
-        return preg_match('/^\d{7,15}$/', $nit) === 1;
+        return preg_match('/^\d{9,12}$/', $nit) === 1;
     }
 
     private function validarMod11(string $nit): bool

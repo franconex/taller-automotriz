@@ -371,6 +371,56 @@ class PagoController extends AdminController implements HasMiddleware
         }
     }
 
+    public function pagoQr(Request $request): RedirectResponse
+    {
+        $request->validate(['orden_id' => 'required|exists:ordenes_trabajo,id']);
+
+        $orden = OrdenTrabajo::with('cliente')->findOrFail($request->orden_id);
+
+        $qrMetodo = MetodoPago::where('nombre', 'QR')->first();
+        if (!$qrMetodo) {
+            return back()->with('error', 'No hay un método de pago QR configurado.');
+        }
+
+        $comprobante = DB::transaction(function () use ($orden, $qrMetodo) {
+            $pago = Pago::create([
+                'orden_trabajo_id' => $orden->id,
+                'metodo_pago_id' => $qrMetodo->id,
+                'usuario_id' => auth()->id(),
+                'fecha_pago' => now(),
+                'monto' => $orden->total_general,
+                'estado' => 'confirmado',
+            ]);
+
+            $anio = now()->format('Y');
+            $ultimo = Comprobante::where('numero', 'like', "COMP-{$anio}-%")
+                ->orderByDesc('numero')->first();
+            $correlativo = $ultimo ? ((int) explode('-', $ultimo->numero)[2]) + 1 : 1;
+            $numero = sprintf('COMP-%s-%04d', $anio, $correlativo);
+
+            $comp = Comprobante::create([
+                'pago_id'     => $pago->id,
+                'cliente_id'  => $orden->cliente_id,
+                'numero'      => $numero,
+                'fecha_emision' => now(),
+                'nit_ci'      => $orden->cliente->nit ?? null,
+                'razon_social' => $orden->cliente->nit
+                    ? ($orden->cliente->razon_social ?? $orden->cliente->nombre_completo)
+                    : 'Consumidor Final',
+                'monto_total' => $orden->total_general,
+                'estado'      => 'emitido',
+            ]);
+
+            if ($orden->estado === 'finalizada') {
+                $orden->update(['estado' => 'entregada', 'fecha_entrega' => now()]);
+            }
+
+            return $comp;
+        });
+
+        return redirect()->route('admin.factura.show', $comprobante);
+    }
+
     private function generarComprobante(Pago $pago): Comprobante
     {
         $anio = now()->format('Y');

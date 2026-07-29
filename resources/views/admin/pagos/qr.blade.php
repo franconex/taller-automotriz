@@ -18,9 +18,12 @@
     <div class="row justify-content-center">
         <div class="col-12 col-md-6 col-lg-4">
             <div class="admin-table-wrap p-4 text-center">
-                <div id="qr-container" class="mb-3">
-                    {!! $qrSvg !!}
-                </div>
+                <img src="{{ asset('img/QR-Pago.jpeg') }}"
+                     alt="Código QR para pago"
+                     class="img-fluid mb-3"
+                     style="max-width: 300px; border-radius: 8px;">
+
+                <p class="small text-muted">Escanea con tu aplicación bancaria desde cualquier dispositivo.</p>
 
                 <dl class="admin-meta text-start mt-3">
                     <dt>Orden</dt>
@@ -40,6 +43,12 @@
                         <i class="bi bi-printer" aria-hidden="true"></i>
                         Imprimir
                     </button>
+                    <a href="{{ asset('img/QR-Pago.jpeg') }}"
+                       class="btn btn-outline-primary"
+                       download="QR-Pago.jpeg">
+                        <i class="bi bi-download" aria-hidden="true"></i>
+                        Descargar QR
+                    </a>
                     <a href="{{ route('admin.pagos.show', $pago) }}" class="btn btn-primary">
                         <i class="bi bi-arrow-left" aria-hidden="true"></i>
                         Volver al pago
@@ -49,35 +58,3 @@
         </div>
     </div>
 @endsection
-
-@push('scripts')
-<script>
-(function () {
-    const container = document.getElementById('qr-container');
-    if (!container) return;
-    const svg = container.querySelector('svg');
-    if (!svg) return;
-
-    const btnDescargar = document.createElement('button');
-    btnDescargar.className = 'btn btn-outline-primary mt-2';
-    btnDescargar.innerHTML = '<i class="bi bi-download" aria-hidden="true"></i> Descargar QR';
-    btnDescargar.addEventListener('click', function () {
-        const svgData = new XMLSerializer().serializeToString(svg);
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.onload = function () {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            const link = document.createElement('a');
-            link.download = 'qr-pago-{{ $pago->id }}.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        };
-        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-    });
-    container.parentNode.insertBefore(btnDescargar, container.nextSibling);
-})();
-</script>
-@endpush

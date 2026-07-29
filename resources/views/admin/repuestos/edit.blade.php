@@ -22,7 +22,7 @@
     </x-admin.page-header>
 
     <div class="admin-table-wrap p-4">
-        <form method="POST" action="{{ route('admin.repuestos.update', $repuesto) }}">
+        <form method="POST" action="{{ route('admin.repuestos.update', $repuesto) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             @include('admin.repuestos._form', ['repuesto' => $repuesto])

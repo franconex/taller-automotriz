@@ -35,9 +35,11 @@
                             </td>
                             <td>${{ number_format($o->total_general, 2) }}</td>
                             <td>
+                                @can('view', $o)
                                 <a href="{{ route('cliente.orden-show', $o) }}" class="btn btn-sm text-white" style="background:#E31E24;">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                @endcan
                             </td>
                         </tr>
                     @endforeach

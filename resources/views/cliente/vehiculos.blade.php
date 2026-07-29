@@ -44,9 +44,11 @@
                             @endif
                         </div>
                         <div class="card-footer bg-white border-0 pt-0">
+                            @can('view', $v)
                             <a href="{{ route('cliente.vehiculo-show', $v) }}" class="btn btn-sm text-white" style="background:#E31E24;">
                                 <i class="bi bi-eye me-1"></i>Ver detalle
                             </a>
+                            @endcan
                         </div>
                     </div>
                 </div>

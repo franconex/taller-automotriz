@@ -59,6 +59,10 @@ class RepuestoController extends AdminController implements HasMiddleware
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? true);
 
+        if ($request->hasFile('imagen')) {
+            $datos['imagen'] = $request->file('imagen')->store('productos', 'public');
+        }
+
         $producto = DB::transaction(function () use ($datos, $request) {
             $r = Repuesto::create($datos);
 
@@ -152,6 +156,19 @@ class RepuestoController extends AdminController implements HasMiddleware
     {
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? false);
+
+        if ($request->boolean('eliminar_imagen') && $repuesto->imagen) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($repuesto->imagen);
+            $datos['imagen'] = null;
+        }
+
+        if ($request->hasFile('imagen')) {
+            if ($repuesto->imagen) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($repuesto->imagen);
+            }
+            $datos['imagen'] = $request->file('imagen')->store('productos', 'public');
+        }
+
         $repuesto->update($datos);
         return redirect()->route('admin.inventario.index')->with('success', 'Producto actualizado.');
     }

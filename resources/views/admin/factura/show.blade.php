@@ -154,6 +154,7 @@
 <body>
     <div class="no-print">
         <button onclick="window.print()">Imprimir Factura</button>
+        <a href="{{ route('admin.pagos.index') }}" style="background:#333;color:#fff;border:none;padding:8px 24px;font-size:13px;cursor:pointer;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:1px;text-decoration:none;display:inline-block;">Volver a pagos</a>
         <a href="{{ route('admin.ordenes.show', $ordenId) }}" style="background:#666;color:#fff;border:none;padding:8px 24px;font-size:13px;cursor:pointer;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:1px;text-decoration:none;display:inline-block;margin-left:8px;">Volver a orden</a>
     </div>
 

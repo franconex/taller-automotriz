@@ -20,13 +20,20 @@ class AdminController extends Controller
             return null;
         }
 
+        // Solo el Administrador puede cambiar de sucursal vía sesión
+        if ($user->sucursal_id === null || $user->tieneRol('Administrador')) {
+            if (session()->has('admin_sucursal_id')) {
+                $sucursalId = session('admin_sucursal_id');
+                return $sucursalId ? (int) $sucursalId : null;
+            }
+        }
+
+        // Si el usuario tiene sucursal fija, no puede cambiar
 if ($user->sucursal_id !== null) {
             return $user->sucursal_id;
         }
 
-        $sucursalId = session('admin_sucursal_id');
-
-        return $sucursalId ? (int) $sucursalId : null;
+        return null;
     }
 
     protected function sucursalesPermitidas(): array

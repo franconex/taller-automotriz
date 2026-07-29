@@ -149,6 +149,11 @@
                                        title="Ver movimientos">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
                                     </a>
+                                    <button type="button" class="btn-icon btn-icon--danger"
+                                            title="Vender"
+                                            onclick="abrirVenta('{{ $p->id }}', '{{ $p->nombre }}', '{{ $p->precio_venta }}', {{ $p->inventarios->first()?->cantidad_actual ?? 0 }})">
+                                        <i class="bi bi-cart-check" aria-hidden="true"></i>
+                                    </button>
                                     <a href="{{ route('admin.repuestos.edit', $p) }}"
                                        class="btn-icon btn-icon--primary" title="Editar">
                                         <i class="bi bi-pencil-square" aria-hidden="true"></i>
@@ -206,12 +211,19 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label">Categoría</label>
-                            <select name="categoria_id" class="form-control form-select">
+                            <select name="categoria_id" id="ef_categoria_id" class="form-control form-select">
                                 <option value="">— Sin categoría —</option>
                                 @foreach ($categorias as $cat)
                                     <option value="{{ $cat->id }}">{{ $cat->nombre }}</option>
                                 @endforeach
+                                <option value="__nueva__">+ Crear nueva</option>
                             </select>
+                            <div id="ef_nueva_categoria_wrap" class="mt-1" style="display:none;">
+                                <div class="input-group">
+                                    <input type="text" id="ef_nueva_categoria" class="form-control" placeholder="Nombre de la categoría">
+                                    <button type="button" class="btn btn-primary btn-sm" id="ef_btn_guardar_categoria">Guardar</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="row g-2 mt-2">
@@ -267,6 +279,51 @@
     </div>
 </div>
 
+{{-- MODAL VENDER PRODUCTO --}}
+<div class="modal fade" id="modalVender" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5">
+                    <i class="bi bi-cart-check text-danger"></i>
+                    Vender producto
+                </h2>
+                <button type="button" class="btn-close" onclick="tpCerrar('modalVender')"></button>
+            </div>
+            <form id="formVender">
+                @csrf
+                <input type="hidden" name="repuesto_id" id="vender_repuesto_id">
+                <input type="hidden" name="sucursal_id" value="{{ auth()->user()->sucursal_id ?? session('admin_sucursal_id') ?? '' }}">
+                <div class="modal-body">
+                    <p class="mb-2" id="vender_nombre"></p>
+                    <div class="mb-2">
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" name="cantidad" id="vender_cantidad" class="form-control" value="1" min="1" max="999" required>
+                        <div class="form-text" id="vender_stock"></div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Precio unitario (Bs)</label>
+                        <input type="number" step="0.01" name="precio_venta" id="vender_precio" class="form-control" min="0">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Método de pago</label>
+                        <select name="metodo_pago_id" class="form-control form-select">
+                            <option value="">— Registrar solo salida —</option>
+                            @foreach (\App\Models\MetodoPago::where('estado', true)->orderBy('nombre')->get() as $mp)
+                                <option value="{{ $mp->id }}">{{ $mp->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="tpCerrar('modalVender')">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar venta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
     <script>
     (function () {
@@ -279,6 +336,10 @@
             document.getElementById('ef_codigo_barras').value = '';
             document.getElementById('ef_codigo_label').textContent = '—';
             document.getElementById('ef_nombre').value = '';
+            var sel = document.getElementById('ef_categoria_id');
+            if (sel) { sel.value = ''; }
+            var wrap = document.getElementById('ef_nueva_categoria_wrap');
+            if (wrap) { wrap.style.display = 'none'; }
             tpAbrirModal('modalFormEscaner');
             setTimeout(function () { document.getElementById('ef_nombre')?.focus(); }, 200);
         };
@@ -468,6 +529,17 @@
             window.buscarCodigoPermanente();
         };
 
+        window.abrirVenta = function (id, nombre, precio, stock) {
+            document.getElementById('vender_repuesto_id').value = id;
+            document.getElementById('vender_nombre').textContent = nombre;
+            document.getElementById('vender_precio').value = precio;
+            document.getElementById('vender_cantidad').value = 1;
+            document.getElementById('vender_cantidad').max = Math.max(1, stock);
+            document.getElementById('vender_stock').textContent = 'Stock disponible: ' + stock;
+            tpAbrirModal('modalVender');
+            setTimeout(function () { document.getElementById('vender_cantidad').focus(); }, 200);
+        };
+
         /* ---------------------------------------------------------
            MODALES
            --------------------------------------------------------- */
@@ -505,6 +577,10 @@
         window.tpAbrirModalRegistro = function (codigo) {
             document.getElementById('ef_codigo_barras').value = codigo;
             document.getElementById('ef_codigo_label').textContent = codigo;
+            var sel = document.getElementById('ef_categoria_id');
+            if (sel) { sel.value = ''; }
+            var wrap = document.getElementById('ef_nueva_categoria_wrap');
+            if (wrap) { wrap.style.display = 'none'; }
             tpAbrirModal('modalFormEscaner');
             setTimeout(function () { document.getElementById('ef_nombre')?.focus(); }, 200);
         };
@@ -611,6 +687,91 @@
                     }
                 });
             }
+
+            /* Crear categoría desde el modal */
+            var catSelect = document.getElementById('ef_categoria_id');
+            var nuevaCatWrap = document.getElementById('ef_nueva_categoria_wrap');
+            var nuevaCatInput = document.getElementById('ef_nueva_categoria');
+            var guardarCatBtn = document.getElementById('ef_btn_guardar_categoria');
+
+            if (catSelect && nuevaCatWrap) {
+                catSelect.addEventListener('change', function () {
+                    nuevaCatWrap.style.display = this.value === '__nueva__' ? '' : 'none';
+                    if (this.value === '__nueva__') {
+                        setTimeout(function () { nuevaCatInput?.focus(); }, 100);
+                    }
+                });
+            }
+
+            if (guardarCatBtn && nuevaCatInput) {
+                function crearCategoria() {
+                    var nombre = nuevaCatInput.value.trim();
+                    if (!nombre) { alert('Escribe el nombre de la categoría.'); return; }
+                    guardarCatBtn.disabled = true;
+                    guardarCatBtn.textContent = 'Guardando…';
+
+                    fetch('{{ route("admin.categorias.crear-rapido") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        },
+                        body: JSON.stringify({ nombre: nombre })
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data.ok) {
+                            var opt = document.createElement('option');
+                            opt.value = data.id;
+                            opt.textContent = data.nombre;
+                            catSelect.insertBefore(opt, catSelect.querySelector('option[value="__nueva__"]'));
+                            catSelect.value = data.id;
+                            nuevaCatWrap.style.display = 'none';
+                            nuevaCatInput.value = '';
+                        } else {
+                            alert('Error al guardar la categoría.');
+                        }
+                    })
+                    .catch(function () { alert('Error de conexión.'); })
+                    .finally(function () {
+                        guardarCatBtn.disabled = false;
+                        guardarCatBtn.textContent = 'Guardar';
+                    });
+                }
+
+                guardarCatBtn.addEventListener('click', crearCategoria);
+                nuevaCatInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') { e.preventDefault(); crearCategoria(); }
+                });
+            }
+
+            /* Envío AJAX del formulario de venta rápida */
+            document.getElementById('formVender')?.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var btn = this.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.textContent = 'Procesando…';
+
+                fetch('{{ route("admin.inventario.vender") }}', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: new FormData(this)
+                })
+                .then(function (r) {
+                    if (!r.ok) { return r.json().then(function (d) { throw d; }); }
+                    return r.json();
+                })
+                .then(function () {
+                    tpCerrar('modalVender');
+                    location.reload();
+                })
+                .catch(function (err) {
+                    btn.disabled = false;
+                    btn.textContent = 'Confirmar venta';
+                    alert(err.mensaje || 'Error al procesar la venta.');
+                });
+            });
 
             /* Envío AJAX del formulario de registro rápido */
             document.getElementById('formEscaner')?.addEventListener('submit', function (e) {

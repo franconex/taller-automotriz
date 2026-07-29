@@ -100,7 +100,7 @@ class RolPermisoSeeder extends Seeder
                 'vehiculos.ver', 'vehiculos.crear', 'vehiculos.editar',
                 'citas.ver', 'citas.crear', 'citas.editar', 'citas.cancelar',
                 'ordenes.ver', 'ordenes.crear', 'ordenes.editar',
-                'inventario.ver',
+                'inventario.ver', 'inventario.entrada',
                 'pagos.ver', 'pagos.registrar',
                 'servicios.ver', 'tipos-servicio.ver', 'proveedores.ver',
                 'repuestos.ver', 'mecanicos.ver',

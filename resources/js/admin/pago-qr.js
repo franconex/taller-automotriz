@@ -16,8 +16,6 @@
 
     if (!metodoSelect) return;
 
-    let qrCache = null;
-
     function esMetodoQR() {
         return metodoSelect.selectedOptions[0]?.text?.trim() === 'QR';
     }
@@ -36,39 +34,8 @@
         if (montoEl) montoEl.textContent = 'Bs ' + parseFloat(monto || 0).toFixed(2).replace('.', ',');
         if (refEl) refEl.textContent = ref;
 
-        const contenido = [
-            'PAGO TALLER',
-            'Orden: ' + ordenText,
-            'Monto: Bs ' + parseFloat(monto || 0).toFixed(2),
-            'Ref: ' + ref,
-        ].join('\n');
-
-        if (contenido === qrCache) return;
-        qrCache = contenido;
-
         if (container) {
-            container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Generando QR...</span></div></div>';
-
-            fetch('/admin/pagos/qr-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ contenido: contenido }),
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.ok && data.svg) {
-                    container.innerHTML = data.svg;
-                } else {
-                    container.innerHTML = '<div class="text-danger small">Error al generar QR</div>';
-                }
-            })
-            .catch(function () {
-                container.innerHTML = '<div class="text-danger small">Error de conexión</div>';
-            });
+            container.innerHTML = '<img src="/img/QR-Pago.jpeg" alt="Código QR de pago" class="img-fluid" style="max-width:250px;">';
         }
     }
 

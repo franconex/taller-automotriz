@@ -127,12 +127,14 @@
                             </td>
                             <td>
                                 <div class="row-actions">
+                                    @can('view', $o)
                                     <a href="{{ route('admin.ordenes.show', $o) }}"
                                        class="btn-icon"
                                        title="Ver detalle"
                                        aria-label="Ver detalle">
                                         <i class="bi bi-eye" aria-hidden="true"></i>
                                     </a>
+                                    @endcan
                                     @if ($esMecanico && $asignacion)
                                     <a href="{{ route('admin.ordenes.show', $o) }}" class="btn-icon btn-icon--primary" title="Gestionar">
                                         <i class="bi bi-gear" aria-hidden="true"></i>

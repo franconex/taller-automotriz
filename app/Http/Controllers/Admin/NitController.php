@@ -11,7 +11,7 @@ class NitController extends Controller
 {
     public function verificar(Request $request): JsonResponse
     {
-        $request->validate(['nit' => 'required|string|digits_between:5,15']);
+        $request->validate(['nit' => 'required|string|digits_between:9,12']);
 
         $nit = $request->input('nit');
 

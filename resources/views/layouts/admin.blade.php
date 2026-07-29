@@ -28,7 +28,10 @@
         );
         if ($iniciales === '') { $iniciales = 'U'; }
         $sucursalesDisponibles = \App\Models\Sucursal::where('estado', true)->orderBy('nombre')->get();
-        $sucursalActiva = $usuario->sucursal ?? $sucursalesDisponibles->firstWhere('id', session('admin_sucursal_id'));
+        $sucursalSeleccionada = $usuario->sucursal_id === null || $usuario->tieneRol('Administrador')
+            ? session('admin_sucursal_id')
+            : $usuario->sucursal_id;
+        $sucursalActiva = $sucursalesDisponibles->firstWhere('id', $sucursalSeleccionada);
     @endphp
 
     <div class="admin-shell">
@@ -102,7 +105,7 @@
                         <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
                     </a>
                     <x-notificaciones-campana />
-@if ($usuario->sucursal_id === null || $usuario->tieneRol('Administrador') || $usuario->tieneRol('Gerente'))
+@if ($usuario->sucursal_id === null || $usuario->tieneRol('Administrador'))
                         <div class="dropdown d-none d-md-inline-flex">
                             <button class="admin-navbar__branch dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sucursal activa">
                                 <i class="bi bi-geo-alt" aria-hidden="true"></i>

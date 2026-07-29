@@ -23,6 +23,10 @@
                     <i class="bi bi-cash-coin" aria-hidden="true"></i>
                     Cobrar
                 </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="abrirQr()">
+                    <i class="bi bi-qr-code" aria-hidden="true"></i>
+                    Pago QR
+                </button>
             @endif
             @if (!Auth::user()->tieneRol('Mecánico') && Auth::user()->tienePermiso('ordenes.editar'))
             <a href="{{ route('admin.ordenes.edit', $orden) }}" class="btn btn-primary btn-sm">
@@ -288,6 +292,47 @@
         </div>
     </div>
 
-@endsection
+{{-- MODAL PAGO QR --}}
+<div class="modal fade" id="modalPagoQr" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content text-center p-4">
+            <div class="modal-body p-0">
+                <h5 class="fw-bold mb-1">Pago con QR</h5>
+                <p class="text-muted small mb-3">Escanea con tu aplicación bancaria</p>
+                <img src="{{ asset('img/QR-Pago.jpeg') }}" alt="Código QR" class="img-fluid mb-3" style="max-width:250px;border-radius:8px;">
+                <p class="small text-muted mb-1">Monto: <strong class="text-dark">Bs {{ number_format((float) $orden->total_general, 2, ',', '.') }}</strong></p>
+                <p class="small text-muted mb-3">Orden: {{ $orden->numero_orden }}</p>
+                <form id="formPagoQr" method="POST" action="{{ route('admin.pagos.pago-qr') }}">
+                    @csrf
+                    <input type="hidden" name="orden_id" value="{{ $orden->id }}">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-check-lg"></i> Pago confirmado
+                    </button>
+                </form>
+                <button type="button" class="btn btn-outline-secondary w-100 mt-2" onclick="cerrarQr()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+@push('scripts')
+<script>
+function abrirQr() {
+    var el = document.getElementById('modalPagoQr');
+    el.classList.add('show'); el.style.display = 'block';
+    document.body.classList.add('modal-open');
+    var bd = document.createElement('div');
+    bd.className = 'modal-backdrop fade show';
+    document.body.appendChild(bd);
+}
+function cerrarQr() {
+    var el = document.getElementById('modalPagoQr');
+    el.classList.remove('show'); el.style.display = 'none';
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.modal-backdrop').forEach(function (b) { b.remove(); });
+}
+</script>
+@endpush
+
+@endsection
 

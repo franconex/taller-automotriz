@@ -45,14 +45,14 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
     Route::get('auth/google/redirect', [GoogleSocialiteController::class, 'redirect'])->name('auth.google.redirect');
     Route::get('auth/google/callback', [GoogleSocialiteController::class, 'callback'])->name('auth.google.callback');
-    Route::post('register', [RegisterController::class, 'store'])->name('register');
+    Route::post('register', [RegisterController::class, 'store'])->middleware('throttle:register')->name('register');
 });
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     // Portal Cliente
-    Route::prefix('cliente')->middleware('rol:Cliente')->name('cliente.')->group(function () {
+    Route::prefix('cliente')->middleware(['rol:Cliente', 'throttle:cliente'])->name('cliente.')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Cliente\DashboardController::class, 'index'])->name('dashboard');
         Route::get('vehiculos', [\App\Http\Controllers\Cliente\DashboardController::class, 'vehiculos'])->name('vehiculos');
         Route::get('vehiculos/registrar', [\App\Http\Controllers\Cliente\DashboardController::class, 'vehiculoCreate'])->name('vehiculos.crear');
@@ -86,7 +86,7 @@ Route::middleware('auth')->group(function () {
         })->name('modelos.json');
     });
 
-    Route::prefix('admin')->middleware('rol:Administrador,Gerente,Recepcionista,Mecánico')->name('admin.')->group(function () {
+    Route::prefix('admin')->middleware(['rol:Administrador,Gerente,Recepcionista,Mecánico', 'throttle:admin'])->name('admin.')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('sucursales', SucursalController::class);
@@ -166,6 +166,7 @@ session(['admin_sucursal_id' => $request->filled('sucursal_id') ? (int) $request
         Route::post('inventario/entrada-rapida', [InventarioController::class, 'entradaRapida'])->name('inventario.entrada-rapida');
         Route::post('inventario/entrada', [InventarioController::class, 'registrarEntrada'])->name('inventario.entrada');
         Route::post('inventario/crear-desde-escaner', [InventarioController::class, 'crearDesdeEscaner'])->name('inventario.crear-desde-escaner');
+        Route::post('inventario/vender', [InventarioController::class, 'vender'])->name('inventario.vender');
         Route::resource('movimientos-inventario', MovimientoInventarioController::class)->parameters(['movimientos-inventario' => 'movimiento'])->except(['edit', 'update']);
         Route::get('movimientos-inventario/{movimiento}/route', [MovimientoInventarioController::class, 'route'])->name('movimientos-inventario.route');
         Route::resource('metodos-pago', MetodoPagoController::class)->parameters(['metodos-pago' => 'metodoPago'])->except(['create', 'store', 'destroy']);
@@ -180,6 +181,7 @@ session(['admin_sucursal_id' => $request->filled('sucursal_id') ? (int) $request
         Route::post('pagos/qr-data', [\App\Http\Controllers\Admin\PagoQRController::class, 'qrData'])->name('pagos.qr-data');
         Route::get('pagos/modal-data/{orden}', [\App\Http\Controllers\Admin\PagoController::class, 'modalData'])->middleware('permiso:pagos.registrar')->name('pagos.modal-data');
         Route::post('pagos/cobrar-modal', [\App\Http\Controllers\Admin\PagoController::class, 'cobrarDesdeModal'])->middleware('permiso:pagos.registrar')->name('pagos.cobrar-modal');
+        Route::post('pagos/pago-qr', [\App\Http\Controllers\Admin\PagoController::class, 'pagoQr'])->middleware('permiso:pagos.registrar')->name('pagos.pago-qr');
         Route::get('factura/{comprobante}', [\App\Http\Controllers\Admin\FacturaController::class, 'show'])->name('factura.show');
         Route::get('verificar-nit', [\App\Http\Controllers\Admin\NitController::class, 'verificar'])->name('nit.verificar');
         Route::get('configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
@@ -209,6 +211,22 @@ session(['admin_sucursal_id' => $request->filled('sucursal_id') ? (int) $request
         Route::get('servicios-por-tipo/{tipoServicio}', function (\App\Models\TipoServicio $tipoServicio) {
             return $tipoServicio->servicios()->where('estado', true)->orderBy('nombre')->get(['id', 'nombre', 'precio_base', 'duracion_estimada_minutos']);
         })->name('servicios.por-tipo');
+
+        Route::post('categorias/crear-rapido', function (\Illuminate\Http\Request $r) {
+            $r->validate(['nombre' => 'required|string|max:100']);
+            $slug = \Illuminate\Support\Str::slug($r->nombre);
+            $original = $slug;
+            $contador = 1;
+            while (\App\Models\Categoria::where('slug', $slug)->exists()) {
+                $slug = $original . '-' . $contador++;
+            }
+            $cat = \App\Models\Categoria::create([
+                'nombre' => $r->nombre,
+                'slug' => $slug,
+                'activo' => true,
+            ]);
+            return response()->json(['ok' => true, 'id' => $cat->id, 'nombre' => $cat->nombre]);
+        })->name('categorias.crear-rapido');
 
 
 
@@ -245,7 +263,7 @@ session(['admin_sucursal_id' => $request->filled('sucursal_id') ? (int) $request
     });
 
     // Portal del Mecánico
-    Route::prefix('mecanico')->middleware('rol:Mecánico')->name('mecanico.')->group(function () {
+    Route::prefix('mecanico')->middleware(['rol:Mecánico', 'throttle:mecanico'])->name('mecanico.')->group(function () {
         Route::get('dashboard', [MecanicoDashboardController::class, 'index'])->name('dashboard');
         Route::post('toggle-disponibilidad', [MecanicoDashboardController::class, 'toggleDisponibilidad'])->name('toggle-disponibilidad');
         Route::get('ordenes', [MecanicoOrdenController::class, 'index'])->name('ordenes.index');

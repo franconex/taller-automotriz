@@ -1,102 +1,158 @@
 import './bootstrap';
 import * as bootstrap from 'bootstrap';
-import 'bootstrap-icons/font/bootstrap-icons.css';
 
 window.bootstrap = bootstrap;
 
-// ─── Navbar scroll effect ───
-const navbar = document.querySelector('.landing-navbar');
+// ─── NAVBAR DINÁMICA: cambia al hacer scroll, resalta sección activa ───
+const nav = document.getElementById('nav');
+const topBtn = document.getElementById('topBtn');
+const navToggle = document.getElementById('navToggle');
+const navMobile = document.getElementById('navMobile');
+const navLinks = document.querySelectorAll('[data-link]');
+
+let lastScroll = 0;
 let ticking = false;
 
-if (navbar) {
-  document.addEventListener('scroll', () => {
-    if (!ticking) {
-      window.requestAnimationFrame(() => {
-        navbar.classList.toggle('scrolled', window.scrollY > 60);
-        ticking = false;
-      });
-      ticking = true;
-    }
+function onScroll() {
+  if (!ticking) {
+    window.requestAnimationFrame(() => {
+      const y = window.scrollY;
+      // Navbar cambia cuando se desplaza > 60px
+      if (nav) nav.classList.toggle('scrolled', y > 60);
+      // Top button
+      if (topBtn) topBtn.classList.toggle('visible', y > 500);
+      // Highlight sección activa
+      highlightActiveSection();
+      lastScroll = y;
+      ticking = false;
+    });
+    ticking = true;
+  }
+}
+
+function highlightActiveSection() {
+  const sections = ['hero', 'servicios', 'como-funciona', 'sucursales', 'contacto'];
+  const y = window.scrollY + 120;
+  let current = 'hero';
+  for (const id of sections) {
+    const el = document.getElementById(id);
+    if (el && el.offsetTop <= y) current = id;
+  }
+  document.querySelectorAll('[data-link]').forEach((link) => {
+    link.classList.toggle('active', link.dataset.link === current);
   });
 }
 
-// ─── Back to top button ───
-const backToTop = document.querySelector('.back-to-top');
+document.addEventListener('scroll', onScroll, { passive: true });
 
-if (backToTop) {
-  document.addEventListener('scroll', () => {
-    backToTop.classList.toggle('visible', window.scrollY > 500);
-  });
-
-  backToTop.addEventListener('click', () => {
+// Top button
+if (topBtn) {
+  topBtn.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
 
-// ─── Counter animation ───
-const counters = document.querySelectorAll('.stats-bar__number');
-
-if (counters.length) {
-  const counterObserver = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          const target = parseInt(el.dataset.target, 10);
-          if (!target || el.dataset.counted) return;
-          el.dataset.counted = 'true';
-
-          const duration = 2000;
-          const start = performance.now();
-
-          const update = (now) => {
-            const elapsed = now - start;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            const current = Math.round(target * eased);
-            el.textContent = current.toLocaleString('es-BO');
-
-            if (progress < 1) {
-              requestAnimationFrame(update);
-            } else {
-              el.textContent = target.toLocaleString('es-BO');
-            }
-          };
-
-          requestAnimationFrame(update);
-        }
-      });
-    },
-    { threshold: 0.5 }
-  );
-
-  counters.forEach((el) => counterObserver.observe(el));
+// Mobile toggle
+if (navToggle && navMobile) {
+  navToggle.addEventListener('click', () => {
+    navMobile.classList.toggle('open');
+  });
 }
 
-// ─── Fade-up / scroll animations ───
-const animObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
-    });
-  },
-  { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
-);
-
-document.querySelectorAll('.animate-fade-up, .animate-fade-left, .animate-fade-right, .animate-scale')
-  .forEach((el) => animObserver.observe(el));
-
-// ─── Smooth anchor scroll (offset for fixed navbar) ───
+// Smooth scroll + cerrar menú móvil
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   anchor.addEventListener('click', (e) => {
-    const target = document.querySelector(anchor.getAttribute('href'));
+    const href = anchor.getAttribute('href');
+    if (href === '#' || href.length < 2) return;
+    const target = document.querySelector(href);
     if (target) {
       e.preventDefault();
-      const offset = 80;
-      const top = target.getBoundingClientRect().top + window.scrollY - offset;
+      const top = target.getBoundingClientRect().top + window.scrollY - 60;
       window.scrollTo({ top, behavior: 'smooth' });
+      if (navMobile) navMobile.classList.remove('open');
     }
   });
 });
+
+// ─── SERVICE CARDS: hover desktop, click mobile ───
+const services = document.querySelectorAll('.service');
+let activeService = null;
+
+services.forEach((card) => {
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.btn')) return;
+    if (window.innerWidth <= 767) {
+      if (activeService && activeService !== card) {
+        activeService.classList.remove('expanded');
+      }
+      card.classList.toggle('expanded');
+      activeService = card.classList.contains('expanded') ? card : null;
+    }
+  });
+
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      card.classList.toggle('expanded');
+    }
+    if (e.key === 'Escape') {
+      card.classList.remove('expanded');
+    }
+  });
+});
+
+// Cerrar al hacer clic fuera (móvil)
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.service')) {
+    if (activeService) {
+      activeService.classList.remove('expanded');
+      activeService = null;
+    }
+  }
+});
+
+// ─── FAQ ACCORDION ───
+document.querySelectorAll('.faq__q').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const idx = btn.dataset.faq;
+    const target = document.getElementById('faq-' + idx);
+    if (!target) return;
+    const isOpen = target.classList.contains('open');
+    // Cerrar todos
+    document.querySelectorAll('.faq__a.open').forEach((el) => el.classList.remove('open'));
+    document.querySelectorAll('.faq__q.open').forEach((el) => el.classList.remove('open'));
+    document.querySelectorAll('.faq__q').forEach((el) => el.setAttribute('aria-expanded', 'false'));
+    if (!isOpen) {
+      target.classList.add('open');
+      btn.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  });
+});
+
+// Inicializar estado de navbar (en caso de cargar con scroll)
+onScroll();
+
+// ─── SCROLL REVEAL — animaciones al entrar en viewport ───
+// Cualquier elemento con [data-reveal] aparece con animación al entrar en pantalla.
+// Variantes: data-reveal="up|down|left|right|scale|fade" (default: up)
+// Delays: data-reveal-delay="1..8"
+const revealEls = document.querySelectorAll('[data-reveal]');
+
+if (revealEls.length && 'IntersectionObserver' in window) {
+  const revealObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+  );
+  revealEls.forEach((el) => revealObserver.observe(el));
+} else {
+  // Fallback: mostrar todo si no hay soporte
+  revealEls.forEach((el) => el.classList.add('is-visible'));
+}

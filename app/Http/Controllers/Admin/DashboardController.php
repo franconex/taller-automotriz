@@ -53,10 +53,14 @@ class DashboardController extends AdminController
         $citasHoy = Cita::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))->whereDate('fecha',$hoy)->whereIn('estado',['pendiente','confirmada'])->count();
         $vehiculosListos = (clone $ordenesBase)->where('estado', 'finalizada')->count();
 
-        $pagosPagados = '(SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE pagos.orden_trabajo_id = ordenes_trabajo.id AND pagos.estado = \'confirmado\')';
         $pagosPendientes = (clone $ordenesBase)
             ->whereNotIn('estado', ['entregada', 'anulada'])
-            ->whereRaw('ordenes_trabajo.total_general > ' . $pagosPagados)
+            ->where(function ($query) {
+                $query->whereRaw(
+                    'ordenes_trabajo.total_general > (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE pagos.orden_trabajo_id = ordenes_trabajo.id AND pagos.estado = ?)',
+                    ['confirmado']
+                );
+            })
             ->count();
 
         $stockBajo = Inventario::when($sucursalId, fn($q)=>$q->where('sucursal_id',$sucursalId))

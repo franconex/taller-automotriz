@@ -20,6 +20,7 @@ class Repuesto extends Model
         'tipo',
         'nombre',
         'categoria',
+        'categoria_id',
         'marca',
         'descripcion',
         'costo_compra',
@@ -27,6 +28,7 @@ class Repuesto extends Model
         'stock_minimo',
         'stock_maximo',
         'proveedor_id',
+        'imagen',
         'estado',
     ];
 

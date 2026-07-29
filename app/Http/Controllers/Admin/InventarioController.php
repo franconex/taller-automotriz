@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Categoria;
 use App\Models\Inventario;
+use App\Models\MetodoPago;
 use App\Models\MovimientoInventario;
+use App\Models\Pago;
 use App\Models\Proveedor;
 use App\Models\Repuesto;
 use App\Models\Sucursal;
@@ -246,6 +248,7 @@ class InventarioController extends AdminController implements HasMiddleware
                 'tipo' => $request->tipo,
                 'nombre' => $request->nombre,
                 'categoria' => $request->categoria,
+                'categoria_id' => $request->categoria_id,
                 'marca' => $request->marca,
                 'descripcion' => $request->descripcion,
                 'costo_compra' => $request->costo_compra ?? 0,
@@ -298,6 +301,69 @@ class InventarioController extends AdminController implements HasMiddleware
 
         return redirect()->route('admin.inventario.index')
             ->with('success', "{$producto->nombre} registrado con éxito.");
+    }
+
+    public function vender(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate([
+            'repuesto_id' => ['required', 'exists:repuestos,id'],
+            'cantidad' => ['required', 'integer', 'min:1'],
+            'precio_venta' => ['nullable', 'numeric', 'min:0'],
+            'metodo_pago_id' => ['nullable', 'exists:metodos_pago,id'],
+            'sucursal_id' => ['nullable', 'exists:sucursales,id'],
+        ]);
+
+        try {
+            DB::transaction(function () use ($request) {
+                $repuesto = Repuesto::findOrFail($request->repuesto_id);
+                $cantidad = (int) $request->cantidad;
+                $sucursalId = $request->sucursal_id ?? $this->usuarioSucursalId();
+
+                $inventario = Inventario::where('repuesto_id', $repuesto->id)
+                    ->where('sucursal_id', $sucursalId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$inventario || $inventario->cantidad_actual - $inventario->cantidad_reservada < $cantidad) {
+                    throw new \RuntimeException('Stock insuficiente para la venta.');
+                }
+
+                $anterior = (int) $inventario->cantidad_actual;
+                $nueva = $anterior - $cantidad;
+                $inventario->cantidad_actual = $nueva;
+                $inventario->fecha_actualizacion = now();
+                $inventario->save();
+
+                MovimientoInventario::create([
+                    'inventario_id' => $inventario->id,
+                    'usuario_id' => Auth::id(),
+                    'tipo' => 'salida_venta',
+                    'cantidad' => $cantidad,
+                    'existencia_anterior' => $anterior,
+                    'existencia_nueva' => $nueva,
+                    'motivo' => 'Venta directa: ' . $repuesto->nombre,
+                    'fecha_movimiento' => now(),
+                ]);
+
+                if ($request->metodo_pago_id && $request->precio_venta > 0) {
+                    Pago::create([
+                        'orden_trabajo_id' => null,
+                        'metodo_pago_id' => $request->metodo_pago_id,
+                        'monto' => $request->precio_venta * $cantidad,
+                        'estado' => 'confirmado',
+                        'usuario_id' => Auth::id(),
+                        'fecha_pago' => now(),
+                        'descripcion' => 'Venta directa: ' . $repuesto->nombre . ' x' . $cantidad,
+                    ]);
+                }
+            });
+
+            return response()->json(['exito' => true, 'mensaje' => 'Venta registrada correctamente.']);
+        } catch (\RuntimeException $e) {
+            return response()->json(['exito' => false, 'mensaje' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            return response()->json(['exito' => false, 'mensaje' => 'Error al procesar la venta.'], 500);
+        }
     }
 
     public function show(Inventario $inventario): View

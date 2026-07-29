@@ -115,7 +115,11 @@
                             @foreach ($ordenesRecientes as $o)
                                 <tr>
                                     <td>
+                                        @can('view', $o)
                                         <a href="{{ route('admin.ordenes.show', $o) }}" class="cell-strong">{{ $o->numero_orden }}</a>
+                                        @else
+                                        <span class="cell-strong">{{ $o->numero_orden }}</span>
+                                        @endcan
                                         <div class="cell-muted small">{{ $o->fecha_emision?->format('d/m/Y H:i') }}</div>
                                     </td>
                                     <td>

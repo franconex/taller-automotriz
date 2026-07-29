@@ -28,6 +28,7 @@ class RepuestoRequest extends AdminFormRequest
             'descripcion' => ['nullable', 'string', 'max:1000'],
             'costo_compra' => ['nullable', 'numeric', 'min:0'],
             'precio_venta' => ['nullable', 'numeric', 'min:0'],
+            'imagen' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'estado' => ['nullable', 'boolean'],
         ];
     }

@@ -8,6 +8,7 @@ use App\Models\Auditoria;
 use App\Models\Autorizacion;
 use App\Models\Cita;
 use App\Models\Comprobante;
+use App\Models\Inventario;
 use App\Models\MarcaVehiculo;
 use App\Models\ModeloVehiculo;
 use App\Models\OrdenTrabajo;
@@ -330,6 +331,34 @@ class DashboardController extends Controller
 
                     // Vincular autorización con la orden
                     $autorizacione->update(['orden_trabajo_id' => $orden->id]);
+
+                    // Descontar stock de los repuestos de la cotización autorizada
+                    $repuestosCotizacion = \App\Models\OrdenRepuesto::where('autorizacion_id', $autorizacione->id)->get();
+                    $sucursalId = $orden->sucursal_id;
+                    foreach ($repuestosCotizacion as $or) {
+                        $inv = Inventario::where('repuesto_id', $or->repuesto_id)
+                            ->where('sucursal_id', $sucursalId)
+                            ->lockForUpdate()
+                            ->first();
+                        if ($inv) {
+                            $cantidad = (int) $or->cantidad;
+                            $anterior = (int) $inv->cantidad_actual;
+                            $nueva = max(0, $anterior - $cantidad);
+                            $inv->cantidad_actual = $nueva;
+                            $inv->fecha_actualizacion = now();
+                            $inv->save();
+                            MovimientoInventario::create([
+                                'inventario_id' => $inv->id,
+                                'usuario_id' => Auth::id(),
+                                'tipo' => 'salida_cotizacion',
+                                'cantidad' => $cantidad,
+                                'existencia_anterior' => $anterior,
+                                'existencia_nueva' => $nueva,
+                                'motivo' => 'Cotización autorizada #' . $autorizacione->id,
+                                'fecha_movimiento' => now(),
+                            ]);
+                        }
+                    }
 
                     $ordenCreada = $orden;
                 } elseif ($orden) {

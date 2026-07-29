@@ -37,6 +37,20 @@
     </x-admin.form-field>
     <x-admin.form-field name="descripcion" label="Descripción" type="textarea" :value="$repuesto->descripcion ?? null" />
 
+    <div class="mt-3 mb-2">
+        <label class="form-label fw-semibold">Imagen del producto</label>
+        @if (!empty($repuesto->imagen))
+            <div class="mb-2">
+                <img src="{{ asset('storage/' . $repuesto->imagen) }}" alt="{{ $repuesto->nombre }}" style="max-height:120px;border-radius:6px;">
+                <div class="form-text">
+                    <label><input type="checkbox" name="eliminar_imagen" value="1"> Eliminar imagen actual</label>
+                </div>
+            </div>
+        @endif
+        <input type="file" name="imagen" class="form-control" accept="image/jpeg,image/png,image/webp">
+        <div class="form-text">JPG, PNG o WebP. Máximo 2MB.</div>
+    </div>
+
     <h3 class="h6 fw-bold mt-4 mb-2">Precios</h3>
     <div class="row g-2">
         <div class="col-6">
