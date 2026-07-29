@@ -60,9 +60,10 @@ class DashboardController extends Controller
         }
 
         $citasPendientes = Cita::where('mecanico_id', $mecanicoId)
-            ->whereIn('estado', ['confirmada'])
-            ->whereDate('fecha', '>=', now())
+            ->whereIn('estado', ['confirmada', 'atendida'])
+            ->whereDate('fecha', '>=', now()->subDay())
             ->with(['cliente:id,nombre_completo,telefono', 'vehiculo:id,placa,marca,modelo', 'servicio:id,nombre'])
+            ->withCount('autorizaciones')
             ->orderBy('fecha')
             ->orderBy('hora')
             ->get();
@@ -78,6 +79,7 @@ class DashboardController extends Controller
 
         $citas = Cita::where('mecanico_id', $mecanicoId)
             ->with(['cliente:id,nombre_completo,telefono', 'vehiculo:id,placa,marca,modelo', 'servicio:id,nombre', 'sucursal:id,nombre'])
+            ->withCount('autorizaciones')
             ->orderByRaw("FIELD(estado, 'confirmada', 'atendida', 'cancelada')")
             ->orderBy('fecha', 'desc')
             ->orderBy('hora', 'desc')

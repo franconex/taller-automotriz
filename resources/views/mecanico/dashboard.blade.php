@@ -137,17 +137,16 @@
                     </div>
                     <div class="d-flex gap-1">
                         <a href="{{ route('mecanico.cotizacion.create', $c) }}" class="btn btn-sm px-2" style="border:1px solid #d4a017;border-radius:3px;color:#d4a017;font-size:.7rem;" title="Diagnosticar y cotizar">
-                            <i class="bi bi-search-heart"></i>
+                            <i class="bi bi-search-heart"></i> Diagnosticar
                         </a>
-                        <form method="POST" action="{{ route('mecanico.citas.iniciar', $c) }}" class="d-inline" onsubmit="return confirm('¿Iniciar trabajo? Se creará la orden.');">
-                            @csrf
-                            <button type="submit" class="btn btn-sm px-2" style="border:1px solid #16A34A;border-radius:3px;color:#16A34A;font-size:.7rem;" title="Iniciar trabajo">
-                                <i class="bi bi-play-fill"></i>
-                            </button>
-                        </form>
-                        <a href="tel:{{ $c->cliente?->telefono }}" class="btn btn-sm px-2" style="border:1px solid #dee2e6;border-radius:3px;font-size:.75rem;" title="Llamar">
-                            <i class="bi bi-telephone"></i>
-                        </a>
+                        @if ($c->autorizaciones_count > 0)
+                            <form method="POST" action="{{ route('mecanico.citas.iniciar', $c) }}" class="d-inline" onsubmit="return confirm('¿Iniciar trabajo? Se creará la orden.');">
+                                @csrf
+                                <button type="submit" class="btn btn-sm px-2" style="border:1px solid #16A34A;border-radius:3px;color:#16A34A;font-size:.7rem;" title="Iniciar trabajo">
+                                    <i class="bi bi-play-fill"></i> Iniciar
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             @endforeach

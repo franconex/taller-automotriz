@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Cita extends Model
@@ -110,6 +111,11 @@ class Cita extends Model
     public function canceladoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelado_por_id');
+    }
+
+    public function autorizaciones(): HasMany
+    {
+        return $this->hasMany(Autorizacion::class, 'cita_id');
     }
 
     public function ordenTrabajo()
