@@ -18,16 +18,65 @@ class SiatNitService
 
     public function verificar(string $nit): array
     {
+        $nit = preg_replace('/\D/', '', $nit);
+
+        if (! $this->validarFormato($nit)) {
+            return ['valido' => false, 'error' => 'NIT debe tener entre 7 y 15 dígitos numéricos.'];
+        }
+
         $nitUsuario = Setting::obtener('nit', '');
         $codigoSistema = Setting::obtener('codigo_sistema', '');
 
-        if (! $nitUsuario || ! $codigoSistema) {
+        if ($nitUsuario && $codigoSistema) {
+            $resultado = $this->consultarSin($nit, $nitUsuario, $codigoSistema);
+            if ($resultado !== null) {
+                return $resultado;
+            }
+        }
+
+        if ($this->validarMod11($nit)) {
             return [
-                'valido' => false,
-                'error' => 'Falta configurar NIT del taller o código de sistema en Configuración.',
+                'valido' => true,
+                'nit' => $nit,
+                'razon_social' => null,
+                'estado' => 'validado por formato',
             ];
         }
 
+        return ['valido' => false, 'error' => 'NIT inválido - dígito verificador incorrecto.'];
+    }
+
+    private function validarFormato(string $nit): bool
+    {
+        return preg_match('/^\d{7,15}$/', $nit) === 1;
+    }
+
+    private function validarMod11(string $nit): bool
+    {
+        if (strlen($nit) < 2) return false;
+
+        $digitoVerificador = (int) substr($nit, -1);
+        $base = substr($nit, 0, -1);
+
+        $factor = 2;
+        $suma = 0;
+
+        for ($i = strlen($base) - 1; $i >= 0; $i--) {
+            $suma += (int) $base[$i] * $factor;
+            $factor = $factor < 7 ? $factor + 1 : 2;
+        }
+
+        $resto = $suma % 11;
+        $digitoCalculado = 11 - $resto;
+
+        if ($digitoCalculado === 11) $digitoCalculado = 0;
+        if ($digitoCalculado === 10) $digitoCalculado = 1;
+
+        return $digitoCalculado === $digitoVerificador;
+    }
+
+    private function consultarSin(string $nit, string $nitUsuario, string $codigoSistema): ?array
+    {
         try {
             $client = new \SoapClient($this->wsdl, [
                 'connection_timeout' => 10,
@@ -45,7 +94,7 @@ class SiatNitService
             $resultado = $response?->RespuestaConsultaNit ?? null;
 
             if (! $resultado) {
-                return ['valido' => false, 'error' => 'Respuesta vacía del SIN.'];
+                return null;
             }
 
             $codigo = (int) ($resultado->codigoRespuesta ?? -1);
@@ -69,12 +118,9 @@ class SiatNitService
                 'valido' => false,
                 'error' => $mensajes[$codigo] ?? "Respuesta SIN: código {$codigo}.",
             ];
-        } catch (\SoapFault $e) {
-            Log::warning('SIAT NIT verification SOAP error: ' . $e->getMessage());
-            return ['valido' => false, 'error' => 'No se pudo conectar con el SIN.'];
         } catch (\Throwable $e) {
-            Log::warning('SIAT NIT verification error: ' . $e->getMessage());
-            return ['valido' => false, 'error' => 'Error de conexión con el SIN.'];
+            Log::warning('SIAT NIT verification SOAP error: ' . $e->getMessage());
+            return null;
         }
     }
 }

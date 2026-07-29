@@ -20,14 +20,16 @@ class PagoStripeController extends AdminController
     {
         $request->validate([
             'orden_id' => ['required', 'exists:ordenes_trabajo,id'],
+            'con_nit' => ['nullable', 'boolean'],
             'nit' => ['nullable', 'string', 'max:30'],
             'razon_social' => ['nullable', 'string', 'max:200'],
         ]);
 
         $orden = OrdenTrabajo::with(['serviciosMecanico', 'repuestosMecanico', 'cliente', 'autorizaciones'])->findOrFail($request->input('orden_id'));
 
-        $nit = $request->input('nit');
-        $razonSocial = $request->input('razon_social') ?? $orden->cliente->nombre_completo;
+        $conNit = $request->input('con_nit', false);
+        $nit = $conNit ? $request->input('nit') : null;
+        $razonSocial = $conNit ? ($request->input('razon_social') ?? $orden->cliente->nombre_completo) : 'Consumidor Final';
 
         $serv = $orden->serviciosMecanico->sum('precio_base');
         $rep = $orden->repuestosMecanico->sum(fn($r) => $r->cantidad * $r->precio_unitario_snapshot);
@@ -48,6 +50,7 @@ class PagoStripeController extends AdminController
         session()->put('stripe_pago', [
             'orden_id' => $orden->id,
             'monto' => $saldoPendiente,
+            'con_nit' => $conNit,
             'nit' => $nit,
             'razon_social' => $razonSocial,
             'metodo_pago_id' => MetodoPago::where('nombre', 'like', '%Tarjeta%')->first()?->id ?? 1,
@@ -139,7 +142,7 @@ class PagoStripeController extends AdminController
                     $orden->update(['estado' => 'entregada', 'fecha_entrega' => now()]);
                 }
 
-                if ($pagoData['nit'] && ! $orden->cliente->nit) {
+                if (! empty($pagoData['con_nit']) && $pagoData['nit'] && ! $orden->cliente->nit) {
                     $orden->cliente->update([
                         'nit' => $pagoData['nit'],
                         'razon_social' => $pagoData['razon_social'],

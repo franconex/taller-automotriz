@@ -154,7 +154,7 @@
 <body>
     <div class="no-print">
         <button onclick="window.print()">Imprimir Factura</button>
-        <button onclick="history.back()" style="background:#666;margin-left:8px;">Volver</button>
+        <a href="{{ route('admin.ordenes.show', $ordenId) }}" style="background:#666;color:#fff;border:none;padding:8px 24px;font-size:13px;cursor:pointer;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:1px;text-decoration:none;display:inline-block;margin-left:8px;">Volver a orden</a>
     </div>
 
     <div class="factura-wrap">
@@ -183,9 +183,11 @@
                 <p><strong>{{ $cliente->nombre_completo }}</strong></p>
                 @if ($comprobante->nit_ci)
                     <p>NIT: {{ $comprobante->nit_ci }}</p>
-                @endif
-                @if ($comprobante->razon_social && $comprobante->razon_social !== $cliente->nombre_completo)
-                    <p>Raz&oacute;n Social: {{ $comprobante->razon_social }}</p>
+                    @if ($comprobante->razon_social && $comprobante->razon_social !== $cliente->nombre_completo)
+                        <p>Raz&oacute;n Social: {{ $comprobante->razon_social }}</p>
+                    @endif
+                @else
+                    <p><em>Consumidor Final</em></p>
                 @endif
                 <p>Direcci&oacute;n: {{ $cliente->direccion ?? '—' }}</p>
                 <p>Tel&eacute;fono: {{ $cliente->telefono ?? '—' }}</p>
@@ -294,7 +296,7 @@
 
     <div class="no-print" style="margin-top:10px;">
         <button onclick="window.print()">Imprimir Factura</button>
-        <button onclick="history.back()" style="background:#666;margin-left:8px;">Volver</button>
+        <a href="{{ route('admin.ordenes.show', $ordenId) }}" style="background:#666;color:#fff;border:none;padding:8px 24px;font-size:13px;cursor:pointer;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:1px;text-decoration:none;display:inline-block;margin-left:8px;">Volver a orden</a>
     </div>
 </body>
 </html>

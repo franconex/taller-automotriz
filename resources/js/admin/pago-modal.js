@@ -82,11 +82,15 @@
         html += '<div style="display:flex;justify-content:space-between;font-size:1rem;font-weight:700;padding:.6rem 0 0;margin-top:.35rem;border-top:2px solid #0B1D3A;"><span style="color:#0B1D3A;">Total</span><span style="color:#D62828;">Bs ' + fmt(pendiente) + '</span></div>';
 
         // Datos de factura
+        var checkedNit = (c.nit && c.nit.length > 0) ? 'checked' : '';
         html += '<div style="margin-top:1rem;padding:.75rem;border:1px solid #d1d5db;background:#f9fafb;">';
-        html += '<div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;margin-bottom:.5rem;">Datos de Factura</div>';
-        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">';
+        html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">';
+        html += '<input type="checkbox" id="factura-con-nit" ' + checkedNit + ' style="width:16px;height:16px;cursor:pointer;">';
+        html += '<label for="factura-con-nit" style="font-size:.8rem;font-weight:600;cursor:pointer;margin:0;">Factura con NIT</label>';
+        html += '</div>';
+        html += '<div id="factura-nit-fields" style="display:' + (checkedNit ? 'grid' : 'none') + ';grid-template-columns:1fr 1fr;gap:.5rem;">';
         html += '<div><label style="font-size:.7rem;color:#6B7280;display:block;margin-bottom:.15rem;">NIT</label><input type="text" id="factura-nit" class="form-control form-control-sm" value="' + esc(c.nit || '') + '" placeholder="NIT" style="font-size:.8rem;border:1px solid #d1d5db;padding:.3rem .5rem;width:100%;"><div id="nit-verificacion" style="font-size:.7rem;margin-top:.15rem;"></div></div>';
-        html += '<div><label style="font-size:.7rem;color:#6B7280;display:block;margin-bottom:.15rem;">Razón Social</label><input type="text" id="factura-razon" class="form-control form-control-sm" value="' + esc(c.razon_social || c.nombre_completo || '') + '" placeholder="Razón Social" style="font-size:.8rem;border:1px solid #d1d5db;padding:.3rem .5rem;width:100%;"></div>';
+        html += '<div><label style="font-size:.7rem;color:#6B7280;display:block;margin-bottom:.15rem;">Razón Social</label><input type="text" id="factura-razon" class="form-control form-control-sm" value="' + esc(c.nit ? (c.razon_social || c.nombre_completo || '') : '') + '" placeholder="Razón Social" style="font-size:.8rem;border:1px solid #d1d5db;padding:.3rem .5rem;width:100%;"></div>';
         html += '</div></div>';
 
         // Método de pago
@@ -107,6 +111,19 @@
         html += '</div></div>';
 
         modalBody.innerHTML = html;
+
+        // Toggle factura con/sin NIT
+        var toggleNit = document.getElementById('factura-con-nit');
+        var nitFields = document.getElementById('factura-nit-fields');
+        if (toggleNit && nitFields) {
+            toggleNit.addEventListener('change', function () {
+                nitFields.style.display = this.checked ? 'grid' : 'none';
+                if (!this.checked) {
+                    var r = document.getElementById('nit-verificacion');
+                    if (r) r.innerHTML = '';
+                }
+            });
+        }
 
         // Verificación NIT contra SIN
         var nitInput = document.getElementById('factura-nit');
@@ -197,9 +214,11 @@
     });
 
     function obtenerDatosFactura() {
+        var conNit = document.getElementById('factura-con-nit')?.checked || false;
+        if (!conNit) return { nit: '', razon_social: 'Consumidor Final', con_nit: false };
         var nit = document.getElementById('factura-nit')?.value || '';
         var razon = document.getElementById('factura-razon')?.value || '';
-        return { nit: nit, razon_social: razon };
+        return { nit: nit, razon_social: razon, con_nit: true };
     }
 
     async function procesarPagoTarjeta() {

@@ -40,6 +40,6 @@ class FacturaController extends Controller
             'servicios', 'repuestos',
             'subtotalServicios', 'subtotalRepuestos',
             'manoDeObra', 'descuento', 'total', 'empresa'
-        ));
+        ) + ['ordenId' => $orden->id]);
     }
 }

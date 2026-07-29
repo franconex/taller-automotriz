@@ -133,6 +133,7 @@ class PagoController extends AdminController implements HasMiddleware
         $data = $request->validate([
             'orden_id' => ['required', 'exists:ordenes_trabajo,id'],
             'metodo_pago_id' => ['required', 'exists:metodos_pago,id'],
+            'con_nit' => ['nullable', 'boolean'],
             'nit' => ['nullable', 'string', 'max:30'],
             'razon_social' => ['nullable', 'string', 'max:200'],
         ]);
@@ -143,8 +144,9 @@ class PagoController extends AdminController implements HasMiddleware
             return response()->json(['ok' => false, 'mensaje' => 'La orden no está en un estado válido para cobrar.'], 422);
         }
 
-        $nit = $data['nit'] ?? null;
-        $razonSocial = $data['razon_social'] ?? $orden->cliente->nombre_completo;
+        $conNit = $data['con_nit'] ?? false;
+        $nit = $conNit ? ($data['nit'] ?? null) : null;
+        $razonSocial = $conNit ? ($data['razon_social'] ?? $orden->cliente->nombre_completo) : 'Consumidor Final';
 
         $yaPagado = $orden->pagos()->where('estado', 'confirmado')->sum('monto');
         $totalServicios = $orden->serviciosMecanico->sum('precio_base');
@@ -188,7 +190,7 @@ class PagoController extends AdminController implements HasMiddleware
                     $orden->update(['estado' => 'entregada', 'fecha_entrega' => now()]);
                 }
 
-                if ($nit && ! $orden->cliente->nit) {
+                if ($conNit && $nit && ! $orden->cliente->nit) {
                     $orden->cliente->update(['nit' => $nit, 'razon_social' => $razonSocial]);
                 }
             });
