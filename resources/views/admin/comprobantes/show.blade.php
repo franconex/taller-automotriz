@@ -1,3 +1,5 @@
+@php use App\Models\Setting; @endphp
+
 @extends('layouts.admin')
 
 @section('title', $comprobante->numero)
