@@ -166,8 +166,8 @@
 @endsection
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/admin/citas.css') }}">
+    @vite(['resources/css/admin/citas.css'])
 @endpush
 @push('scripts')
-    <script type="module" src="{{ Vite::asset('resources/js/admin/citas-calendario.js') }}"></script>
+    @vite(['resources/js/admin/citas-calendario.js'])
 @endpush
