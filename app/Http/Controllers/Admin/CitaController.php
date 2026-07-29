@@ -62,7 +62,6 @@ class CitaController extends AdminController
         $vehiculos  = Vehiculo::with('cliente')->orderBy('placa')->get();
         $servicios  = Servicio::where('estado', true)->orderBy('nombre')->get();
         $mecanicos  = Mecanico::with('empleado')
-            ->where('disponibilidad', 'disponible')
             ->when($this->usuarioSucursalId(), fn ($q) => $q->whereHas('empleado', fn ($sq) => $sq->where('sucursal_id', $this->usuarioSucursalId())))
             ->get()
             ->filter(fn ($m) => $m->empleado && $m->empleado->estado)
@@ -863,6 +862,54 @@ class CitaController extends AdminController
         } catch (\Throwable $e) {
             return $hora;
         }
+    }
+
+    public function mecanicosDisponibles(Request $request): JsonResponse
+    {
+        $fecha = $request->input('fecha');
+        $hora = $request->input('hora');
+        $citaId = $request->input('cita_id');
+
+        if (! $fecha || ! $hora) {
+            return response()->json([]);
+        }
+
+        $horaFin = $request->input('hora_fin')
+            ?: Carbon::parse($hora)->addHour()->format('H:i');
+
+        try {
+            $inicio = Carbon::parse($fecha . ' ' . $hora);
+            $fin = Carbon::parse($fecha . ' ' . $horaFin);
+        } catch (\Throwable $e) {
+            return response()->json([]);
+        }
+
+        $mecanicos = Mecanico::with('empleado')
+            ->get()
+            ->filter(fn ($m) => $m->empleado && $m->empleado->estado)
+            ->sortBy(fn ($m) => $m->empleado->nombre_completo)
+            ->values();
+
+        $disponibles = $mecanicos->filter(function ($m) use ($fecha, $inicio, $fin, $citaId) {
+            $conflictos = Cita::where('mecanico_id', $m->id)
+                ->whereDate('fecha', $fecha)
+                ->whereIn('estado', ['confirmada', 'pendiente'])
+                ->when($citaId, fn ($q) => $q->where('id', '!=', $citaId))
+                ->get()
+                ->filter(function ($c) use ($inicio, $fin) {
+                    $cInicio = Carbon::parse($c->fecha->format('Y-m-d') . ' ' . $c->hora);
+                    $cFin = Carbon::parse($c->fecha->format('Y-m-d') . ' ' . ($c->hora_fin ?: Carbon::parse($c->hora)->addHour()->format('H:i')));
+                    return $cInicio->lt($fin) && $cFin->gt($inicio);
+                })
+                ->isEmpty();
+
+            return $conflictos;
+        });
+
+        return response()->json($disponibles->map(fn ($m) => [
+            'id' => $m->id,
+            'nombre' => $m->empleado->nombre_completo,
+        ]));
     }
 
     protected function respuestaAccion(Request $request, string $mensaje, bool $ok = true, array $errors = []): RedirectResponse|JsonResponse

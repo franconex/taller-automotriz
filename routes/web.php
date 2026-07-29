@@ -210,6 +210,7 @@ Route::middleware('auth')->group(function () {
         Route::get('citas/eventos', [CitaController::class, 'eventos'])->name('citas.eventos');
         Route::get('citas/tabla-dia', [CitaController::class, 'tablaDia'])->name('citas.tabla-dia');
         Route::get('citas/proximas', [CitaController::class, 'proximas'])->name('citas.proximas');
+        Route::get('mecanicos-disponibles', [CitaController::class, 'mecanicosDisponibles'])->name('mecanicos.disponibles');
         Route::post('citas/quick-cliente', [CitaController::class, 'quickCliente'])->middleware('permiso:citas.crear')->name('citas.quick-cliente');
         Route::post('citas/quick-vehiculo', [CitaController::class, 'quickVehiculo'])->middleware('permiso:citas.crear')->name('citas.quick-vehiculo');
         Route::post('citas', [CitaController::class, 'store'])->middleware('permiso:citas.crear')->name('citas.store');

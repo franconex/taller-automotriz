@@ -664,6 +664,7 @@ import interactionPlugin from '@fullcalendar/interaction';
         document.getElementById('form-costo_consulta').value = c.costo_consulta || '0';
         document.getElementById('form-deja_vehiculo').checked = c.deja_vehiculo !== undefined ? !!c.deja_vehiculo : true;
         actualizarVehiculos();
+        actualizarMecanicosDisponibles();
         // Disparar actualizacion de tipo (servicio, deja_vehiculo, costo)
         var evt = new Event('change');
         document.getElementById('form-tipo')?.dispatchEvent(evt);
@@ -696,6 +697,31 @@ import interactionPlugin from '@fullcalendar/interaction';
         } else {
             info.style.display = 'none';
         }
+    }
+
+    async function actualizarMecanicosDisponibles() {
+        const fecha = document.getElementById('form-fecha')?.value;
+        const hora = document.getElementById('form-hora')?.value;
+        const select = document.getElementById('form-mecanico_id');
+        if (!select) return;
+        if (!fecha || !hora) {
+            const allOpts = [...select.options].filter(o => o.value !== '' && !o.dataset.original);
+            if (allOpts.length === 0) return;
+            return;
+        }
+        const citaId = document.getElementById('form-cita_id')?.value;
+        const url = '/admin/mecanicos-disponibles?fecha=' + fecha + '&hora=' + hora + (citaId ? '&cita_id=' + citaId : '');
+        try {
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
+            const disponibles = await res.json();
+            const actual = select.value;
+            select.innerHTML = '<option value="">— Sin mecánico asignado —</option>';
+            disponibles.forEach(function (m) {
+                select.innerHTML += '<option value="' + m.id + '">' + escape(m.nombre) + '</option>';
+            });
+            if (actual && [...select.options].some(o => o.value === actual)) select.value = actual;
+        } catch (e) {}
     }
 
     async function enviarFormulario(e) {
@@ -1016,6 +1042,8 @@ import interactionPlugin from '@fullcalendar/interaction';
 
         document.getElementById('form-cliente_id')?.addEventListener('change', actualizarVehiculos);
         document.getElementById('form-vehiculo_id')?.addEventListener('change', actualizarInfoVehiculo);
+        document.getElementById('form-fecha')?.addEventListener('change', actualizarMecanicosDisponibles);
+        document.getElementById('form-hora')?.addEventListener('change', actualizarMecanicosDisponibles);
         document.getElementById('formulario-cita')?.addEventListener('submit', enviarFormulario);
 
         document.getElementById('btn-quick-cliente')?.addEventListener('click', abrirQuickCliente);
