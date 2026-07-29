@@ -4,7 +4,7 @@
     const modal = document.getElementById('modalCobrar');
     if (!modal) return;
 
-    const STRIPE_KEY = document.getElementById('stripe-key')?.getAttribute('content');
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
     const bsModal = new bootstrap.Modal(modal, { backdrop: 'static', keyboard: false });
     const modalBody = document.getElementById('modalCobrarBody');
@@ -13,16 +13,7 @@
 
     let currentOrdenId = null;
     let currentTotal = 0;
-    let currentPagado = 0;
     let currentData = null;
-
-    let stripe = null;
-    let elements = null;
-    let cardNumber = null;
-    let cardExpiry = null;
-    let cardCvc = null;
-    let stripeInitialized = false;
-    const stripeFields = document.getElementById('stripe-fields');
 
     document.querySelectorAll('[data-modal-cobrar]').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
@@ -34,20 +25,16 @@
 
     function cargarDatosOrden(ordenId) {
         modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-secondary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2 small text-muted">Cargando datos de la orden...</p></div>';
-        if (stripeFields) stripeFields.style.display = 'none';
         btnConfirmar.disabled = true;
-        destroyStripe();
         bsModal.show();
 
-        var url = '/admin/pagos/modal-data/' + ordenId;
-        fetch(url, {
+        fetch('/admin/pagos/modal-data/' + ordenId, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
         })
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function (data) {
             currentTotal = data.total_general || 0;
-            currentPagado = 0;
             currentData = data;
             renderModal(data);
             btnConfirmar.disabled = false;
@@ -65,7 +52,7 @@
         var serv = data.servicios || [];
         var rep = data.repuestos || [];
 
-        var pendiente = Math.max(0, currentTotal - currentPagado);
+        var pendiente = Math.max(0, currentTotal);
 
         var html = '';
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem;">';
@@ -133,47 +120,8 @@
                         label.style.color = '#0B1D3A';
                     }
                 });
-
-                var nombre = this.dataset.nombre;
-                if (nombre === 'Tarjeta' && STRIPE_KEY) {
-                    if (stripeFields) stripeFields.style.display = '';
-                    initStripe();
-                } else {
-                    if (stripeFields) stripeFields.style.display = 'none';
-                    destroyStripe();
-                }
             });
         });
-
-        var preseleccionado = modalBody.querySelector('input[name="modal_metodo"]:checked');
-        if (preseleccionado && preseleccionado.dataset.nombre === 'Tarjeta' && STRIPE_KEY) {
-            if (stripeFields) stripeFields.style.display = '';
-            setTimeout(initStripe, 200);
-        }
-    }
-
-    function initStripe() {
-        if (stripeInitialized || !STRIPE_KEY) return;
-        stripeInitialized = true;
-        stripe = Stripe(STRIPE_KEY);
-        elements = stripe.elements({ locale: 'es' });
-        var style = { base: { fontSize: '15px', color: '#1F2937' } };
-        cardNumber = elements.create('cardNumber', { style: style });
-        cardExpiry = elements.create('cardExpiry', { style: style });
-        cardCvc = elements.create('cardCvc', { style: style });
-        cardNumber.mount('#stripe-card-number');
-        cardExpiry.mount('#stripe-card-expiry');
-        cardCvc.mount('#stripe-card-cvc');
-    }
-
-    function destroyStripe() {
-        if (!stripeInitialized) return;
-        try { cardNumber?.destroy(); } catch(e) {}
-        try { cardExpiry?.destroy(); } catch(e) {}
-        try { cardCvc?.destroy(); } catch(e) {}
-        stripeInitialized = false;
-        stripe = null;
-        elements = null;
     }
 
     btnConfirmar.addEventListener('click', function () {
@@ -185,8 +133,8 @@
         btnConfirmar.disabled = true;
         btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Procesando...';
 
-        if (nombreMetodo === 'Tarjeta' && STRIPE_KEY) {
-            procesarPagoTarjeta(selected.value);
+        if (nombreMetodo === 'Tarjeta') {
+            procesarPagoTarjeta();
         } else {
             procesarPagoNormal(selected.value);
         }
@@ -198,30 +146,22 @@
         return { nit: nit, razon_social: razon };
     }
 
-    async function procesarPagoTarjeta(metodoPagoId) {
+    async function procesarPagoTarjeta() {
+        var factura = obtenerDatosFactura();
+
         try {
-            if (!stripe || !cardNumber) { alert('Stripe no inicializado.'); btnConfirmar.disabled = false; btnConfirmar.innerHTML = 'Confirmar pago'; return; }
-
-            var pendiente = Math.max(0, currentTotal - currentPagado);
-            if (pendiente <= 0) { alert('La orden ya está pagada.'); btnConfirmar.disabled = false; btnConfirmar.innerHTML = 'Confirmar pago'; return; }
-
-            var { error: pmError, paymentMethod } = await stripe.createPaymentMethod({ type: 'card', card: cardNumber });
-            if (pmError) { alert(pmError.message); btnConfirmar.disabled = false; btnConfirmar.innerHTML = 'Confirmar pago'; return; }
-
-            var factura = obtenerDatosFactura();
-
             var res = await fetch('/admin/pagos/stripe/cobrar', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf },
                 body: JSON.stringify({ orden_id: currentOrdenId, nit: factura.nit, razon_social: factura.razon_social }),
                 credentials: 'same-origin',
             });
             var data = await res.json();
 
-            if (data.ok) {
-                mostrarExito(data.mensaje || 'Pago exitoso', data.factura_url, data.comprobante_numero);
+            if (data.ok && data.url) {
+                window.location.href = data.url;
             } else {
-                alert(data.mensaje || 'Error al procesar el pago con tarjeta.');
+                alert(data.message || 'Error al procesar el pago con tarjeta.');
                 btnConfirmar.disabled = false;
                 btnConfirmar.innerHTML = 'Confirmar pago';
             }
@@ -238,7 +178,7 @@
 
         fetch('/admin/pagos/cobrar-modal', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf },
             body: JSON.stringify(body),
             credentials: 'same-origin',
         })
@@ -268,8 +208,6 @@
         modalBody.innerHTML = html;
         btnConfirmar.style.display = 'none';
         btnCancelar.textContent = 'Cerrar';
-        if (stripeFields) stripeFields.style.display = 'none';
-        destroyStripe();
     }
 
     modal.addEventListener('hidden.bs.modal', function () {
@@ -278,8 +216,6 @@
         btnConfirmar.style.display = '';
         btnCancelar.textContent = 'Cancelar';
         currentOrdenId = null;
-        destroyStripe();
-        if (stripeFields) stripeFields.style.display = 'none';
         location.reload();
     });
 

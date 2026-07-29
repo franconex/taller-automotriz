@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use Stripe\Checkout\Session;
 use Stripe\Stripe;
-use Stripe\PaymentIntent;
 
 class StripeService
 {
@@ -12,30 +12,20 @@ class StripeService
         Stripe::setApiKey(config('stripe.secret'));
     }
 
-    public function cobrar(int $montoCentavos, string $moneda = 'usd'): array
+    public function checkout(array $params): Session
     {
-        $intent = PaymentIntent::create([
-            'amount' => $montoCentavos,
-            'currency' => $moneda,
-            'payment_method_types' => ['card'],
-            'description' => 'Pago taller automotriz',
+        return Session::create([
+            'line_items' => [$params['line_item']],
+            'mode' => 'payment',
+            'success_url' => $params['success_url'],
+            'cancel_url' => $params['cancel_url'],
+            'metadata' => $params['metadata'] ?? [],
+            'locale' => 'es',
         ]);
-
-        return [
-            'id' => $intent->id,
-            'client_secret' => $intent->client_secret,
-            'status' => $intent->status,
-        ];
     }
 
-    public function confirmar(string $paymentIntentId): array
+    public function retrieveSession(string $sessionId): Session
     {
-        $intent = PaymentIntent::retrieve($paymentIntentId);
-
-        return [
-            'id' => $intent->id,
-            'status' => $intent->status,
-            'amount' => $intent->amount,
-        ];
+        return Session::retrieve($sessionId);
     }
 }

@@ -218,16 +218,6 @@
           <p class="small mb-0">Cargando...</p>
         </div>
       </div>
-      {{-- STRIPE FIELDS --}}
-      <div id="stripe-fields" style="display:none;padding:0 1.25rem 1rem;">
-        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;margin-bottom:.4rem;">Datos de la tarjeta</div>
-        <div style="border:1px solid #d1d5db;padding:.6rem .75rem;margin-bottom:.35rem;" id="stripe-card-number"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;">
-          <div style="border:1px solid #d1d5db;padding:.6rem .75rem;" id="stripe-card-expiry"></div>
-          <div style="border:1px solid #d1d5db;padding:.6rem .75rem;" id="stripe-card-cvc"></div>
-        </div>
-      </div>
-
       <div class="modal-footer" style="border-top:1px solid #e5e7eb;padding:.75rem 1.25rem;">
         <button type="button" class="btn btn-sm btn-outline-secondary" id="modalCobrarCancelar" data-bs-dismiss="modal">Cancelar</button>
         <button type="button" class="btn btn-sm btn-success" id="modalCobrarConfirmar" disabled>

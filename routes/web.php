@@ -163,6 +163,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('pagos', PagoController::class);
         Route::patch('pagos/{pago}/toggle', [PagoController::class, 'toggle'])->name('pagos.toggle');
         Route::post('pagos/stripe/cobrar', [\App\Http\Controllers\Admin\PagoStripeController::class, 'cobrar'])->middleware('permiso:pagos.registrar')->name('pagos.stripe.cobrar');
+        Route::get('pagos/stripe/success', [\App\Http\Controllers\Admin\PagoStripeController::class, 'success'])->name('pagos.stripe.success');
+        Route::get('pagos/stripe/cancel', [\App\Http\Controllers\Admin\PagoStripeController::class, 'cancel'])->name('pagos.stripe.cancel');
         Route::patch('pagos/{pago}/anular', [PagoController::class, 'anular'])->name('pagos.anular');
         Route::get('pagos/{pago}/qr', [\App\Http\Controllers\Admin\PagoQRController::class, 'mostrar'])->name('pagos.qr');
         Route::post('pagos/qr-data', [\App\Http\Controllers\Admin\PagoQRController::class, 'qrData'])->name('pagos.qr-data');

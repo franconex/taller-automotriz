@@ -8,7 +8,10 @@ use App\Models\OrdenTrabajo;
 use App\Models\Pago;
 use App\Services\StripeService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PagoStripeController extends AdminController
 {
@@ -18,9 +21,6 @@ class PagoStripeController extends AdminController
             'orden_id' => ['required', 'exists:ordenes_trabajo,id'],
             'nit' => ['nullable', 'string', 'max:30'],
             'razon_social' => ['nullable', 'string', 'max:200'],
-        ], [
-            'orden_id.required' => 'La orden es obligatoria.',
-            'orden_id.exists' => 'La orden no existe.',
         ]);
 
         $orden = OrdenTrabajo::with(['serviciosMecanico', 'repuestosMecanico', 'cliente', 'autorizaciones'])->findOrFail($request->input('orden_id'));
@@ -40,68 +40,125 @@ class PagoStripeController extends AdminController
             return response()->json(['ok' => false, 'message' => 'La orden ya está totalmente pagada.'], 422);
         }
 
-        $existePendiente = Pago::where('orden_trabajo_id', $orden->id)
-            ->where('estado', 'pendiente')
-            ->whereNotNull('stripe_payment_intent_id')
-            ->exists();
-        if ($existePendiente) {
-            return response()->json(['ok' => false, 'message' => 'Ya existe un intento de pago pendiente para esta orden.'], 422);
-        }
+        $montoCentavos = (int) round($saldoPendiente * 100);
+        $moneda = strtolower(config('app.moneda', 'usd'));
 
-        $moneda = config('app.moneda', 'usd');
+        session()->put('stripe_pago', [
+            'orden_id' => $orden->id,
+            'monto' => $saldoPendiente,
+            'nit' => $nit,
+            'razon_social' => $razonSocial,
+            'metodo_pago_id' => MetodoPago::where('nombre', 'like', '%Tarjeta%')->first()?->id ?? 1,
+        ]);
 
         try {
             $stripe = new StripeService();
-            $montoCentavos = (int) round($saldoPendiente * 100);
-            $resultado = $stripe->cobrar($montoCentavos, $moneda);
 
-            $metodoPago = MetodoPago::where('nombre', 'like', '%Tarjeta%')->first();
+            $descripcion = 'Orden ' . $orden->numero_orden . ' - ' . ($orden->cliente->nombre_completo ?? '');
 
-            $pago = Pago::create([
-                'orden_trabajo_id'       => $orden->id,
-                'metodo_pago_id'         => $metodoPago?->id ?? 1,
-                'usuario_id'             => auth()->id(),
-                'fecha_pago'             => now(),
-                'monto'                  => $saldoPendiente,
-                'referencia'             => $resultado['id'],
-                'stripe_payment_intent_id' => $resultado['id'],
-                'estado'                 => 'confirmado',
+            $checkout = $stripe->checkout([
+                'line_item' => [
+                    'price_data' => [
+                        'currency' => $moneda,
+                        'product_data' => ['name' => $descripcion],
+                        'unit_amount' => $montoCentavos,
+                    ],
+                    'quantity' => 1,
+                ],
+                'success_url' => route('admin.pagos.stripe.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => route('admin.pagos.stripe.cancel'),
+                'metadata' => [
+                    'orden_id' => (string) $orden->id,
+                ],
             ]);
-
-            $stripe->confirmar($resultado['id']);
-
-            $ultimoId = Comprobante::withTrashed()->max('id') ?? 0;
-            $comprobante = Comprobante::create([
-                'pago_id'      => $pago->id,
-                'cliente_id'   => $orden->cliente_id,
-                'numero'       => 'FACT-' . now()->format('Ymd') . '-' . str_pad($ultimoId + 1, 4, '0', STR_PAD_LEFT),
-                'fecha_emision' => now(),
-                'nit_ci'       => $nit,
-                'razon_social' => $razonSocial,
-                'monto_total'  => $saldoPendiente,
-                'estado'       => 'emitido',
-            ]);
-
-            if (! in_array($orden->estado, ['entregada', 'anulada'])) {
-                $orden->update(['estado' => 'entregada', 'fecha_entrega' => now()]);
-            }
-
-            if ($nit && ! $orden->cliente->nit) {
-                $orden->cliente->update(['nit' => $nit, 'razon_social' => $razonSocial]);
-            }
 
             return response()->json([
                 'ok' => true,
-                'message' => 'Pago de Bs ' . number_format($saldoPendiente, 2) . ' confirmado. Factura ' . $comprobante->numero . ' generada.',
-                'comprobante_id' => $comprobante->id,
-                'comprobante_numero' => $comprobante->numero,
-                'factura_url' => route('admin.factura.show', $comprobante),
+                'url' => $checkout->url,
             ]);
         } catch (\Throwable $e) {
+            Log::error('Stripe checkout error: ' . $e->getMessage());
             return response()->json([
                 'ok' => false,
-                'message' => 'Error al procesar el pago: ' . $e->getMessage(),
+                'message' => 'Error al conectar con Stripe: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function success(Request $request): RedirectResponse
+    {
+        $sessionId = $request->input('session_id');
+        if (! $sessionId) {
+            return redirect()->route('admin.pagos.index')->with('error', 'No se recibió el ID de sesión de Stripe.');
+        }
+
+        $pagoData = session()->pull('stripe_pago');
+        if (! $pagoData) {
+            return redirect()->route('admin.pagos.index')->with('error', 'No se encontraron datos de pago. Intenta de nuevo.');
+        }
+
+        try {
+            $stripe = new StripeService();
+            $session = $stripe->retrieveSession($sessionId);
+
+            if ($session->payment_status !== 'paid') {
+                return redirect()->route('admin.pagos.index')->with('error', 'El pago no fue completado en Stripe.');
+            }
+
+            $orden = OrdenTrabajo::with(['cliente', 'serviciosMecanico', 'repuestosMecanico'])->findOrFail($pagoData['orden_id']);
+
+            $comprobante = null;
+
+            DB::transaction(function () use ($orden, $pagoData, $session, &$comprobante) {
+                $pago = Pago::create([
+                    'orden_trabajo_id' => $orden->id,
+                    'metodo_pago_id' => $pagoData['metodo_pago_id'],
+                    'usuario_id' => auth()->id(),
+                    'fecha_pago' => now(),
+                    'monto' => $pagoData['monto'],
+                    'referencia' => $session->id,
+                    'stripe_payment_intent_id' => $session->payment_intent,
+                    'estado' => 'confirmado',
+                ]);
+
+                $ultimoId = Comprobante::withTrashed()->max('id') ?? 0;
+                $comprobante = Comprobante::create([
+                    'pago_id' => $pago->id,
+                    'cliente_id' => $orden->cliente_id,
+                    'numero' => 'FACT-' . now()->format('Ymd') . '-' . str_pad($ultimoId + 1, 4, '0', STR_PAD_LEFT),
+                    'fecha_emision' => now(),
+                    'nit_ci' => $pagoData['nit'] ?? null,
+                    'razon_social' => $pagoData['razon_social'] ?? $orden->cliente->nombre_completo,
+                    'monto_total' => $pagoData['monto'],
+                    'estado' => 'emitido',
+                ]);
+
+                if (! in_array($orden->estado, ['entregada', 'anulada'])) {
+                    $orden->update(['estado' => 'entregada', 'fecha_entrega' => now()]);
+                }
+
+                if ($pagoData['nit'] && ! $orden->cliente->nit) {
+                    $orden->cliente->update([
+                        'nit' => $pagoData['nit'],
+                        'razon_social' => $pagoData['razon_social'],
+                    ]);
+                }
+            });
+
+            $url = $comprobante
+                ? route('admin.factura.show', $comprobante)
+                : route('admin.pagos.index');
+
+            return redirect()->to($url)->with('success', 'Pago de Bs ' . number_format($pagoData['monto'], 2) . ' confirmado. Factura generada.');
+        } catch (\Throwable $e) {
+            Log::error('Stripe success error: ' . $e->getMessage());
+            return redirect()->route('admin.pagos.index')->with('error', 'Error al procesar el pago: ' . $e->getMessage());
+        }
+    }
+
+    public function cancel(Request $request): RedirectResponse
+    {
+        session()->forget('stripe_pago');
+        return redirect()->route('admin.pagos.index')->with('error', 'Pago con tarjeta cancelado.');
     }
 }
