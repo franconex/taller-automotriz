@@ -120,8 +120,24 @@
                         label.style.color = '#0B1D3A';
                     }
                 });
+                var info = document.getElementById('stripe-info');
+                if (info) {
+                    info.style.display = this.dataset.nombre === 'Tarjeta' ? '' : 'none';
+                }
             });
         });
+        // Info stripe
+        var infoHtml = '<div id="stripe-info" style="display:none;margin-top:.5rem;padding:.5rem;background:#f0f7ff;border:1px solid #b8d4f0;font-size:.75rem;color:#0B1D3A;border-radius:3px;"><i class="bi bi-shield-check me-1"></i>Serás redirigido a Stripe para pagar de forma segura con tu tarjeta.</div>';
+        var contenedorMetodos = modalBody.querySelector('div:has(> .metodo-label)') || modalBody.querySelector('[style*="grid-template-columns:1fr 1fr 1fr"]');
+        if (contenedorMetodos && contenedorMetodos.parentNode) {
+            contenedorMetodos.parentNode.insertAdjacentHTML('beforeend', infoHtml);
+        }
+        // Mostrar info si tarjeta preseleccionada
+        var preseleccionado = modalBody.querySelector('input[name="modal_metodo"]:checked');
+        if (preseleccionado && preseleccionado.dataset.nombre === 'Tarjeta') {
+            var info = document.getElementById('stripe-info');
+            if (info) info.style.display = '';
+        }
     }
 
     btnConfirmar.addEventListener('click', function () {
@@ -131,7 +147,11 @@
 
         var nombreMetodo = selected.dataset.nombre;
         btnConfirmar.disabled = true;
-        btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Procesando...';
+        if (nombreMetodo === 'Tarjeta') {
+            btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Redirigiendo a Stripe...';
+        } else {
+            btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Procesando...';
+        }
 
         if (nombreMetodo === 'Tarjeta') {
             procesarPagoTarjeta();
@@ -163,12 +183,12 @@
             } else {
                 alert(data.message || 'Error al procesar el pago con tarjeta.');
                 btnConfirmar.disabled = false;
-                btnConfirmar.innerHTML = 'Confirmar pago';
+                btnConfirmar.innerHTML = 'Pagar';
             }
         } catch (err) {
             alert('Error: ' + err.message);
             btnConfirmar.disabled = false;
-            btnConfirmar.innerHTML = 'Confirmar pago';
+            btnConfirmar.innerHTML = 'Pagar';
         }
     }
 
@@ -189,13 +209,13 @@
             } else {
                 alert(data.mensaje || 'Error al registrar pago');
                 btnConfirmar.disabled = false;
-                btnConfirmar.innerHTML = 'Confirmar pago';
+                btnConfirmar.innerHTML = 'Pagar';
             }
         })
         .catch(function (err) {
             alert('Error de conexión: ' + err.message);
             btnConfirmar.disabled = false;
-            btnConfirmar.innerHTML = 'Confirmar pago';
+            btnConfirmar.innerHTML = 'Pagar';
         });
     }
 
@@ -212,7 +232,7 @@
 
     modal.addEventListener('hidden.bs.modal', function () {
         btnConfirmar.disabled = false;
-        btnConfirmar.innerHTML = 'Confirmar pago';
+        btnConfirmar.innerHTML = 'Pagar';
         btnConfirmar.style.display = '';
         btnCancelar.textContent = 'Cancelar';
         currentOrdenId = null;

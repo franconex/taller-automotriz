@@ -221,7 +221,7 @@
       <div class="modal-footer" style="border-top:1px solid #e5e7eb;padding:.75rem 1.25rem;">
         <button type="button" class="btn btn-sm btn-outline-secondary" id="modalCobrarCancelar" data-bs-dismiss="modal">Cancelar</button>
         <button type="button" class="btn btn-sm btn-success" id="modalCobrarConfirmar" disabled>
-          <i class="bi bi-check2-circle me-1"></i> Confirmar pago
+          <i class="bi bi-credit-card me-1"></i> Pagar
         </button>
       </div>
     </div>
