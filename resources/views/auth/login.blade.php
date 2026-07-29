@@ -175,6 +175,7 @@
                                     <i class="bi bi-person" aria-hidden="true"></i>
                                 </span>
                                 <input id="reg-nombre" type="text" name="nombre_completo"
+                                       value="{{ old('nombre_completo') }}"
                                        class="form-control login-input"
                                        placeholder="Nombre completo" required>
                             </div>
@@ -187,6 +188,7 @@
                                     <i class="bi bi-envelope" aria-hidden="true"></i>
                                 </span>
                                 <input id="reg-email" type="email" name="email"
+                                       value="{{ old('email') }}"
                                        class="form-control login-input"
                                        placeholder="Correo electrónico" required>
                             </div>
@@ -200,6 +202,7 @@
                                         <i class="bi bi-telephone" aria-hidden="true"></i>
                                     </span>
                                     <input id="reg-telefono" type="text" name="telefono"
+                                           value="{{ old('telefono') }}"
                                            class="form-control login-input" placeholder="Teléfono">
                                 </div>
                             </div>
@@ -210,6 +213,7 @@
                                         <i class="bi bi-card-text" aria-hidden="true"></i>
                                     </span>
                                     <input id="reg-ci" type="text" name="ci"
+                                           value="{{ old('ci') }}"
                                            class="form-control login-input" placeholder="CI (opcional)">
                                 </div>
                             </div>
@@ -315,6 +319,9 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Creando cuenta...';
         });
     }
+    @if ($errors->has('nombre_completo') || $errors->has('email') || $errors->has('password') || $errors->has('terminos'))
+    switchTab('register');
+    @endif
 })();
 
 function switchTab(tab) {
