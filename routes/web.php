@@ -173,6 +173,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('comprobantes', ComprobanteController::class)->except(['create', 'store']);
         Route::patch('comprobantes/{comprobante}/anular', [ComprobanteController::class, 'anular'])->name('comprobantes.anular');
         Route::get('factura/{comprobante}', [\App\Http\Controllers\Admin\FacturaController::class, 'show'])->name('factura.show');
+        Route::get('verificar-nit', [\App\Http\Controllers\Admin\NitController::class, 'verificar'])->name('nit.verificar');
         Route::get('configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
         Route::put('configuracion', [ConfiguracionController::class, 'update'])->name('configuracion.update');
         Route::get('reportes', [ReporteController::class, 'index'])->name('reportes.index');

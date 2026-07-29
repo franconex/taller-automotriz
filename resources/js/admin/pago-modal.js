@@ -85,7 +85,7 @@
         html += '<div style="margin-top:1rem;padding:.75rem;border:1px solid #d1d5db;background:#f9fafb;">';
         html += '<div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;margin-bottom:.5rem;">Datos de Factura</div>';
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">';
-        html += '<div><label style="font-size:.7rem;color:#6B7280;display:block;margin-bottom:.15rem;">NIT</label><input type="text" id="factura-nit" class="form-control form-control-sm" value="' + esc(c.nit || '') + '" placeholder="NIT" style="font-size:.8rem;border:1px solid #d1d5db;padding:.3rem .5rem;width:100%;"></div>';
+        html += '<div><label style="font-size:.7rem;color:#6B7280;display:block;margin-bottom:.15rem;">NIT</label><input type="text" id="factura-nit" class="form-control form-control-sm" value="' + esc(c.nit || '') + '" placeholder="NIT" style="font-size:.8rem;border:1px solid #d1d5db;padding:.3rem .5rem;width:100%;"><div id="nit-verificacion" style="font-size:.7rem;margin-top:.15rem;"></div></div>';
         html += '<div><label style="font-size:.7rem;color:#6B7280;display:block;margin-bottom:.15rem;">Razón Social</label><input type="text" id="factura-razon" class="form-control form-control-sm" value="' + esc(c.razon_social || c.nombre_completo || '') + '" placeholder="Razón Social" style="font-size:.8rem;border:1px solid #d1d5db;padding:.3rem .5rem;width:100%;"></div>';
         html += '</div></div>';
 
@@ -107,6 +107,42 @@
         html += '</div></div>';
 
         modalBody.innerHTML = html;
+
+        // Verificación NIT contra SIN
+        var nitInput = document.getElementById('factura-nit');
+        var nitResult = document.getElementById('nit-verificacion');
+        if (nitInput && nitResult) {
+            var debounceTimer = null;
+            nitInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                var val = this.value.replace(/\D/g, '');
+                this.value = val;
+                if (val.length < 5) { nitResult.innerHTML = ''; return; }
+                debounceTimer = setTimeout(function () {
+                    nitResult.innerHTML = '<span style="color:#6B7280;"><i class="bi bi-arrow-clockwise"></i> Verificando...</span>';
+                    fetch('/admin/verificar-nit?nit=' + val, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin',
+                    })
+                    .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+                    .then(function (data) {
+                        if (data.valido) {
+                            nitResult.innerHTML = '<span style="color:#16A34A;"><i class="bi bi-check-circle-fill"></i> ' + esc(data.razon_social) + ' — NIT habilitado</span>';
+                            var razon = document.getElementById('factura-razon');
+                            if (razon && !razon.value.trim()) razon.value = data.razon_social || '';
+                        } else {
+                            nitResult.innerHTML = '<span style="color:#DC2626;"><i class="bi bi-exclamation-circle-fill"></i> ' + esc(data.error || 'NIT inválido') + '</span>';
+                        }
+                    })
+                    .catch(function () {
+                        nitResult.innerHTML = '<span style="color:#d97706;"><i class="bi bi-exclamation-triangle-fill"></i> SIN no disponible (verificación manual)</span>';
+                    });
+                }, 600);
+            });
+            if (nitInput.value.length >= 5) {
+                nitInput.dispatchEvent(new Event('input'));
+            }
+        }
 
         modalBody.querySelectorAll('input[name="modal_metodo"]').forEach(function (radio) {
             radio.addEventListener('change', function () {
