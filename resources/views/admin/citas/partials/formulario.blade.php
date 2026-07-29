@@ -102,6 +102,7 @@
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
                             </div>
+                            <div id="vehiculo-info" class="mt-1 small" style="display:none;color:#555;"></div>
                             <div class="invalid-feedback"></div>
                         </div>
 
@@ -284,7 +285,7 @@
 <script type="application/json" id="vehiculos-data">
 [
     @foreach ($vehiculos as $v)
-        {"id": {{ $v->id }}, "cliente_id": {{ $v->cliente_id }}, "label": "{{ addslashes($v->placa . ' — ' . ($v->cliente->nombre_completo ?? '')) }}"}
+        {"id": {{ $v->id }}, "cliente_id": {{ $v->cliente_id }}, "label": "{{ addslashes($v->placa . ' — ' . ($v->cliente->nombre_completo ?? '')) }}", "marca": "{{ addslashes($v->marca ?? '') }}", "modelo": "{{ addslashes($v->modelo ?? '') }}"}
         @if (! $loop->last),@endif
     @endforeach
 ]

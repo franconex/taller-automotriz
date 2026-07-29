@@ -678,8 +678,24 @@ import interactionPlugin from '@fullcalendar/interaction';
         try { data = JSON.parse(document.getElementById('vehiculos-data')?.textContent || '[]'); } catch(e) {}
         select.innerHTML = '<option value="">— Selecciona un vehículo —</option>' +
             data.filter((v) => !clienteId || String(v.cliente_id) === String(clienteId))
-                .map((v) => `<option value="${v.id}" data-cliente="${v.cliente_id}">${escape(v.label)}</option>`).join('');
+                .map((v) => `<option value="${v.id}" data-cliente="${v.cliente_id}" data-marca="${escape(v.marca || '')}" data-modelo="${escape(v.modelo || '')}">${escape(v.label)}</option>`).join('');
         if (current && [...select.options].some((o) => o.value === current)) select.value = current;
+        actualizarInfoVehiculo();
+    }
+
+    function actualizarInfoVehiculo() {
+        const select = document.getElementById('form-vehiculo_id');
+        const info = document.getElementById('vehiculo-info');
+        if (!select || !info) return;
+        const opt = select.options[select.selectedIndex];
+        if (opt && opt.value) {
+            const marca = opt.getAttribute('data-marca') || '';
+            const modelo = opt.getAttribute('data-modelo') || '';
+            info.innerHTML = '<i class="bi bi-car-front me-1"></i>' + escape(marca) + (marca && modelo ? ' ' : '') + escape(modelo);
+            info.style.display = '';
+        } else {
+            info.style.display = 'none';
+        }
     }
 
     async function enviarFormulario(e) {
@@ -999,6 +1015,7 @@ import interactionPlugin from '@fullcalendar/interaction';
         });
 
         document.getElementById('form-cliente_id')?.addEventListener('change', actualizarVehiculos);
+        document.getElementById('form-vehiculo_id')?.addEventListener('change', actualizarInfoVehiculo);
         document.getElementById('formulario-cita')?.addEventListener('submit', enviarFormulario);
 
         document.getElementById('btn-quick-cliente')?.addEventListener('click', abrirQuickCliente);
