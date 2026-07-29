@@ -130,4 +130,9 @@ class OrdenTrabajo extends Model
     {
         return $this->hasManyThrough(EvidenciaTrabajo::class, AsignacionTrabajo::class, 'orden_trabajo_id', 'asignacion_trabajo_id');
     }
+
+    public function autorizaciones(): HasMany
+    {
+        return $this->hasMany(Autorizacion::class, 'orden_trabajo_id');
+    }
 }

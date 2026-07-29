@@ -66,6 +66,9 @@
                                 <i class="bi bi-receipt"></i>
                                 {{ $pago->comprobante->numero }}
                             </a>
+                            <a href="{{ route('admin.factura.show', $pago->comprobante) }}" target="_blank" class="btn btn-sm ms-2" style="border:1px solid #0B1D3A;border-radius:3px;font-size:.75rem;">
+                                <i class="bi bi-printer"></i> Factura
+                            </a>
                         </dd>
                     @endif
                     <dt>Referencia</dt><dd>{{ $pago->referencia ?? '—' }}</dd>

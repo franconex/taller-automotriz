@@ -14,8 +14,8 @@
     let currentOrdenId = null;
     let currentTotal = 0;
     let currentPagado = 0;
+    let currentData = null;
 
-    // Stripe
     let stripe = null;
     let elements = null;
     let cardNumber = null;
@@ -24,7 +24,6 @@
     let stripeInitialized = false;
     const stripeFields = document.getElementById('stripe-fields');
 
-    // Abrir modal desde botones con data-modal-cobrar
     document.querySelectorAll('[data-modal-cobrar]').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
             e.preventDefault();
@@ -48,7 +47,8 @@
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function (data) {
             currentTotal = data.total_general || 0;
-            currentPagado = 0; // se podría calcular desde data si se agrega
+            currentPagado = 0;
+            currentData = data;
             renderModal(data);
             btnConfirmar.disabled = false;
         })
@@ -65,12 +65,13 @@
         var serv = data.servicios || [];
         var rep = data.repuestos || [];
 
+        var pendiente = Math.max(0, currentTotal - currentPagado);
+
         var html = '';
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem;">';
         html += '<div style="padding:.5rem .75rem;background:#f9fafb;border:1px solid #e5e7eb;"><div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;">Cliente</div><div style="font-weight:600;color:#0B1D3A;font-size:.9rem;margin-top:.1rem;">' + esc(c.nombre_completo) + '</div></div>';
         html += '<div style="padding:.5rem .75rem;background:#f9fafb;border:1px solid #e5e7eb;"><div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;">Vehículo</div><div style="font-weight:600;color:#0B1D3A;font-size:.9rem;margin-top:.1rem;">' + esc(v.placa) + (v.marca ? ' · ' + esc(v.marca) + ' ' + esc(v.modelo || '') : '') + '</div></div>';
         html += '<div style="padding:.5rem .75rem;background:#f9fafb;border:1px solid #e5e7eb;"><div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;">Orden</div><div style="font-weight:600;color:#0B1D3A;font-size:.9rem;margin-top:.1rem;">' + esc(o.numero_orden) + '</div></div>';
-        var pendiente = Math.max(0, currentTotal - currentPagado);
         html += '<div style="padding:.5rem .75rem;background:#f9fafb;border:1px solid #e5e7eb;"><div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;">Total a cobrar</div><div style="font-weight:700;color:#D62828;font-size:1.1rem;margin-top:.1rem;">Bs ' + fmt(pendiente) + '</div></div>';
         html += '</div>';
 
@@ -87,7 +88,19 @@
                 html += '<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:.25rem 0;border-bottom:1px solid #f3f4f6;"><span>' + esc(r.repuesto?.nombre || '#' + r.repuesto_id) + ' <span style="color:#9CA3AF;">x' + r.cantidad + '</span></span><span style="font-weight:600;">Bs ' + fmt(sub) + '</span></div>';
             });
         }
+        if (data.mano_obra > 0) {
+            html += '<div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;padding:.35rem 0 .15rem;margin-top:.35rem;">Mano de Obra</div>';
+            html += '<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:.25rem 0;border-bottom:1px solid #f3f4f6;"><span>Mano de obra</span><span style="font-weight:600;">Bs ' + fmt(data.mano_obra) + '</span></div>';
+        }
         html += '<div style="display:flex;justify-content:space-between;font-size:1rem;font-weight:700;padding:.6rem 0 0;margin-top:.35rem;border-top:2px solid #0B1D3A;"><span style="color:#0B1D3A;">Total</span><span style="color:#D62828;">Bs ' + fmt(pendiente) + '</span></div>';
+
+        // Datos de factura
+        html += '<div style="margin-top:1rem;padding:.75rem;border:1px solid #d1d5db;background:#f9fafb;">';
+        html += '<div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;margin-bottom:.5rem;">Datos de Factura</div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">';
+        html += '<div><label style="font-size:.7rem;color:#6B7280;display:block;margin-bottom:.15rem;">NIT</label><input type="text" id="factura-nit" class="form-control form-control-sm" value="' + esc(c.nit || '') + '" placeholder="NIT" style="font-size:.8rem;border:1px solid #d1d5db;padding:.3rem .5rem;width:100%;"></div>';
+        html += '<div><label style="font-size:.7rem;color:#6B7280;display:block;margin-bottom:.15rem;">Razón Social</label><input type="text" id="factura-razon" class="form-control form-control-sm" value="' + esc(c.razon_social || c.nombre_completo || '') + '" placeholder="Razón Social" style="font-size:.8rem;border:1px solid #d1d5db;padding:.3rem .5rem;width:100%;"></div>';
+        html += '</div></div>';
 
         // Método de pago
         html += '<div style="margin-top:1rem;"><div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;margin-bottom:.5rem;">Método de pago</div>';
@@ -108,7 +121,6 @@
 
         modalBody.innerHTML = html;
 
-        // Eventos para cambio de método
         modalBody.querySelectorAll('input[name="modal_metodo"]').forEach(function (radio) {
             radio.addEventListener('change', function () {
                 modalBody.querySelectorAll('.metodo-label').forEach(function (label) {
@@ -122,7 +134,6 @@
                     }
                 });
 
-                // Mostrar u ocultar Stripe
                 var nombre = this.dataset.nombre;
                 if (nombre === 'Tarjeta' && STRIPE_KEY) {
                     if (stripeFields) stripeFields.style.display = '';
@@ -134,7 +145,6 @@
             });
         });
 
-        // Si el método preseleccionado es Tarjeta, iniciar Stripe
         var preseleccionado = modalBody.querySelector('input[name="modal_metodo"]:checked');
         if (preseleccionado && preseleccionado.dataset.nombre === 'Tarjeta' && STRIPE_KEY) {
             if (stripeFields) stripeFields.style.display = '';
@@ -166,7 +176,6 @@
         elements = null;
     }
 
-    // Confirmar pago
     btnConfirmar.addEventListener('click', function () {
         if (!currentOrdenId) return;
         var selected = document.querySelector('input[name="modal_metodo"]:checked');
@@ -183,6 +192,12 @@
         }
     });
 
+    function obtenerDatosFactura() {
+        var nit = document.getElementById('factura-nit')?.value || '';
+        var razon = document.getElementById('factura-razon')?.value || '';
+        return { nit: nit, razon_social: razon };
+    }
+
     async function procesarPagoTarjeta(metodoPagoId) {
         try {
             if (!stripe || !cardNumber) { alert('Stripe no inicializado.'); btnConfirmar.disabled = false; btnConfirmar.innerHTML = 'Confirmar pago'; return; }
@@ -193,18 +208,20 @@
             var { error: pmError, paymentMethod } = await stripe.createPaymentMethod({ type: 'card', card: cardNumber });
             if (pmError) { alert(pmError.message); btnConfirmar.disabled = false; btnConfirmar.innerHTML = 'Confirmar pago'; return; }
 
+            var factura = obtenerDatosFactura();
+
             var res = await fetch('/admin/pagos/stripe/cobrar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' },
-                body: JSON.stringify({ orden_id: currentOrdenId }),
+                body: JSON.stringify({ orden_id: currentOrdenId, nit: factura.nit, razon_social: factura.razon_social }),
                 credentials: 'same-origin',
             });
             var data = await res.json();
 
             if (data.ok) {
-                mostrarExito(data.message || 'Pago exitoso');
+                mostrarExito(data.mensaje || 'Pago exitoso', data.factura_url, data.comprobante_numero);
             } else {
-                alert(data.message || 'Error al procesar el pago con tarjeta.');
+                alert(data.mensaje || 'Error al procesar el pago con tarjeta.');
                 btnConfirmar.disabled = false;
                 btnConfirmar.innerHTML = 'Confirmar pago';
             }
@@ -216,16 +233,19 @@
     }
 
     function procesarPagoNormal(metodoPagoId) {
+        var factura = obtenerDatosFactura();
+        var body = { orden_id: currentOrdenId, metodo_pago_id: metodoPagoId, nit: factura.nit, razon_social: factura.razon_social };
+
         fetch('/admin/pagos/cobrar-modal', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' },
-            body: JSON.stringify({ orden_id: currentOrdenId, metodo_pago_id: metodoPagoId }),
+            body: JSON.stringify(body),
             credentials: 'same-origin',
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.ok) {
-                mostrarExito(data.mensaje || 'Pago registrado');
+                mostrarExito(data.mensaje || 'Pago registrado', data.factura_url, data.comprobante_numero);
             } else {
                 alert(data.mensaje || 'Error al registrar pago');
                 btnConfirmar.disabled = false;
@@ -239,16 +259,19 @@
         });
     }
 
-    function mostrarExito(mensaje) {
-        modalBody.innerHTML = '<div class="text-center py-4"><i class="bi bi-check-circle-fill" style="font-size:2.5rem;color:#2B9348;display:block;margin-bottom:.5rem;"></i><p style="font-weight:700;color:#0B1D3A;margin-bottom:.25rem;">Pago completado</p><p class="small text-muted">' + esc(mensaje) + '</p></div>';
+    function mostrarExito(mensaje, facturaUrl, comprobanteNumero) {
+        var html = '<div class="text-center py-3"><i class="bi bi-check-circle-fill" style="font-size:2.5rem;color:#2B9348;display:block;margin-bottom:.5rem;"></i><p style="font-weight:700;color:#0B1D3A;margin-bottom:.25rem;">Pago completado</p><p class="small text-muted">' + esc(mensaje) + '</p>';
+        if (facturaUrl) {
+            html += '<a href="' + esc(facturaUrl) + '" target="_blank" class="btn btn-sm mt-2" style="border:1px solid #0B1D3A;border-radius:3px;color:#0B1D3A;font-size:.8rem;"><i class="bi bi-receipt me-1"></i> Ver Factura ' + esc(comprobanteNumero || '') + '</a>';
+        }
+        html += '</div>';
+        modalBody.innerHTML = html;
         btnConfirmar.style.display = 'none';
         btnCancelar.textContent = 'Cerrar';
         if (stripeFields) stripeFields.style.display = 'none';
         destroyStripe();
-        setTimeout(function () { bsModal.hide(); location.reload(); }, 2000);
     }
 
-    // Reset al cerrar
     modal.addEventListener('hidden.bs.modal', function () {
         btnConfirmar.disabled = false;
         btnConfirmar.innerHTML = 'Confirmar pago';
@@ -257,6 +280,7 @@
         currentOrdenId = null;
         destroyStripe();
         if (stripeFields) stripeFields.style.display = 'none';
+        location.reload();
     });
 
     function esc(s) { return String(s || '').replace(/[&<>"']/g, function (c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }

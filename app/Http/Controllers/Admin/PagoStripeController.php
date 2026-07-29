@@ -16,20 +16,23 @@ class PagoStripeController extends AdminController
     {
         $request->validate([
             'orden_id' => ['required', 'exists:ordenes_trabajo,id'],
+            'nit' => ['nullable', 'string', 'max:30'],
+            'razon_social' => ['nullable', 'string', 'max:200'],
         ], [
             'orden_id.required' => 'La orden es obligatoria.',
             'orden_id.exists' => 'La orden no existe.',
         ]);
 
-        $orden = OrdenTrabajo::with(['serviciosMecanico', 'repuestosMecanico', 'cliente'])->findOrFail($request->input('orden_id'));
+        $orden = OrdenTrabajo::with(['serviciosMecanico', 'repuestosMecanico', 'cliente', 'autorizaciones'])->findOrFail($request->input('orden_id'));
 
-        // Calcular total real desde servicios y repuestos
-        $totalReal = (float) $orden->total_general;
-        if ($totalReal <= 0) {
-            $serv = $orden->serviciosMecanico->sum('precio_base');
-            $rep = $orden->repuestosMecanico->sum(fn($r) => $r->cantidad * $r->precio_unitario_snapshot);
-            $totalReal = $serv + $rep;
-        }
+        $nit = $request->input('nit');
+        $razonSocial = $request->input('razon_social') ?? $orden->cliente->nombre_completo;
+
+        $serv = $orden->serviciosMecanico->sum('precio_base');
+        $rep = $orden->repuestosMecanico->sum(fn($r) => $r->cantidad * $r->precio_unitario_snapshot);
+        $manoObra = (float) $orden->autorizaciones->sum('mano_de_obra');
+        $totalReal = $serv + $rep + $manoObra;
+
         $pagado = (float) $orden->pagos()->where('estado', 'confirmado')->sum('monto');
         $saldoPendiente = max(0, $totalReal - $pagado);
 
@@ -65,37 +68,34 @@ class PagoStripeController extends AdminController
                 'estado'                 => 'confirmado',
             ]);
 
-            // Confirmar PaymentIntent
             $stripe->confirmar($resultado['id']);
 
-            // Generar comprobante con detalle
-            $items = [];
-            foreach ($orden->serviciosMecanico as $s) {
-                $items[] = $s->nombre_servicio . ' Bs ' . number_format($s->precio_base, 2);
-            }
-            foreach ($orden->repuestosMecanico as $r) {
-                $items[] = ($r->repuesto?->nombre ?? 'Repuesto') . ' x' . $r->cantidad . ' Bs ' . number_format($r->cantidad * $r->precio_unitario_snapshot, 2);
-            }
-
             $ultimoId = Comprobante::withTrashed()->max('id') ?? 0;
-            Comprobante::create([
+            $comprobante = Comprobante::create([
                 'pago_id'      => $pago->id,
                 'cliente_id'   => $orden->cliente_id,
-                'numero'       => 'REC-' . now()->format('Ymd') . '-' . str_pad($ultimoId + 1, 4, '0', STR_PAD_LEFT),
+                'numero'       => 'FACT-' . now()->format('Ymd') . '-' . str_pad($ultimoId + 1, 4, '0', STR_PAD_LEFT),
                 'fecha_emision' => now(),
+                'nit_ci'       => $nit,
+                'razon_social' => $razonSocial,
                 'monto_total'  => $saldoPendiente,
                 'estado'       => 'emitido',
-                'observaciones' => implode("\n", $items),
             ]);
 
-            // Entregar orden
             if (! in_array($orden->estado, ['entregada', 'anulada'])) {
                 $orden->update(['estado' => 'entregada', 'fecha_entrega' => now()]);
             }
 
+            if ($nit && ! $orden->cliente->nit) {
+                $orden->cliente->update(['nit' => $nit, 'razon_social' => $razonSocial]);
+            }
+
             return response()->json([
                 'ok' => true,
-                'message' => 'Pago de Bs ' . number_format($saldoPendiente, 2) . ' confirmado. Comprobante REC-' . str_pad($ultimoId + 1, 4, '0', STR_PAD_LEFT) . ' generado.',
+                'message' => 'Pago de Bs ' . number_format($saldoPendiente, 2) . ' confirmado. Factura ' . $comprobante->numero . ' generada.',
+                'comprobante_id' => $comprobante->id,
+                'comprobante_numero' => $comprobante->numero,
+                'factura_url' => route('admin.factura.show', $comprobante),
             ]);
         } catch (\Throwable $e) {
             return response()->json([
