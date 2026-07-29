@@ -10,12 +10,21 @@
             <h5 class="fw-bold mb-0 text-uppercase tracking-wide" style="letter-spacing:.5px;">
                 <i class="bi bi-grid-1x2-fill me-2"></i>Bienvenido, {{ Auth::user()->nombre }}
             </h5>
-            <a href="{{ route('mecanico.ordenes.index') }}" class="btn btn-sm ms-auto px-3" style="border:1px solid var(--tp-border);border-radius:4px;font-size:.8rem;">
-                <i class="bi bi-journal-text me-1"></i> Ver todas
-                @if ($counts['total_activas'] > 0)
-                    <span class="badge bg-dark ms-1 rounded-0">{{ $counts['total_activas'] }}</span>
-                @endif
-            </a>
+            <div class="d-flex align-items-center gap-2 ms-auto">
+                <form method="POST" action="{{ route('mecanico.toggle-disponibilidad') }}" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-sm d-flex align-items-center gap-1 px-3" style="border:1px solid {{ $mecanico->disponibilidad === 'disponible' ? '#16A34A' : '#DC2626' }};border-radius:4px;color:{{ $mecanico->disponibilidad === 'disponible' ? '#16A34A' : '#DC2626' }};font-size:.75rem;background:{{ $mecanico->disponibilidad === 'disponible' ? '#e6f7ed' : '#fee2e2' }};">
+                        <span style="width:8px;height:8px;border-radius:50%;background:{{ $mecanico->disponibilidad === 'disponible' ? '#16A34A' : '#DC2626' }};display:inline-block;"></span>
+                        {{ $mecanico->disponibilidad === 'disponible' ? 'Disponible' : 'Ocupado' }}
+                    </button>
+                </form>
+                <a href="{{ route('mecanico.ordenes.index') }}" class="btn btn-sm px-3" style="border:1px solid var(--tp-border);border-radius:4px;font-size:.8rem;">
+                    <i class="bi bi-journal-text me-1"></i> Ver todas
+                    @if ($counts['total_activas'] > 0)
+                        <span class="badge bg-dark ms-1 rounded-0">{{ $counts['total_activas'] }}</span>
+                    @endif
+                </a>
+            </div>
         </div>
     </div>
 

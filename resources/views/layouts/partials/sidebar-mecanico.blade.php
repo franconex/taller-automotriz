@@ -30,6 +30,21 @@
 @endphp
 
 <nav class="admin-sidebar__nav" aria-label="Menú mecánico">
+    {{-- ESTADO --}}
+    @php
+        $mec = Auth::user()->empleado?->mecanico;
+    @endphp
+    @if ($mec)
+        <div class="px-3 py-2">
+            <div class="d-flex align-items-center gap-2 small">
+                <span style="width:8px;height:8px;border-radius:50%;background:{{ $mec->disponibilidad === 'disponible' ? '#16A34A' : '#DC2626' }};display:inline-block;"></span>
+                <span class="fw-semibold text-uppercase" style="font-size:.65rem;letter-spacing:.5px;color:{{ $mec->disponibilidad === 'disponible' ? '#16A34A' : '#DC2626' }};">
+                    {{ $mec->disponibilidad === 'disponible' ? 'Disponible' : 'Ocupado' }}
+                </span>
+            </div>
+        </div>
+    @endif
+
     {{-- PRINCIPAL --}}
     <div class="admin-sidebar__section">Principal</div>
     <ul class="list-unstyled m-0">

@@ -236,6 +236,7 @@ Route::middleware('auth')->group(function () {
     // Portal del Mecánico
     Route::prefix('mecanico')->middleware('rol:Mecánico')->name('mecanico.')->group(function () {
         Route::get('dashboard', [MecanicoDashboardController::class, 'index'])->name('dashboard');
+        Route::post('toggle-disponibilidad', [MecanicoDashboardController::class, 'toggleDisponibilidad'])->name('toggle-disponibilidad');
         Route::get('ordenes', [MecanicoOrdenController::class, 'index'])->name('ordenes.index');
         Route::get('ordenes/{orden}', [MecanicoOrdenController::class, 'show'])->name('ordenes.show');
         Route::post('ordenes/{orden}/diagnostico', [MecanicoOrdenController::class, 'diagnostico'])->name('ordenes.diagnostico');

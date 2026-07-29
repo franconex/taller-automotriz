@@ -885,6 +885,7 @@ class CitaController extends AdminController
         }
 
         $mecanicos = Mecanico::with('empleado')
+            ->where('disponibilidad', 'disponible')
             ->get()
             ->filter(fn ($m) => $m->empleado && $m->empleado->estado)
             ->sortBy(fn ($m) => $m->empleado->nombre_completo)

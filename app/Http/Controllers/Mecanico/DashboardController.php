@@ -5,20 +5,28 @@ namespace App\Http\Controllers\Mecanico;
 use App\Http\Controllers\Controller;
 use App\Models\AsignacionTrabajo;
 use App\Models\Cita;
+use App\Models\Mecanico;
 use App\Models\OrdenTrabajo;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    private function mecanico(): ?Mecanico
+    {
+        return Auth::user()?->empleado?->mecanico;
+    }
+
     private function mecanicoId(): ?int
     {
-        return Auth::user()?->empleado?->mecanico?->id;
+        return $this->mecanico()?->id;
     }
 
     public function index(): View
     {
         $mecanicoId = $this->mecanicoId();
+        $mecanico = $this->mecanico();
 
         $asignaciones = AsignacionTrabajo::where('mecanico_id', $mecanicoId)
             ->with(['ordenTrabajo.cliente', 'ordenTrabajo.vehiculo'])
@@ -69,7 +77,7 @@ class DashboardController extends Controller
             ->get();
 
         return view('mecanico.dashboard', compact(
-            'counts', 'activas', 'finalizadasHoy', 'ordenesDisponibles', 'citasPendientes'
+            'counts', 'activas', 'finalizadasHoy', 'ordenesDisponibles', 'citasPendientes', 'mecanico'
         ));
     }
 
@@ -86,5 +94,20 @@ class DashboardController extends Controller
             ->paginate(20);
 
         return view('mecanico.citas.index', compact('citas'));
+    }
+
+    public function toggleDisponibilidad(): RedirectResponse
+    {
+        $mecanico = $this->mecanico();
+        if (! $mecanico) {
+            return back()->with('error', 'No se encontró tu perfil de mecánico.');
+        }
+
+        $mecanico->disponibilidad = $mecanico->disponibilidad === 'disponible' ? 'ocupado' : 'disponible';
+        $mecanico->save();
+
+        $texto = $mecanico->disponibilidad === 'disponible' ? 'disponible' : 'ocupado';
+
+        return back()->with('success', "Ahora estás marcado como {$texto}.");
     }
 }
