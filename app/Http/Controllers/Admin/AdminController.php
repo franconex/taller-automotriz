@@ -20,13 +20,12 @@ class AdminController extends Controller
             return null;
         }
 
-        if ($user->sucursal_id !== null) {
-            return $user->sucursal_id;
+        if (session()->has('admin_sucursal_id')) {
+            $sucursalId = session('admin_sucursal_id');
+            return $sucursalId !== null ? (int) $sucursalId : null;
         }
 
-        $sucursalId = session('admin_sucursal_id');
-
-        return $sucursalId ? (int) $sucursalId : null;
+        return $user->sucursal_id;
     }
 
     protected function sucursalesPermitidas(): array
@@ -35,6 +34,14 @@ class AdminController extends Controller
 
         if ($user === null) {
             return [];
+        }
+
+        if (session()->has('admin_sucursal_id')) {
+            $sessionSucursalId = session('admin_sucursal_id');
+            if ($sessionSucursalId === null) {
+                return \App\Models\Sucursal::where('estado', true)->pluck('id')->toArray();
+            }
+            return [(int) $sessionSucursalId];
         }
 
         if ($user->sucursal_id !== null) {

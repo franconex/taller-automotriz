@@ -92,7 +92,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('sucursales/{sucursale}/toggle', [SucursalController::class, 'toggle'])->name('sucursales.toggle');
         Route::post('sucursales/seleccionar', function (\Illuminate\Http\Request $request) {
             $request->validate(['sucursal_id' => 'nullable|exists:sucursales,id']);
-            session(['admin_sucursal_id' => $request->sucursal_id]);
+            session(['admin_sucursal_id' => $request->filled('sucursal_id') ? (int) $request->sucursal_id : null]);
             return back()->with('success', 'Sucursal cambiada correctamente.');
         })->name('sucursales.seleccionar');
         Route::resource('empleados', EmpleadoController::class);

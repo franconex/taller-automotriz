@@ -101,7 +101,7 @@
 
                 <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
                     <x-notificaciones-campana />
-                    @if ($usuario->sucursal_id === null)
+                    @if ($usuario->sucursal_id === null || $usuario->tieneRol('Administrador') || $usuario->tieneRol('Gerente'))
                         <div class="dropdown d-none d-md-inline-flex">
                             <button class="admin-navbar__branch dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sucursal activa">
                                 <i class="bi bi-geo-alt" aria-hidden="true"></i>
