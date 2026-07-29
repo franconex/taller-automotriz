@@ -24,6 +24,13 @@
                     <img src="{{ asset('img/logo-modo-oscuro.png') }}"
                          alt="Taller Pro"
                          class="login-brand-icon flex-shrink-0">
+                    <a href="{{ url('/') }}" class="btn btn-sm ms-auto d-inline-flex align-items-center gap-1 px-3"
+                       style="border:1px solid rgba(255,255,255,.2);border-radius:8px;color:rgba(255,255,255,.7);font-size:.82rem;transition:all .2s;"
+                       onmouseover="this.style.borderColor='rgba(255,255,255,.4)';this.style.color='#fff';"
+                       onmouseout="this.style.borderColor='rgba(255,255,255,.2)';this.style.color='rgba(255,255,255,.7)';">
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                        Volver al inicio
+                    </a>
                 </div>
 
                 <div class="flex-grow-1 d-flex flex-column justify-content-center my-4" style="max-width: 90%;">
@@ -175,6 +182,7 @@
                                     <i class="bi bi-person" aria-hidden="true"></i>
                                 </span>
                                 <input id="reg-nombre" type="text" name="nombre_completo"
+                                       value="{{ old('nombre_completo') }}"
                                        class="form-control login-input"
                                        placeholder="Nombre completo" required>
                             </div>
@@ -187,6 +195,7 @@
                                     <i class="bi bi-envelope" aria-hidden="true"></i>
                                 </span>
                                 <input id="reg-email" type="email" name="email"
+                                       value="{{ old('email') }}"
                                        class="form-control login-input"
                                        placeholder="Correo electrónico" required>
                             </div>
@@ -200,6 +209,7 @@
                                         <i class="bi bi-telephone" aria-hidden="true"></i>
                                     </span>
                                     <input id="reg-telefono" type="text" name="telefono"
+                                           value="{{ old('telefono') }}"
                                            class="form-control login-input" placeholder="Teléfono">
                                 </div>
                             </div>
@@ -210,6 +220,7 @@
                                         <i class="bi bi-card-text" aria-hidden="true"></i>
                                     </span>
                                     <input id="reg-ci" type="text" name="ci"
+                                           value="{{ old('ci') }}"
                                            class="form-control login-input" placeholder="CI (opcional)">
                                 </div>
                             </div>
@@ -315,6 +326,9 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Creando cuenta...';
         });
     }
+    @if ($errors->has('nombre_completo') || $errors->has('email') || $errors->has('password') || $errors->has('terminos'))
+    switchTab('register');
+    @endif
 })();
 
 function switchTab(tab) {

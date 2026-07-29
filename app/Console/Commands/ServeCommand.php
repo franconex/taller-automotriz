@@ -10,7 +10,7 @@ use Symfony\Component\Process\Process;
 
 use function Illuminate\Support\php_binary;
 
-#[AsCommand(name: 'serve|dev')]
+#[AsCommand(name: 'serve')]
 class ServeCommand extends Command
 {
     protected $name = 'serve';

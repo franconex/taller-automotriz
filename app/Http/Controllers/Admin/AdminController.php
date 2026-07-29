@@ -20,7 +20,7 @@ class AdminController extends Controller
             return null;
         }
 
-        if ($user->sucursal_id !== null) {
+if ($user->sucursal_id !== null) {
             return $user->sucursal_id;
         }
 
@@ -37,6 +37,13 @@ class AdminController extends Controller
             return [];
         }
 
+if (session()->has('admin_sucursal_id')) {
+            $sessionSucursalId = session('admin_sucursal_id');
+            if ($sessionSucursalId === null) {
+                return \App\Models\Sucursal::where('estado', true)->pluck('id')->toArray();
+            }
+            return [(int) $sessionSucursalId];
+        }
         if ($user->sucursal_id !== null) {
             return [$user->sucursal_id];
         }

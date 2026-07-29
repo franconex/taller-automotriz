@@ -7,8 +7,6 @@
     <li><a href="{{ route('admin.dashboard') }}">Inicio</a></li>
     <li><a href="{{ route('admin.ordenes.index') }}">Órdenes de trabajo</a></li>
     <li class="active" aria-current="page">{{ $orden->numero_orden }}</li>
-
-@include('admin.pagos.partials.modal-tarjeta')
 @endsection
 
 @section('content')
@@ -20,6 +18,12 @@
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 Volver
             </a>
+            @if ($orden->estado === 'finalizada')
+                <button type="button" class="btn btn-success btn-sm" onclick="window.TPPago?.abrirModal({{ $orden->id }})">
+                    <i class="bi bi-cash-coin" aria-hidden="true"></i>
+                    Cobrar
+                </button>
+            @endif
             @if (!Auth::user()->tieneRol('Mecánico') && Auth::user()->tienePermiso('ordenes.editar'))
             <a href="{{ route('admin.ordenes.edit', $orden) }}" class="btn btn-primary btn-sm">
                 <i class="bi bi-pencil-square" aria-hidden="true"></i>
@@ -284,7 +288,6 @@
         </div>
     </div>
 
-@include('admin.pagos.partials.modal-tarjeta')
 @endsection
 
 

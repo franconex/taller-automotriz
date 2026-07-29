@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -86,9 +87,19 @@ class User extends Authenticatable
         return $this->hasOne(Perfil::class);
     }
 
+    public function vacaciones(): HasMany
+    {
+        return $this->hasMany(Vacacion::class, 'usuario_solicitante_id');
+    }
+
     public function isActivo(): bool
     {
-        return $this->estado === 'activo';
+        return in_array($this->estado, ['activo', 'vacaciones']);
+    }
+
+    public function estaEnVacaciones(): bool
+    {
+        return $this->estado === 'vacaciones';
     }
 
     public function tieneRol(string $nombreRol): bool

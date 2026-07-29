@@ -78,9 +78,21 @@
                             <td class="d-none d-lg-table-cell cell-muted">{{ $u->sucursal->nombre ?? '—' }}</td>
                             <td>
                                 <x-admin.status-badge
-                                    :tone="$u->estado === 'activo' ? 'success' : 'neutral'"
-                                    :icon="$u->estado === 'activo' ? 'bi-check-circle-fill' : 'bi-pause-circle-fill'"
-                                    :label="ucfirst($u->estado)" />
+                                    :tone="match($u->estado) {
+                                        'activo' => 'success',
+                                        'vacaciones' => 'warning',
+                                        default => 'neutral',
+                                    }"
+                                    :icon="match($u->estado) {
+                                        'activo' => 'bi-check-circle-fill',
+                                        'vacaciones' => 'bi-sun-fill',
+                                        default => 'bi-pause-circle-fill',
+                                    }"
+                                    :label="match($u->estado) {
+                                        'activo' => 'Activo',
+                                        'vacaciones' => 'Vacaciones',
+                                        default => 'Inactivo',
+                                    }" />
                             </td>
                             <td>
                                 <div class="row-actions">

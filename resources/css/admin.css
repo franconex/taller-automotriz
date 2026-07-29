@@ -1404,3 +1404,131 @@ textarea.form-control,
 
 .admin-toast__item--info { border-left-color: var(--tp-info); }
 .admin-toast__item--info i { color: var(--tp-info); }
+
+/* ============================================
+   STEPPER
+   ============================================ */
+.tp-stepper__step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--tp-text-muted);
+}
+.tp-stepper__num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--tp-border);
+    color: var(--tp-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    transition: all 0.2s ease;
+}
+.tp-stepper__step--active .tp-stepper__num {
+    background: var(--tp-red);
+    color: #fff;
+}
+.tp-stepper__step--active .tp-stepper__label {
+    color: var(--tp-text);
+    font-weight: 600;
+}
+.tp-stepper__step--done .tp-stepper__num {
+    background: var(--tp-success);
+    color: #fff;
+}
+.tp-stepper__step--done .tp-stepper__label {
+    color: var(--tp-success);
+}
+.tp-stepper__connector {
+    width: 40px;
+    height: 2px;
+    background: var(--tp-border);
+    border-radius: 1px;
+}
+
+/* ============================================
+   METHOD CARDS
+   ============================================ */
+.tp-method-card {
+    border: 2px solid var(--tp-border);
+    border-radius: var(--tp-radius-lg);
+    padding: 1.25rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--tp-surface);
+}
+.tp-method-card:hover {
+    border-color: var(--tp-red);
+    box-shadow: 0 2px 8px rgba(227, 30, 36, 0.1);
+}
+.tp-method-card--selected {
+    border-color: var(--tp-red);
+    background: var(--tp-red-soft);
+    box-shadow: 0 2px 12px rgba(227, 30, 36, 0.15);
+}
+.tp-method-card__icon {
+    font-size: 2.25rem;
+    color: var(--tp-text-secondary);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+.tp-method-card--selected .tp-method-card__icon {
+    color: var(--tp-red);
+}
+.tp-method-card__name {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    margin-bottom: 0.2rem;
+}
+.tp-method-card__desc {
+    font-size: 0.75rem;
+    color: var(--tp-text-muted);
+}
+
+/* ============================================
+   COMPROBANTE PREVIEW
+   ============================================ */
+.tp-comprobante-preview {
+    background: var(--tp-surface-alt);
+    border: 1px solid var(--tp-border);
+    border-radius: var(--tp-radius);
+    padding: 1rem;
+}
+.tp-comprobante-preview__header {
+    border-bottom: 2px dashed var(--tp-border);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+.tp-comprobante-preview__body {
+    line-height: 1.6;
+}
+
+/* ============================================
+   FLOATING ACTION BUTTON
+   ============================================ */
+/* ============================================
+   SIDEBAR BADGE
+   ============================================ */
+.admin-sidebar__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: var(--tp-red);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-left: auto;
+}
+.admin-sidebar--collapsed .admin-sidebar__badge {
+    display: none;
+}

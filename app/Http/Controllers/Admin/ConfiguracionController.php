@@ -23,6 +23,7 @@ class ConfiguracionController extends AdminController implements HasMiddleware
         $config = [
             'razon_social' => Setting::obtener('razon_social', ''),
             'nit' => Setting::obtener('nit', ''),
+            'codigo_sistema' => Setting::obtener('codigo_sistema', ''),
             'direccion' => Setting::obtener('direccion', ''),
             'telefono' => Setting::obtener('telefono', ''),
             'email' => Setting::obtener('email', ''),
@@ -41,6 +42,7 @@ class ConfiguracionController extends AdminController implements HasMiddleware
         $datos = $request->validate([
             'razon_social' => ['nullable', 'string', 'max:150'],
             'nit' => ['nullable', 'string', 'max:30'],
+            'codigo_sistema' => ['nullable', 'string', 'max:50'],
             'direccion' => ['nullable', 'string', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:100'],

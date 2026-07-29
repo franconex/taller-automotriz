@@ -293,5 +293,5 @@
     ]
 }
 </script>
-<script type="module" src="{{ Vite::asset('resources/js/admin/dashboard-charts.js') }}"></script>
+@vite(['resources/js/admin/dashboard-charts.js'])
 @endpush

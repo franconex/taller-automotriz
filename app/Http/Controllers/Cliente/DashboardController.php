@@ -464,7 +464,9 @@ class DashboardController extends Controller
 
         $cita = Cita::create($data);
 
-        $recepcionistas = User::whereHas('rol', fn ($q) => $q->where('nombre', 'Recepcionista'))->get();
+        $recepcionistas = User::whereHas('rol', fn ($q) => $q->where('nombre', 'Recepcionista'))
+            ->whereHas('empleado', fn ($q) => $q->where('sucursal_id', $cita->sucursal_id))
+            ->get();
         Notification::send($recepcionistas, new CitaSolicitada($cita));
 
         return redirect()->route('cliente.citas')

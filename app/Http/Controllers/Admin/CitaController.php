@@ -62,7 +62,7 @@ class CitaController extends AdminController
         $vehiculos  = Vehiculo::with('cliente')->orderBy('placa')->get();
         $servicios  = Servicio::where('estado', true)->orderBy('nombre')->get();
         $mecanicos  = Mecanico::with('empleado')
-            ->where('disponibilidad', 'disponible')
+            ->when($this->usuarioSucursalId(), fn ($q) => $q->whereHas('empleado', fn ($sq) => $sq->where('sucursal_id', $this->usuarioSucursalId())))
             ->get()
             ->filter(fn ($m) => $m->empleado && $m->empleado->estado)
             ->sortBy(fn ($m) => $m->empleado->nombre_completo)
@@ -133,7 +133,7 @@ class CitaController extends AdminController
             ->when(! empty($validated['sucursal_id']), fn ($q) => $q->where('sucursal_id', $validated['sucursal_id']))
             ->when(! empty($validated['servicio_id']), fn ($q) => $q->where('servicio_id', $validated['servicio_id']))
             ->when(! empty($validated['mecanico_id']), fn ($q) => $q->where('mecanico_id', $validated['mecanico_id']))
-            ->when(! empty($validated['estado']), fn ($q) => $q->where('estado', $validated['estado']), fn ($q) => $q->whereIn('estado', ['confirmada', 'atendida']));
+            ->when(! empty($validated['estado']), fn ($q) => $q->where('estado', $validated['estado']));
 
         $eventos = $query->get()->map(function (Cita $cita) {
             $cliente  = $cita->cliente?->nombre_completo ?? '—';
@@ -371,6 +371,11 @@ class CitaController extends AdminController
         $mecanico = Mecanico::with('empleado')->find($datos['mecanico_id']);
         if (! $mecanico || ! $mecanico->empleado?->estado) {
             return $this->respuestaAccion($request, 'El mecánico seleccionado no está activo.', false);
+        }
+
+        $sucursalId = Auth::user()->sucursal_id;
+        if ($sucursalId !== null && (int) $mecanico->empleado->sucursal_id !== (int) $sucursalId) {
+            return $this->respuestaAccion($request, 'El mecánico no pertenece a tu sucursal.', false);
         }
 
         if ($this->mecanicoOcupado($mecanico->id, $cita->fecha, $cita->hora, $cita->horaFinCalculada())) {
@@ -828,7 +833,9 @@ class CitaController extends AdminController
 
     protected function asegurarSucursalPermitida(Cita $cita): void
     {
-        $sucursalId = $this->usuarioSucursalId();
+        $user = Auth::user();
+        if ($user === null) abort(403);
+        $sucursalId = $user->sucursal_id;
         if ($sucursalId !== null && (int) $cita->sucursal_id !== (int) $sucursalId) {
             abort(403, 'No tienes acceso a esta cita.');
         }
@@ -855,6 +862,55 @@ class CitaController extends AdminController
         } catch (\Throwable $e) {
             return $hora;
         }
+    }
+
+    public function mecanicosDisponibles(Request $request): JsonResponse
+    {
+        $fecha = $request->input('fecha');
+        $hora = $request->input('hora');
+        $citaId = $request->input('cita_id');
+
+        if (! $fecha || ! $hora) {
+            return response()->json([]);
+        }
+
+        $horaFin = $request->input('hora_fin')
+            ?: Carbon::parse($hora)->addHour()->format('H:i');
+
+        try {
+            $inicio = Carbon::parse($fecha . ' ' . $hora);
+            $fin = Carbon::parse($fecha . ' ' . $horaFin);
+        } catch (\Throwable $e) {
+            return response()->json([]);
+        }
+
+        $mecanicos = Mecanico::with('empleado')
+            ->where('disponibilidad', 'disponible')
+            ->get()
+            ->filter(fn ($m) => $m->empleado && $m->empleado->estado)
+            ->sortBy(fn ($m) => $m->empleado->nombre_completo)
+            ->values();
+
+        $disponibles = $mecanicos->filter(function ($m) use ($fecha, $inicio, $fin, $citaId) {
+            $conflictos = Cita::where('mecanico_id', $m->id)
+                ->whereDate('fecha', $fecha)
+                ->whereIn('estado', ['confirmada', 'pendiente'])
+                ->when($citaId, fn ($q) => $q->where('id', '!=', $citaId))
+                ->get()
+                ->filter(function ($c) use ($inicio, $fin) {
+                    $cInicio = Carbon::parse($c->fecha->format('Y-m-d') . ' ' . $c->hora);
+                    $cFin = Carbon::parse($c->fecha->format('Y-m-d') . ' ' . ($c->hora_fin ?: Carbon::parse($c->hora)->addHour()->format('H:i')));
+                    return $cInicio->lt($fin) && $cFin->gt($inicio);
+                })
+                ->isEmpty();
+
+            return $conflictos;
+        });
+
+        return response()->json($disponibles->map(fn ($m) => [
+            'id' => $m->id,
+            'nombre' => $m->empleado->nombre_completo,
+        ]));
     }
 
     protected function respuestaAccion(Request $request, string $mensaje, bool $ok = true, array $errors = []): RedirectResponse|JsonResponse

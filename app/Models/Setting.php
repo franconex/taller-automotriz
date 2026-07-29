@@ -19,22 +19,18 @@ class Setting extends Model
 
     public static function obtener(string $clave, mixed $porDefecto = null): mixed
     {
-        $cacheKey = 'setting:' . $clave;
+        $registro = static::where('clave', $clave)->first();
 
-        return Cache::rememberForever($cacheKey, function () use ($clave, $porDefecto) {
-            $registro = static::where('clave', $clave)->first();
+        if (! $registro) {
+            return $porDefecto;
+        }
 
-            if (! $registro) {
-                return $porDefecto;
-            }
-
-            return match ($registro->tipo) {
-                'booleano' => (bool) $registro->valor,
-                'numero' => is_numeric($registro->valor) ? $registro->valor + 0 : $porDefecto,
-                'json' => json_decode($registro->valor ?? '[]', true) ?? $porDefecto,
-                default => $registro->valor ?? $porDefecto,
-            };
-        });
+        return match ($registro->tipo) {
+            'booleano' => (bool) $registro->valor,
+            'numero' => is_numeric($registro->valor) ? $registro->valor + 0 : $porDefecto,
+            'json' => json_decode($registro->valor ?? '[]', true) ?? $porDefecto,
+            default => $registro->valor ?? $porDefecto,
+        };
     }
 
     public static function guardar(string $clave, mixed $valor, string $tipo = 'texto', string $grupo = 'general', ?string $descripcion = null): void

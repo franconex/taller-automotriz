@@ -174,6 +174,10 @@ class UsuarioController extends AdminController implements HasMiddleware
             return back()->with('error', 'No puedes cambiar tu propio estado.');
         }
 
+        if ($usuario->estaEnVacaciones()) {
+            return back()->with('error', 'No se puede cambiar el estado de un usuario que está de vacaciones. Finaliza sus vacaciones primero.');
+        }
+
         $nuevoEstado = $usuario->estado === 'activo' ? 'inactivo' : 'activo';
 
         if ($nuevoEstado === 'activo' && $usuario->empleado && !$usuario->empleado->estado) {

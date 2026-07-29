@@ -3,6 +3,7 @@
     'permission' => null,
     'icon' => 'bi-circle',
     'label' => '',
+    'badge' => null,
 ])
 
 @php
@@ -17,8 +18,11 @@
        class="admin-sidebar__link {{ $active ? 'active' : '' }}"
        data-tp-label="{{ $label }}"
        @if ($active) aria-current="page" @endif>
-        <i class="bi {{ $icon }}" aria-hidden="true"></i>
+         <i class="bi {{ $icon }}" aria-hidden="true"></i>
         <span class="admin-sidebar__text">{{ $label }}</span>
+        @if ($badge && $badge > 0)
+            <span class="admin-sidebar__badge">{{ $badge }}</span>
+        @endif
     </a>
 </li>
 @endif

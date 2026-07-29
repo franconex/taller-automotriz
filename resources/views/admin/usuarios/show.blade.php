@@ -38,9 +38,21 @@
                     <dt>Estado</dt>
                     <dd>
                         <x-admin.status-badge
-                            :tone="$usuario->estado === 'activo' ? 'success' : 'neutral'"
-                            :icon="$usuario->estado === 'activo' ? 'bi-check-circle-fill' : 'bi-pause-circle-fill'"
-                            :label="ucfirst($usuario->estado)" />
+                            :tone="match($usuario->estado) {
+                                'activo' => 'success',
+                                'vacaciones' => 'warning',
+                                default => 'neutral',
+                            }"
+                            :icon="match($usuario->estado) {
+                                'activo' => 'bi-check-circle-fill',
+                                'vacaciones' => 'bi-sun-fill',
+                                default => 'bi-pause-circle-fill',
+                            }"
+                            :label="match($usuario->estado) {
+                                'activo' => 'Activo',
+                                'vacaciones' => 'Vacaciones',
+                                default => 'Inactivo',
+                            }" />
                     </dd>
                 </dl>
             </div>

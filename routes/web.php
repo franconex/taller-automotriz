@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\SolicitudPermisoController;
 use App\Http\Controllers\Admin\SucursalController;
 use App\Http\Controllers\Admin\TipoServicioController;
 use App\Http\Controllers\Admin\UsuarioController;
+use App\Http\Controllers\Admin\VacacionController;
 use App\Http\Controllers\Admin\VehiculoController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\GoogleSocialiteController;
@@ -92,7 +93,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('sucursales/{sucursale}/toggle', [SucursalController::class, 'toggle'])->name('sucursales.toggle');
         Route::post('sucursales/seleccionar', function (\Illuminate\Http\Request $request) {
             $request->validate(['sucursal_id' => 'nullable|exists:sucursales,id']);
-            session(['admin_sucursal_id' => $request->sucursal_id]);
+session(['admin_sucursal_id' => $request->filled('sucursal_id') ? (int) $request->sucursal_id : null]);
             return back()->with('success', 'Sucursal cambiada correctamente.');
         })->name('sucursales.seleccionar');
         Route::resource('empleados', EmpleadoController::class);
@@ -143,6 +144,15 @@ Route::middleware('auth')->group(function () {
         Route::patch('solicitudes-permiso/{solicitudPermiso}/rechazar', [SolicitudPermisoController::class, 'rechazar'])
             ->name('solicitudes-permiso.rechazar');
 
+        Route::resource('vacaciones', VacacionController::class)
+            ->only(['index', 'create', 'store']);
+        Route::patch('vacaciones/{vacacion}/aprobar', [VacacionController::class, 'aprobar'])
+            ->name('vacaciones.aprobar');
+        Route::patch('vacaciones/{vacacion}/rechazar', [VacacionController::class, 'rechazar'])
+            ->name('vacaciones.rechazar');
+        Route::patch('vacaciones/{vacacion}/finalizar', [VacacionController::class, 'finalizar'])
+            ->name('vacaciones.finalizar');
+
         Route::get('vehiculos/verificar-placa', [VehiculoController::class, 'verificarPlaca'])
             ->name('vehiculos.verificar-placa');
         Route::get('vehiculos/buscar-por-placa', [VehiculoController::class, 'buscarPorPlaca'])
@@ -163,13 +173,15 @@ Route::middleware('auth')->group(function () {
         Route::resource('pagos', PagoController::class);
         Route::patch('pagos/{pago}/toggle', [PagoController::class, 'toggle'])->name('pagos.toggle');
         Route::post('pagos/stripe/cobrar', [\App\Http\Controllers\Admin\PagoStripeController::class, 'cobrar'])->middleware('permiso:pagos.registrar')->name('pagos.stripe.cobrar');
+        Route::get('pagos/stripe/success', [\App\Http\Controllers\Admin\PagoStripeController::class, 'success'])->name('pagos.stripe.success');
+        Route::get('pagos/stripe/cancel', [\App\Http\Controllers\Admin\PagoStripeController::class, 'cancel'])->name('pagos.stripe.cancel');
         Route::patch('pagos/{pago}/anular', [PagoController::class, 'anular'])->name('pagos.anular');
         Route::get('pagos/{pago}/qr', [\App\Http\Controllers\Admin\PagoQRController::class, 'mostrar'])->name('pagos.qr');
         Route::post('pagos/qr-data', [\App\Http\Controllers\Admin\PagoQRController::class, 'qrData'])->name('pagos.qr-data');
         Route::get('pagos/modal-data/{orden}', [\App\Http\Controllers\Admin\PagoController::class, 'modalData'])->middleware('permiso:pagos.registrar')->name('pagos.modal-data');
         Route::post('pagos/cobrar-modal', [\App\Http\Controllers\Admin\PagoController::class, 'cobrarDesdeModal'])->middleware('permiso:pagos.registrar')->name('pagos.cobrar-modal');
-        Route::resource('comprobantes', ComprobanteController::class)->except(['create', 'store']);
-        Route::patch('comprobantes/{comprobante}/anular', [ComprobanteController::class, 'anular'])->name('comprobantes.anular');
+        Route::get('factura/{comprobante}', [\App\Http\Controllers\Admin\FacturaController::class, 'show'])->name('factura.show');
+        Route::get('verificar-nit', [\App\Http\Controllers\Admin\NitController::class, 'verificar'])->name('nit.verificar');
         Route::get('configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
         Route::put('configuracion', [ConfiguracionController::class, 'update'])->name('configuracion.update');
         Route::get('reportes', [ReporteController::class, 'index'])->name('reportes.index');
@@ -209,6 +221,7 @@ Route::middleware('auth')->group(function () {
         Route::get('citas/eventos', [CitaController::class, 'eventos'])->name('citas.eventos');
         Route::get('citas/tabla-dia', [CitaController::class, 'tablaDia'])->name('citas.tabla-dia');
         Route::get('citas/proximas', [CitaController::class, 'proximas'])->name('citas.proximas');
+        Route::get('mecanicos-disponibles', [CitaController::class, 'mecanicosDisponibles'])->name('mecanicos.disponibles');
         Route::post('citas/quick-cliente', [CitaController::class, 'quickCliente'])->middleware('permiso:citas.crear')->name('citas.quick-cliente');
         Route::post('citas/quick-vehiculo', [CitaController::class, 'quickVehiculo'])->middleware('permiso:citas.crear')->name('citas.quick-vehiculo');
         Route::post('citas', [CitaController::class, 'store'])->middleware('permiso:citas.crear')->name('citas.store');
@@ -234,6 +247,7 @@ Route::middleware('auth')->group(function () {
     // Portal del Mecánico
     Route::prefix('mecanico')->middleware('rol:Mecánico')->name('mecanico.')->group(function () {
         Route::get('dashboard', [MecanicoDashboardController::class, 'index'])->name('dashboard');
+        Route::post('toggle-disponibilidad', [MecanicoDashboardController::class, 'toggleDisponibilidad'])->name('toggle-disponibilidad');
         Route::get('ordenes', [MecanicoOrdenController::class, 'index'])->name('ordenes.index');
         Route::get('ordenes/{orden}', [MecanicoOrdenController::class, 'show'])->name('ordenes.show');
         Route::post('ordenes/{orden}/diagnostico', [MecanicoOrdenController::class, 'diagnostico'])->name('ordenes.diagnostico');
@@ -246,6 +260,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('ordenes/{orden}/estado', [MecanicoOrdenController::class, 'cambiarEstado'])->name('ordenes.estado');
         Route::patch('ordenes/{orden}/finalizar', [MecanicoOrdenController::class, 'finalizar'])->name('ordenes.finalizar');
         Route::post('ordenes/{orden}/tomar', [MecanicoOrdenController::class, 'tomar'])->name('ordenes.tomar');
+            Route::get('citas', [MecanicoDashboardController::class, 'citasIndex'])->name('citas.index');
         // Cotización desde orden (nueva)
         Route::get('ordenes/{orden}/cotizar', [MecanicoCotizacionController::class, 'ordenCreate'])->name('ordenes.cotizar-nueva');
         Route::post('ordenes/{orden}/cotizar/enviar', [MecanicoCotizacionController::class, 'ordenEnviar'])->name('ordenes.cotizar-enviar');

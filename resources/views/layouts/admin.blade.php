@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="stripe-key" id="stripe-key" content="{{ config('stripe.key') }}">
     <title>@yield('title', 'Panel') — Taller Pro</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    @vite(['resources/css/app.css', 'resources/css/admin.css', 'resources/js/app.js', 'resources/js/admin.js', 'resources/js/admin/pago-stripe.js'])
+    @vite(['resources/css/app.css', 'resources/css/admin.css', 'resources/js/app.js', 'resources/js/admin.js', 'resources/js/admin/pago-qr.js'])
     @stack('styles')
 </head>
 <body class="admin-body">
@@ -99,8 +98,11 @@
                 </div>
 
                 <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
+                    <a href="{{ url('/') }}" class="btn btn-sm d-none d-md-inline-flex align-items-center gap-1 px-2" target="_blank" title="Ver sitio web" style="border:1px solid var(--tp-border, #e2e8f0);border-radius:6px;color:var(--tp-text-muted, #64748b);font-size:.8rem;">
+                        <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                    </a>
                     <x-notificaciones-campana />
-                    @if ($usuario->sucursal_id === null)
+@if ($usuario->sucursal_id === null || $usuario->tieneRol('Administrador') || $usuario->tieneRol('Gerente'))
                         <div class="dropdown d-none d-md-inline-flex">
                             <button class="admin-navbar__branch dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sucursal activa">
                                 <i class="bi bi-geo-alt" aria-hidden="true"></i>
@@ -155,6 +157,12 @@
                         <ul class="dropdown-menu dropdown-menu-end admin-dropdown">
                             <li class="dropdown-header">{{ $usuario->email }}</li>
                             <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url('/') }}" target="_blank">
+                                    <i class="bi bi-globe2" aria-hidden="true"></i>
+                                    Ver sitio web
+                                </a>
+                            </li>
                             <li>
                                 <a class="dropdown-item" href="{{ route('admin.perfil.index') }}">
                                     <i class="bi bi-person" aria-hidden="true"></i>
@@ -211,6 +219,7 @@
                 });
             });
         });
+
     });
     </script>
 </body>

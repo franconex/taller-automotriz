@@ -41,9 +41,9 @@ class GoogleSocialiteController extends Controller
                 ->withErrors($e->errors());
         }
 
-        Auth::login($user);
-
         $request->session()->regenerate();
+
+        Auth::login($user, true);
 
         if (! $user->email_verified_at && ($googleUser->user['email_verified'] ?? false)) {
             $user->update(['email_verified_at' => now()]);
@@ -51,7 +51,10 @@ class GoogleSocialiteController extends Controller
 
         $redirectTo = $user->esCliente() ? route('cliente.dashboard') : route('admin.dashboard');
 
-        return redirect()->intended($redirectTo)
+        $request->session()->put('url.intended', $redirectTo);
+        $request->session()->save();
+
+        return redirect()->to($redirectTo)
             ->with('success', 'Inicio de sesión con Google exitoso.');
     }
 }
