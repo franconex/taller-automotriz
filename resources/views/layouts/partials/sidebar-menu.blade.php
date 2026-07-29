@@ -30,9 +30,14 @@
         ['route' => 'admin.movimientos-inventario.index', 'permission' => 'inventario.ver', 'icon' => 'bi-arrow-left-right', 'label' => 'Movimientos'],
     ];
 
+    $pagosPendientes = \App\Models\OrdenTrabajo::where('estado', 'finalizada')
+        ->whereDoesntHave('pagos', function ($q) { $q->where('estado', 'confirmado'); })
+        ->when(Auth::user()->sucursal_id, fn ($q) => $q->where('sucursal_id', Auth::user()->sucursal_id))
+        ->count();
+
     $finanzas = [
         ['route' => 'admin.metodos-pago.index',   'permission' => 'metodos-pago.ver', 'icon' => 'bi-credit-card', 'label' => 'Métodos de pago'],
-        ['route' => 'admin.pagos.index',          'permission' => 'pagos.ver',     'icon' => 'bi-cash-coin',     'label' => 'Pagos'],
+        ['route' => 'admin.pagos.index',          'permission' => 'pagos.ver',     'icon' => 'bi-cash-coin',     'label' => 'Pagos', 'badge' => $pagosPendientes],
         ['route' => 'admin.comprobantes.index',   'permission' => 'comprobantes.ver', 'icon' => 'bi-receipt',    'label' => 'Comprobantes'],
         ['route' => 'admin.reportes.index',       'permission' => 'reportes.ver',  'icon' => 'bi-graph-up',      'label' => 'Reportes'],
         ['route' => 'admin.auditoria.index',      'permission' => 'auditoria.ver', 'icon' => 'bi-journal-text',  'label' => 'Auditoría'],
@@ -65,7 +70,6 @@
     <ul class="list-unstyled m-0">
         <x-admin.sidebar-item
             routeName="admin.dashboard"
-            permission="dashboard.ver"
             icon="bi-speedometer2"
             label="Dashboard" />
     </ul>
@@ -136,7 +140,8 @@
                     :routeName="$item['route']"
                     :permission="$item['permission'] ?? null"
                     :icon="$item['icon']"
-                    :label="$item['label']" />
+                    :label="$item['label']"
+                    :badge="$item['badge'] ?? null" />
             @endforeach
         </ul>
     @endif

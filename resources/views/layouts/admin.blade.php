@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
 
     @vite(['resources/css/app.css', 'resources/css/admin.css', 'resources/js/app.js', 'resources/js/admin.js', 'resources/js/admin/pago-stripe.js'])
     @stack('styles')
@@ -28,6 +29,8 @@
             collect($partesNombre)->take(2)->map(fn($p) => mb_substr($p, 0, 1))->implode('')
         );
         if ($iniciales === '') { $iniciales = 'U'; }
+        $sucursalesDisponibles = \App\Models\Sucursal::where('estado', true)->orderBy('nombre')->get();
+        $sucursalActiva = $usuario->sucursal ?? $sucursalesDisponibles->firstWhere('id', session('admin_sucursal_id'));
     @endphp
 
     <div class="admin-shell">
@@ -38,7 +41,11 @@
                 <img src="{{ asset('img/logo-modo-oscuro.png') }}" alt="Taller Pro">
             </div>
             <div class="admin-sidebar__nav-wrap">
-                @include('layouts.partials.sidebar-menu')
+                @if ($usuario->tieneRol('Mecánico'))
+                    @include('layouts.partials.sidebar-mecanico')
+                @else
+                    @include('layouts.partials.sidebar-menu')
+                @endif
             </div>
         </aside>
 
@@ -55,7 +62,11 @@
                 <div class="admin-mobile-drawer__brand">
                     <img src="{{ asset('img/logo-modo-oscuro.png') }}" alt="Taller Pro">
                 </div>
+                @if ($usuario->tieneRol('Mecánico'))
+                    @include('layouts.partials.sidebar-mecanico')
+                @else
                     @include('layouts.partials.sidebar-menu')
+                @endif
                 </div>
             </aside>
 
@@ -89,7 +100,37 @@
                 </div>
 
                 <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
-                    @if ($usuario->sucursal)
+                    <x-notificaciones-campana />
+                    @if ($usuario->sucursal_id === null)
+                        <div class="dropdown d-none d-md-inline-flex">
+                            <button class="admin-navbar__branch dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sucursal activa">
+                                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                {{ $sucursalActiva?->nombre ?? 'Todas las sucursales' }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end admin-dropdown">
+                                <li>
+                                    <form method="POST" action="{{ route('admin.sucursales.seleccionar') }}">
+                                        @csrf
+                                        <input type="hidden" name="sucursal_id" value="">
+                                        <button type="submit" class="dropdown-item {{ session('admin_sucursal_id') === null ? 'active' : '' }}">
+                                            <i class="bi bi-building"></i> Todas las sucursales
+                                        </button>
+                                    </form>
+                                </li>
+                                @foreach ($sucursalesDisponibles as $s)
+                                    <li>
+                                        <form method="POST" action="{{ route('admin.sucursales.seleccionar') }}">
+                                            @csrf
+                                            <input type="hidden" name="sucursal_id" value="{{ $s->id }}">
+                                            <button type="submit" class="dropdown-item {{ (int) session('admin_sucursal_id') === (int) $s->id ? 'active' : '' }}">
+                                                <i class="bi bi-building"></i> {{ $s->nombre }}
+                                            </button>
+                                        </form>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @elseif ($usuario->sucursal)
                         <span class="admin-navbar__branch d-none d-md-inline-flex" title="Sucursal activa">
                             <i class="bi bi-geo-alt" aria-hidden="true"></i>
                             {{ $usuario->sucursal->nombre }}
@@ -153,9 +194,41 @@
         </div>
     </div>
 
+    <button class="admin-fab" id="fabRegistrarPago" title="Registrar pago rápido" aria-label="Registrar pago">
+        <i class="bi bi-cash-coin" aria-hidden="true"></i>
+    </button>
+
     @stack('modals')
     @stack('offcanvas')
     @stack('scripts')
+    <script>
+    // Búsqueda en selects con filtro: oculta options que no coinciden
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.search-select-input').forEach(function(input) {
+            input.addEventListener('keyup', function() {
+                var targetId = this.dataset.target;
+                var select = document.getElementById(targetId);
+                if (!select) return;
+                var q = this.value.toLowerCase();
+                Array.from(select.options).forEach(function(opt) {
+                    if (!opt.value) return;
+                    opt.hidden = !opt.text.toLowerCase().includes(q);
+                });
+            });
+        });
+
+        var fab = document.getElementById('fabRegistrarPago');
+        if (fab) {
+            fab.addEventListener('click', function () {
+                if (typeof window.TPPago !== 'undefined' && window.TPPago?.abrirModal) {
+                    window.TPPago.abrirModal();
+                } else {
+                    window.location.href = '{{ route("admin.pagos.index") }}';
+                }
+            });
+        }
+    });
+    </script>
 </body>
 </html>
 

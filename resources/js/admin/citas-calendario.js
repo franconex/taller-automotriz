@@ -29,10 +29,13 @@ import interactionPlugin from '@fullcalendar/interaction';
     const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     const DIAS_SEMANA = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
     const COLORES = {
-        confirmada: '#16A34A',
+        solicitada: '#6B7280',
+        propuesta:  '#F59E0B',
         pendiente:  '#F59E0B',
+        confirmada: '#16A34A',
         atendida:   '#0891B2',
         cancelada:  '#9CA3AF',
+        rechazada:  '#DC2626',
         no_asistio: '#B91C1C',
     };
 
@@ -446,7 +449,7 @@ import interactionPlugin from '@fullcalendar/interaction';
         const horaFin = c.hora_fin ? formatHora(c.hora_fin) : '';
         let actions = '';
         if (c.es_pasable_reprogramar) actions += `<button type="button" class="btn btn-outline-secondary" data-accion="reprogramar" data-id="${c.id}"><i class="bi bi-arrow-repeat"></i> Reprogramar</button>`;
-        if (c.es_pasable_confirmar) actions += `<button type="button" class="btn btn-success" data-accion="confirmar" data-id="${c.id}"><i class="bi bi-check2-circle"></i> Confirmar</button>`;
+        if (c.es_pasable_confirmar) actions += `<button type="button" class="btn btn-success" data-accion="confirmar" data-id="${c.id}"><i class="bi bi-check2-circle"></i> Confirmar y asignar mecánico</button>`;
         if (c.es_pasable_cancelar) actions += `<button type="button" class="btn btn-outline-danger" data-accion="cancelar" data-id="${c.id}"><i class="bi bi-x-circle"></i> Cancelar</button>`;
         if (c.es_pasable_no_asistio) actions += `<button type="button" class="btn btn-outline-warning" data-accion="no-asistio" data-id="${c.id}"><i class="bi bi-person-x"></i> No asistió</button>`;
         if (!c.tiene_orden && !['cancelada','no_asistio'].includes(c.estado)) actions += `<button type="button" class="btn btn-primary" data-accion="convertir-orden" data-id="${c.id}"><i class="bi bi-clipboard-check"></i> Convertir a orden</button>`;
@@ -482,7 +485,7 @@ import interactionPlugin from '@fullcalendar/interaction';
                 const a = btn.getAttribute('data-accion');
                 const id = btn.getAttribute('data-id');
                 if (a === 'reprogramar') abrirReprogramar(id);
-                if (a === 'confirmar') confirmarCita(id);
+                if (a === 'confirmar') { cerrarModal('modal-detalle-cita'); abrirFormulario({ cita_id: id, accion: 'confirmar' }); }
                 if (a === 'cancelar') cancelarCita(id);
                 if (a === 'no-asistio') marcarNoAsistio(id);
                 if (a === 'convertir-orden') convertirEnOrden(id);
@@ -597,7 +600,15 @@ import interactionPlugin from '@fullcalendar/interaction';
         document.getElementById('form-cita_id').value = cita_id || '';
         document.getElementById('form-__accion').value = accion;
 
-        if (accion === 'reprogramar') {
+        const mecanicoSelect = document.getElementById('form-mecanico_id');
+        if (mecanicoSelect) {
+            mecanicoSelect.required = accion === 'confirmar';
+        }
+
+        if (accion === 'confirmar') {
+            document.getElementById('modal-formulario-titulo').textContent = 'Confirmar cita y asignar mecánico';
+            cargarDatosEdicion(cita_id);
+        } else if (accion === 'reprogramar') {
             document.getElementById('modal-formulario-titulo').textContent = 'Reprogramar cita';
             cargarDatosReprogramar(cita_id);
         } else if (cita_id) {
@@ -696,9 +707,15 @@ import interactionPlugin from '@fullcalendar/interaction';
 
         try {
             let url, method;
-            if (accion === 'reprogramar' && citaId) { url = `${urlAcciones}/${citaId}/reprogramar`; method = 'PUT'; }
+            if (accion === 'confirmar' && citaId) { url = `${urlAcciones}/${citaId}/confirmar`; method = 'PATCH'; }
+            else if (accion === 'reprogramar' && citaId) { url = `${urlAcciones}/${citaId}/reprogramar`; method = 'PUT'; }
             else if (citaId) { url = `${urlAcciones}/${citaId}`; method = 'PUT'; }
             else { url = urlAcciones; method = 'POST'; }
+
+            let body = data;
+            if (accion === 'confirmar') {
+                body = { mecanico_id: data.mecanico_id };
+            }
 
             const res = await fetch(url, {
                 method,
@@ -709,7 +726,7 @@ import interactionPlugin from '@fullcalendar/interaction';
                     'X-CSRF-TOKEN': csrf,
                 },
                 credentials: 'same-origin',
-                body: JSON.stringify(data),
+                body: JSON.stringify(body),
             });
 
             let json;
@@ -961,6 +978,13 @@ import interactionPlugin from '@fullcalendar/interaction';
         bindToolbar();
         recargarTablas();
         actualizarBotonesVista();
+
+        // Abrir detalle automáticamente si hay ?cita=ID en la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const citaIdParam = urlParams.get('cita');
+        if (citaIdParam) {
+            setTimeout(() => abrirDetalle(citaIdParam), 400);
+        }
 
         let resizeTimer = null;
         window.addEventListener('resize', () => {

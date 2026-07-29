@@ -20,6 +20,7 @@ class ClienteController extends AdminController implements HasMiddleware
     public static function middleware(): array
     {
         return [
+            new Middleware('permiso:clientes.ver', only: ['index', 'show']),
             new Middleware('permiso:clientes.crear', only: ['create', 'store']),
             new Middleware('permiso:clientes.editar', only: ['edit', 'update', 'destroy', 'toggle']),
         ];

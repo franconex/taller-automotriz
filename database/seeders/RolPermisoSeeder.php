@@ -18,10 +18,11 @@ class RolPermisoSeeder extends Seeder
         // Administrador: todos los permisos
         $admin->permisos()->sync(Permiso::pluck('id'));
 
+        // Dashboard no es un permiso, es una ruta accesible por rol.
+
         // Gerente: supervisión, reportes, órdenes, inventario, pagos, clientes
         $gerente->permisos()->sync(
             Permiso::whereIn('codigo', [
-                'dashboard.ver',
                 'sucursales.ver',
                 'usuarios.ver',
                 'roles.ver',
@@ -77,6 +78,18 @@ class RolPermisoSeeder extends Seeder
                 'precios.ver',
                 'solicitudes-permiso.ver',
                 'solicitudes-permiso.crear',
+                'citas.confirmar',
+                'citas.asignar_mecanico',
+                'citas.registrar_llegada',
+                'ordenes.atencion_directa',
+                'ordenes.servicios_asignar',
+                'ordenes.repuestos_asignar',
+                'ordenes.estimar_tiempo',
+                'ordenes.ver_estimacion',
+                'subservicios.ver',
+                'subservicios.crear',
+                'subservicios.editar',
+                'estimaciones.supervisar',
             ])->pluck('id')
         );
 
@@ -93,18 +106,24 @@ class RolPermisoSeeder extends Seeder
                 'repuestos.ver', 'mecanicos.ver',
                 'metodos-pago.ver', 'comprobantes.ver',
                 'solicitudes-permiso.ver', 'solicitudes-permiso.crear',
+                'citas.confirmar',
+                'citas.asignar_mecanico',
+                'citas.registrar_llegada',
+                'ordenes.atencion_directa',
+                'ordenes.ver_estimacion',
+                'subservicios.ver',
             ])->pluck('id')
         );
 
-        // Mecánico
+        // Mecánico — permisos predeterminados para acceder a recursos del sistema
         $mecanico->permisos()->sync(
             Permiso::whereIn('codigo', [
-                'dashboard.ver',
                 'ordenes.ver', 'ordenes.actualizar_estado',
-                'inventario.ver', 'servicios.ver', 'tipos-servicio.ver',
-                'proveedores.ver', 'repuestos.ver', 'empleados.ver', 'mecanicos.ver',
-                'metodos-pago.ver', 'comprobantes.ver',
+                'inventario.ver', 'servicios.ver', 'repuestos.ver',
                 'solicitudes-permiso.ver', 'solicitudes-permiso.crear',
+                'ordenes.estimar_tiempo', 'ordenes.ver_estimacion',
+                'subservicios.ver',
+                'ordenes.servicios_asignar', 'ordenes.repuestos_asignar',
             ])->pluck('id')
         );
     }

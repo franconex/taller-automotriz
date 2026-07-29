@@ -113,7 +113,7 @@
                     <x-admin.form-field name="sucursal_id" label="Sucursal" type="select" :value="old('sucursal_id')">
                         <option value="">Seleccionar...</option>
                         @foreach ($sucursales as $s)
-                            <option value="{{ $s->id }}" @selected((int) old('sucursal_id', auth()->user()->sucursal_id ?? '') === $s->id)>{{ $s->nombre }}</option>
+                            <option value="{{ $s->id }}" @selected((int) old('sucursal_id', auth()->user()->sucursal_id ?? session('admin_sucursal_id') ?? '') === $s->id)>{{ $s->nombre }}</option>
                         @endforeach
                     </x-admin.form-field>
                 </div>

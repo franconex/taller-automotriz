@@ -46,6 +46,16 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
+        if ($user->esCliente() && ! $user->cliente) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'login' => 'No puedes iniciar sesión porque tu cuenta de cliente no está activa. Contacta al administrador.',
+            ]);
+        }
+
         $user->update(['ultimo_acceso' => now()]);
 
         return $this->redirectAfterLogin($user);
@@ -66,6 +76,8 @@ class AuthenticatedSessionController extends Controller
     {
         return match ($user->rol->nombre) {
             'Recepcionista' => route('admin.citas.index'),
+            'Mecánico' => route('mecanico.dashboard'),
+            'Cliente' => route('cliente.dashboard'),
             default => route('admin.dashboard'),
         };
     }
@@ -84,6 +96,14 @@ class AuthenticatedSessionController extends Controller
     private function intendedUrlMatchesRole(string $url, User $user): bool
     {
         $path = parse_url($url, PHP_URL_PATH) ?? '';
+
+        if ($user->esCliente()) {
+            return str_contains($path, '/cliente/');
+        }
+
+        if ($user->tieneRol('Mecánico')) {
+            return str_contains($path, '/mecanico/');
+        }
 
         return str_contains($path, '/admin/');
     }

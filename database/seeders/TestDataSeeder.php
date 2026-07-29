@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\AsignacionTrabajo;
 use App\Models\Cita;
 use App\Models\Cliente;
 use App\Models\Comprobante;
@@ -11,6 +12,7 @@ use App\Models\Especialidad;
 use App\Models\Inventario;
 use App\Models\Mecanico;
 use App\Models\MetodoPago;
+use App\Models\MovimientoInventario;
 use App\Models\OrdenTrabajo;
 use App\Models\Pago;
 use App\Models\Proveedor;
@@ -29,162 +31,229 @@ class TestDataSeeder extends Seeder
 {
     public function run(): void
     {
-        $sucursal = Sucursal::first() ?? Sucursal::create([
-            'nombre' => 'Sucursal Principal',
-            'direccion' => 'Av. Principal #100, Santa Cruz',
-            'telefono' => '3-1234567',
-            'horario_atencion' => 'Lun-Vie 8:00-18:00, Sab 8:00-13:00',
-        ]);
+        $password = 'TallerPro2026!';
 
         $adminRole = Rol::where('nombre', 'Administrador')->first();
         $gerenteRole = Rol::where('nombre', 'Gerente')->first();
         $recepcionistaRole = Rol::where('nombre', 'Recepcionista')->first();
-        $mecanicoRole = Rol::where('nombre', 'Mecanico')->first();
+        $mecanicoRole = Rol::where('nombre', 'Mecánico')->first();
 
-        $this->command->info('Creando empleados...');
+        $this->command->info('=== CREANDO 3 SUCURSALES ===');
 
-        $empleadoAdmin = Empleado::firstOrCreate(
-            ['ci' => '12345678'],
+        $sucursalesData = [
             [
-                'sucursal_id' => $sucursal->id,
-                'rol_id' => $adminRole->id,
-                'nombre_completo' => 'Admin Principal',
-                'telefono' => '70000001',
-                'email' => 'admin@tallerpro.com',
-                'cargo' => 'Administrador del Sistema',
-                'fecha_contratacion' => '2024-01-15',
-                'estado' => true,
-            ]
-        );
-
-        $empleadoGerente = Empleado::firstOrCreate(
-            ['ci' => '87654321'],
+                'nombre' => 'Sucursal Principal',
+                'direccion' => 'Av. Cristo Redentor #1250, Santa Cruz',
+                'telefono' => '3-3456789',
+                'horario_atencion' => 'Lun-Vie 7:00-19:00, Sáb 7:00-14:00',
+                'latitud' => -17.783333,
+                'longitud' => -63.182500,
+            ],
             [
-                'sucursal_id' => $sucursal->id,
-                'rol_id' => $gerenteRole->id,
-                'nombre_completo' => 'Maria Garcia',
-                'telefono' => '70000002',
-                'email' => 'maria@tallerpro.com',
-                'cargo' => 'Gerente General',
-                'fecha_contratacion' => '2024-02-01',
-                'estado' => true,
-            ]
-        );
-
-        $empleadoRecepcion = Empleado::firstOrCreate(
-            ['ci' => '11223344'],
+                'nombre' => 'Sucursal Norte Montero',
+                'direccion' => 'Av. Ejército Nacional #450, Montero',
+                'telefono' => '3-9221100',
+                'horario_atencion' => 'Lun-Vie 8:00-18:00, Sáb 8:00-13:00',
+                'latitud' => -17.333333,
+                'longitud' => -63.250000,
+            ],
             [
-                'sucursal_id' => $sucursal->id,
-                'rol_id' => $recepcionistaRole->id,
-                'nombre_completo' => 'Carlos Mendoza',
-                'telefono' => '70000003',
-                'email' => 'carlos@tallerpro.com',
-                'cargo' => 'Recepcionista',
-                'fecha_contratacion' => '2024-03-10',
-                'estado' => true,
-            ]
-        );
+                'nombre' => 'Sucursal Sur La Guardia',
+                'direccion' => 'Carretera Santa Cruz-Cotoca Km 12, La Guardia',
+                'telefono' => '3-7711222',
+                'horario_atencion' => 'Lun-Vie 8:00-17:00, Sáb 8:00-12:00',
+                'latitud' => -17.933333,
+                'longitud' => -63.133333,
+            ],
+        ];
 
-        $empleadoMec1 = Empleado::firstOrCreate(
-            ['ci' => '99887766'],
-            [
-                'sucursal_id' => $sucursal->id,
-                'rol_id' => $mecanicoRole->id,
-                'nombre_completo' => 'Juan Perez',
-                'telefono' => '70000004',
-                'email' => 'juan@tallerpro.com',
-                'cargo' => 'Mecanico Senior',
-                'fecha_contratacion' => '2024-01-20',
-                'estado' => true,
-            ]
-        );
+        $sucursales = [];
+        foreach ($sucursalesData as $sd) {
+            $sucursales[] = Sucursal::firstOrCreate(
+                ['nombre' => $sd['nombre']],
+                $sd
+            );
+        }
 
-        $empleadoMec2 = Empleado::firstOrCreate(
-            ['ci' => '55667788'],
-            [
-                'sucursal_id' => $sucursal->id,
-                'rol_id' => $mecanicoRole->id,
-                'nombre_completo' => 'Pedro Ramirez',
-                'telefono' => '70000005',
-                'email' => 'pedro@tallerpro.com',
-                'cargo' => 'Mecanico',
-                'fecha_contratacion' => '2024-04-05',
-                'estado' => true,
-            ]
-        );
+        [$sucPrincipal, $sucNorte, $sucSur] = $sucursales;
 
-        $empleadoMec3 = Empleado::firstOrCreate(
-            ['ci' => '33445566'],
-            [
-                'sucursal_id' => $sucursal->id,
-                'rol_id' => $mecanicoRole->id,
-                'nombre_completo' => 'Luis Fernandez',
-                'telefono' => '70000006',
-                'email' => 'luis@tallerpro.com',
-                'cargo' => 'Mecanico Electricista',
-                'fecha_contratacion' => '2024-05-12',
-                'estado' => true,
-            ]
-        );
+        $this->command->info('=== CREANDO ESPECIALIDADES ===');
+        $espMeca = Especialidad::firstOrCreate(['nombre' => 'Mecánica General'], ['descripcion' => 'Mecánica general vehicular', 'estado' => true]);
+        $espElec = Especialidad::firstOrCreate(['nombre' => 'Electricidad Automotriz'], ['descripcion' => 'Electricidad y electrónica automotriz', 'estado' => true]);
+        $espMotor = Especialidad::firstOrCreate(['nombre' => 'Motores Diesel'], ['descripcion' => 'Especialización en motores diesel', 'estado' => true]);
+        $espAire = Especialidad::firstOrCreate(['nombre' => 'Aire Acondicionado'], ['descripcion' => 'Reparación de sistemas de climatización', 'estado' => true]);
+        $espDiag = Especialidad::firstOrCreate(['nombre' => 'Diagnóstico Avanzado'], ['descripcion' => 'Diagnóstico computarizado y escáner', 'estado' => true]);
 
-        $this->command->info('Asociando empleados a usuarios...');
-        $users = User::all();
-        $userAdmin = $users->firstWhere('username', 'admin');
-        $userGerente = $users->firstWhere('username', 'gerente');
-        $userRecepcion = $users->firstWhere('username', 'recepcion');
+        $this->command->info('=== CREANDO EMPLEADOS POR SUCURSAL ===');
 
-        if ($userAdmin) { $userAdmin->update(['empleado_id' => $empleadoAdmin->id]); }
-        if ($userGerente) { $userGerente->update(['empleado_id' => $empleadoGerente->id]); }
-        if ($userRecepcion) { $userRecepcion->update(['empleado_id' => $empleadoRecepcion->id]); }
+        $userAdmin = User::where('username', 'admin')->first();
 
-        $this->command->info('Creando especialidades...');
-        $espMeca = Especialidad::firstOrCreate(['nombre' => 'Mecanica General'], ['descripcion' => 'Mecanica general vehicular', 'estado' => true]);
-        $espElec = Especialidad::firstOrCreate(['nombre' => 'Electricidad Automotriz'], ['descripcion' => 'Electricidad y electronica automotriz', 'estado' => true]);
-        $espMotor = Especialidad::firstOrCreate(['nombre' => 'Motores Diesel'], ['descripcion' => 'Especializacion en motores diesel', 'estado' => true]);
+        $empleadosPorSucursal = [];
+        $usersPorSucursal = [];
 
-        $this->command->info('Creando mecanicos...');
-        $mecanico1 = Mecanico::firstOrCreate(
-            ['empleado_id' => $empleadoMec1->id],
-            ['especialidad_id' => $espMeca->id, 'disponibilidad' => 'disponible', 'observaciones' => 'Mecanico general con 8 anos de experiencia']
-        );
-        $mecanico2 = Mecanico::firstOrCreate(
-            ['empleado_id' => $empleadoMec2->id],
-            ['especialidad_id' => $espMotor->id, 'disponibilidad' => 'ocupado', 'observaciones' => 'Especialista en motores diesel']
-        );
-        $mecanico3 = Mecanico::firstOrCreate(
-            ['empleado_id' => $empleadoMec3->id],
-            ['especialidad_id' => $espElec->id, 'disponibilidad' => 'disponible', 'observaciones' => 'Electricista automotriz']
-        );
+        $staffConfig = [
+            $sucPrincipal->id => [
+                'gerente' => ['Carlos Gutiérrez', '28475610', '3-7002001', 'carlos.gutierrez@tallerpro.com', 'Gerente Sucursal', '2024-01-15'],
+                'recepcion' => ['Ana Belén Roca', '37582910', '3-7002002', 'ana.roca@tallerpro.com', 'Recepcionista', '2024-02-20'],
+                'mecanicos' => [
+                    ['Miguel Ángel Suárez', '19283746', '3-7002003', 'miguel.suarez@tallerpro.com', 'Mecánico Senior', '2024-01-10', $espMeca->id],
+                    ['Roberto Vargas', '28374655', '3-7002004', 'roberto.vargas@tallerpro.com', 'Electricista Automotriz', '2024-03-05', $espElec->id],
+                    ['Hugo Fernández', '37482910', '3-7002005', 'hugo.fernandez@tallerpro.com', 'Especialista en Motores', '2024-04-12', $espMotor->id],
+                ],
+            ],
+            $sucNorte->id => [
+                'gerente' => ['María José Ribera', '48592017', '3-9222010', 'maria.ribera@tallerpro.com', 'Gerente Sucursal', '2024-06-01'],
+                'recepcion' => ['Pedro Luis Montes', '59683028', '3-9222011', 'pedro.montes@tallerpro.com', 'Recepcionista', '2024-06-15'],
+                'mecanicos' => [
+                    ['Jorge Antonio Ríos', '60794139', '3-9222012', 'jorge.rios@tallerpro.com', 'Mecánico General', '2024-07-01', $espMeca->id],
+                    ['Daniel Eduardo Paz', '71805240', '3-9222013', 'daniel.paz@tallerpro.com', 'Diagnosticador', '2024-08-20', $espDiag->id],
+                ],
+            ],
+            $sucSur->id => [
+                'gerente' => ['Fernando Méndez', '82916351', '3-7711223', 'fernando.mendez@tallerpro.com', 'Gerente Sucursal', '2025-01-10'],
+                'recepcion' => ['Laura Beatriz Castro', '93027462', '3-7711224', 'laura.castro@tallerpro.com', 'Recepcionista', '2025-01-15'],
+                'mecanicos' => [
+                    ['Sergio Ramiro Quispe', '04138573', '3-7711225', 'sergio.quispe@tallerpro.com', 'Mecánico General', '2025-02-01', $espMeca->id],
+                    ['Ricardo Antonio López', '15249684', '3-7711226', 'ricardo.lopez@tallerpro.com', 'Aire Acondicionado', '2025-02-15', $espAire->id],
+                ],
+            ],
+        ];
 
-        $adminPassword = 'TallerPro2026!';
+        foreach ($staffConfig as $sucId => $config) {
+            $gerenteEmpleado = Empleado::firstOrCreate(
+                ['ci' => $config['gerente'][1]],
+                [
+                    'sucursal_id' => $sucId,
+                    'rol_id' => $gerenteRole->id,
+                    'nombre_completo' => $config['gerente'][0],
+                    'telefono' => $config['gerente'][2],
+                    'email' => $config['gerente'][3],
+                    'cargo' => $config['gerente'][4],
+                    'fecha_contratacion' => $config['gerente'][5],
+                    'estado' => true,
+                ]
+            );
 
-        $userMec1 = User::firstOrCreate(
-            ['username' => 'mecanico1'],
-            [
-                'nombre' => $empleadoMec1->nombre_completo,
-                'email' => 'mecanico1@tallerpro.com',
-                'password' => Hash::make($adminPassword),
-                'estado' => 'activo',
-                'rol_id' => $mecanicoRole->id,
-                'sucursal_id' => $sucursal->id,
-                'empleado_id' => $empleadoMec1->id,
-            ]
-        );
+            $recepcionEmpleado = Empleado::firstOrCreate(
+                ['ci' => $config['recepcion'][1]],
+                [
+                    'sucursal_id' => $sucId,
+                    'rol_id' => $recepcionistaRole->id,
+                    'nombre_completo' => $config['recepcion'][0],
+                    'telefono' => $config['recepcion'][2],
+                    'email' => $config['recepcion'][3],
+                    'cargo' => $config['recepcion'][4],
+                    'fecha_contratacion' => $config['recepcion'][5],
+                    'estado' => true,
+                ]
+            );
 
-        $userMec2 = User::firstOrCreate(
-            ['username' => 'mecanico2'],
-            [
-                'nombre' => $empleadoMec2->nombre_completo,
-                'email' => 'mecanico2@tallerpro.com',
-                'password' => Hash::make($adminPassword),
-                'estado' => 'activo',
-                'rol_id' => $mecanicoRole->id,
-                'sucursal_id' => $sucursal->id,
-                'empleado_id' => $empleadoMec2->id,
-            ]
-        );
+            $empleadosPorSucursal[$sucId] = [
+                'gerente' => $gerenteEmpleado,
+                'recepcion' => $recepcionEmpleado,
+                'mecanicos' => [],
+            ];
 
-        $this->command->info('Creando proveedores...');
+            $sucName = Sucursal::find($sucId)->nombre;
+            $sufijo = match ($sucId) { $sucPrincipal->id => 'sp', $sucNorte->id => 'sn', $sucSur->id => 'ss', default => 'sx' };
+
+            $gerenteUser = User::updateOrCreate(
+                ['username' => "gerente_{$sufijo}"],
+                [
+                    'nombre' => $gerenteEmpleado->nombre_completo,
+                    'email' => "gerente.{$sufijo}@tallerpro.com",
+                    'password' => Hash::make($password),
+                    'estado' => 'activo',
+                    'rol_id' => $gerenteRole->id,
+                    'sucursal_id' => $sucId,
+                    'empleado_id' => $gerenteEmpleado->id,
+                ]
+            );
+
+            $recepcionUser = User::updateOrCreate(
+                ['username' => "recepcion_{$sufijo}"],
+                [
+                    'nombre' => $recepcionEmpleado->nombre_completo,
+                    'email' => "recepcion.{$sufijo}@tallerpro.com",
+                    'password' => Hash::make($password),
+                    'estado' => 'activo',
+                    'rol_id' => $recepcionistaRole->id,
+                    'sucursal_id' => $sucId,
+                    'empleado_id' => $recepcionEmpleado->id,
+                ]
+            );
+
+            $usersPorSucursal[$sucId] = [
+                'gerente' => $gerenteUser,
+                'recepcion' => $recepcionUser,
+                'mecanicos' => [],
+            ];
+
+            foreach ($config['mecanicos'] as $i => $m) {
+                $empleado = Empleado::firstOrCreate(
+                    ['ci' => $m[1]],
+                    [
+                        'sucursal_id' => $sucId,
+                        'rol_id' => $mecanicoRole->id,
+                        'nombre_completo' => $m[0],
+                        'telefono' => $m[2],
+                        'email' => $m[3],
+                        'cargo' => $m[4],
+                        'fecha_contratacion' => $m[5],
+                        'estado' => true,
+                    ]
+                );
+
+                $mecUser = User::updateOrCreate(
+                    ['username' => "mecanico_{$sufijo}_" . ($i + 1)],
+                    [
+                        'nombre' => $empleado->nombre_completo,
+                        'email' => "mecanico.{$sufijo}" . ($i + 1) . "@tallerpro.com",
+                        'password' => Hash::make($password),
+                        'estado' => 'activo',
+                        'rol_id' => $mecanicoRole->id,
+                        'sucursal_id' => $sucId,
+                        'empleado_id' => $empleado->id,
+                    ]
+                );
+
+                $mecanico = Mecanico::firstOrCreate(
+                    ['empleado_id' => $empleado->id],
+                    [
+                        'especialidad_id' => $m[6],
+                        'disponibilidad' => $i === 0 ? 'ocupado' : 'disponible',
+                        'observaciones' => $m[4],
+                    ]
+                );
+
+                $empleadosPorSucursal[$sucId]['mecanicos'][] = $empleado;
+                $usersPorSucursal[$sucId]['mecanicos'][] = $mecUser;
+
+                $this->command->info("  Creado {$m[0]} en " . Sucursal::find($sucId)->nombre);
+            }
+        }
+
+        $this->command->info('=== USUARIOS BASE SIN EMPLEADO ASIGNADO ===');
+        if ($userAdmin) {
+            $userAdmin->update(['empleado_id' => null, 'sucursal_id' => null]);
+        }
+
+        $userGerente = User::where('username', 'gerente')->first();
+        if ($userGerente) {
+            $userGerente->update(['empleado_id' => null, 'sucursal_id' => null]);
+        }
+
+        $userRecepcion = User::where('username', 'recepcion')->first();
+        if ($userRecepcion) {
+            $userRecepcion->update(['empleado_id' => null, 'sucursal_id' => null]);
+        }
+
+        $userMecanico = User::where('username', 'mecanico')->first();
+        if ($userMecanico) {
+            $userMecanico->update(['empleado_id' => null, 'sucursal_id' => null]);
+        }
+
+        $this->command->info('=== CREANDO PROVEEDORES ===');
         $prov1 = Proveedor::firstOrCreate(
             ['nit' => '102345027'],
             [
@@ -200,7 +269,7 @@ class TestDataSeeder extends Seeder
             ['nit' => '201987654'],
             [
                 'nombre_empresa' => 'Lubricantes y Filtros Bolivia',
-                'contacto' => 'Ana Laura',
+                'contacto' => 'Ana Laura Suárez',
                 'telefono' => '3-9876543',
                 'email' => 'info@lubribol.com',
                 'direccion' => 'Calle Buenos Aires #300',
@@ -211,50 +280,76 @@ class TestDataSeeder extends Seeder
             ['nit' => '305678901'],
             [
                 'nombre_empresa' => 'Distribuidora de Frenos ABC',
-                'contacto' => 'Mario Suarez',
+                'contacto' => 'Mario Suárez',
                 'telefono' => '3-4567890',
                 'email' => 'pedidos@frenosabc.com',
-                'direccion' => 'Av. Grigota #750',
+                'direccion' => 'Av. Grigotá #750',
+                'estado' => true,
+            ]
+        );
+        $prov4 = Proveedor::firstOrCreate(
+            ['nit' => '408765432'],
+            [
+                'nombre_empresa' => 'Autopartes del Oriente',
+                'contacto' => 'Carmen Llanos',
+                'telefono' => '3-5678901',
+                'email' => 'ventas@autopartesori.com',
+                'direccion' => 'Av. Paraguá #420',
                 'estado' => true,
             ]
         );
 
-        $this->command->info('Creando tipos de servicio...');
-        $tipoMeca = TipoServicio::firstOrCreate(['nombre' => 'Mecanica General'], ['descripcion' => 'Servicios de mecanica general', 'estado' => true]);
-        $tipoElec = TipoServicio::firstOrCreate(['nombre' => 'Electricidad'], ['descripcion' => 'Servicios de electricidad automotriz', 'estado' => true]);
-        $tipoRev = TipoServicio::firstOrCreate(['nombre' => 'Revision y Diagnostico'], ['descripcion' => 'Revision y diagnostico vehicular', 'estado' => true]);
-        $tipoLat = TipoServicio::firstOrCreate(['nombre' => 'Latoneria y Pintura'], ['descripcion' => 'Trabajos de latoneria y pintura', 'estado' => true]);
-        $tipoMan = TipoServicio::firstOrCreate(['nombre' => 'Mantenimiento Preventivo'], ['descripcion' => 'Mantenimiento preventivo programado', 'estado' => true]);
-
-        $this->command->info('Creando servicios...');
-        $servicios = [];
-        $serviciosData = [
-            ['Cambio de Aceite y Filtro', $tipoMan->id, 80, 30],
-            ['Alineacion y Balanceo', $tipoMeca->id, 120, 45],
-            ['Revision de Frenos', $tipoMeca->id, 60, 20],
-            ['Cambio de Pastillas de Freno', $tipoMeca->id, 150, 60],
-            ['Diagnostico Computarizado', $tipoRev->id, 200, 45],
-            ['Revision General', $tipoRev->id, 100, 30],
-            ['Cambio de Bujias', $tipoMeca->id, 90, 40],
-            ['Reparacion de Motor Electrico', $tipoElec->id, 350, 120],
-            ['Instalacion de Alarma', $tipoElec->id, 180, 60],
-            ['Cambio de Alternador', $tipoElec->id, 120, 50],
-            ['Reparacion de Aire Acondicionado', $tipoElec->id, 400, 90],
-            ['Pintura Completa', $tipoLat->id, 2500, 240],
-            ['Reparacion de Parachoques', $tipoLat->id, 400, 120],
-            ['Latoneria Menor', $tipoLat->id, 300, 90],
-            ['Cambio de Amortiguadores', $tipoMeca->id, 200, 60],
-            ['Lavado de Inyectores', $tipoMeca->id, 150, 45],
-            ['Cambio de Correa de Distribucion', $tipoMeca->id, 500, 180],
-            ['Escaneo Electronico', $tipoRev->id, 150, 30],
-            ['Revision de Suspension', $tipoMeca->id, 80, 30],
-            ['Cambio de Embrague', $tipoMeca->id, 800, 240],
+        $this->command->info('=== CREANDO TIPOS Y SERVICIOS ===');
+        $tiposServicio = [];
+        $tiposData = [
+            ['Mantenimiento Preventivo', 'Mantenimiento programado por kilometraje'],
+            ['Mecánica General', 'Reparaciones mecánicas generales'],
+            ['Electricidad', 'Sistemas eléctricos y electrónicos'],
+            ['Revisión y Diagnóstico', 'Diagnóstico y escaneo computarizado'],
+            ['Latonería y Pintura', 'Trabajos de carrocería y pintura'],
+            ['Aire Acondicionado', 'Sistemas de climatización automotriz'],
+            ['Transmisión y Embrague', 'Cajas de cambio y sistemas de transmisión'],
         ];
-        foreach ($serviciosData as $i => $s) {
+        foreach ($tiposData as $td) {
+            $tiposServicio[] = TipoServicio::firstOrCreate(
+                ['nombre' => $td[0]],
+                ['descripcion' => $td[1], 'estado' => true]
+            );
+        }
+
+        $serviciosData = [
+            ['Cambio de Aceite y Filtro', $tiposServicio[0]->id, 80, 30, 'Cambio de aceite de motor + filtro nuevo'],
+            ['Alineación y Balanceo', $tiposServicio[1]->id, 120, 45, 'Alineación computarizada y balanceo dinámico'],
+            ['Revisión de Frenos', $tiposServicio[1]->id, 60, 20, 'Inspección visual y medición de pastillas y discos'],
+            ['Cambio de Pastillas de Freno', $tiposServicio[1]->id, 150, 60, 'Reemplazo de pastillas delanteras o traseras'],
+            ['Diagnóstico Computarizado', $tiposServicio[3]->id, 200, 45, 'Escaneo electrónico completo del vehículo'],
+            ['Revisión General 30 Puntos', $tiposServicio[3]->id, 100, 30, 'Checklist de 30 puntos de inspección'],
+            ['Cambio de Bujías', $tiposServicio[1]->id, 90, 40, 'Reemplazo de bujías y revisión de bobinas'],
+            ['Reparación de Motor de Arranque', $tiposServicio[2]->id, 250, 90, 'Diagnóstico y reparación del motor de arranque'],
+            ['Instalación de Alarma', $tiposServicio[2]->id, 180, 60, 'Instalación de alarma con cierre centralizado'],
+            ['Cambio de Alternador', $tiposServicio[2]->id, 120, 50, 'Reemplazo de alternador y correa'],
+            ['Carga de Gas A/A', $tiposServicio[5]->id, 350, 60, 'Recarga de gas refrigerante R134a'],
+            ['Reparación de Aire Acondicionado', $tiposServicio[5]->id, 500, 120, 'Diagnóstico y reparación completa del sistema A/A'],
+            ['Pintura Completa', $tiposServicio[4]->id, 2500, 480, 'Lijado, masillado y pintura completa'],
+            ['Reparación de Parachoques', $tiposServicio[4]->id, 400, 120, 'Reparación y pintura de parachoques'],
+            ['Latonería Menor', $tiposServicio[4]->id, 300, 90, 'Reparación de golpes menores y abolladuras'],
+            ['Cambio de Amortiguadores', $tiposServicio[1]->id, 200, 60, 'Reemplazo de amortiguadores delanteros o traseros'],
+            ['Lavado de Inyectores', $tiposServicio[1]->id, 150, 45, 'Limpieza ultrasónica de inyectores'],
+            ['Cambio de Correa de Distribución', $tiposServicio[1]->id, 500, 180, 'Reemplazo de correa de distribución + tensores'],
+            ['Escaneo Electrónico', $tiposServicio[3]->id, 150, 30, 'Lectura de códigos de falla OBD2'],
+            ['Revisión de Suspensión', $tiposServicio[1]->id, 80, 30, 'Inspección de amortiguadores, resortes y rótulas'],
+            ['Cambio de Embrague', $tiposServicio[6]->id, 800, 240, 'Reemplazo de kit de embrague completo'],
+            ['Cambio de Aceite de Transmisión', $tiposServicio[6]->id, 120, 40, 'Cambio de aceite de transmisión automática o manual'],
+            ['Mantenimiento 10.000 km', $tiposServicio[0]->id, 350, 120, 'Cambio de aceite, filtros, revisión general, rotación de llantas'],
+            ['Mantenimiento 20.000 km', $tiposServicio[0]->id, 550, 180, 'Mantenimiento completo + bujías + líquidos'],
+            ['Diagnóstico de Motor Diesel', $tiposServicio[3]->id, 300, 60, 'Diagnóstico especializado para motores diesel comunes'],
+        ];
+        $servicios = [];
+        foreach ($serviciosData as $s) {
             $servicios[] = Servicio::firstOrCreate(
                 ['nombre' => $s[0], 'tipo_servicio_id' => $s[1]],
                 [
-                    'descripcion' => "Servicio de {$s[0]}",
+                    'descripcion' => $s[4],
                     'precio_base' => $s[2],
                     'duracion_estimada_minutos' => $s[3],
                     'estado' => true,
@@ -262,28 +357,33 @@ class TestDataSeeder extends Seeder
             );
         }
 
-        $this->command->info('Creando repuestos...');
+        $this->command->info('=== CREANDO REPUESTOS ===');
         $repuestosData = [
-            ['REP-001', 'Aceite Motor 20W50 1L', 'Lubricantes', 'Castrol', 25, 45, 10, $prov2->id],
+            ['REP-001', 'Aceite Motor 20W50 1L', 'Lubricantes y Aceites', 'Castrol', 25, 45, 10, $prov2->id],
             ['REP-002', 'Filtro de Aceite', 'Filtros', 'Fram', 12, 25, 15, $prov2->id],
             ['REP-003', 'Filtro de Aire', 'Filtros', 'Mann', 20, 40, 10, $prov2->id],
             ['REP-004', 'Pastillas de Freno Delanteras', 'Frenos', 'Bosch', 80, 150, 8, $prov3->id],
             ['REP-005', 'Pastillas de Freno Traseras', 'Frenos', 'Bosch', 75, 140, 8, $prov3->id],
             ['REP-006', 'Disco de Freno Delantero', 'Frenos', 'Bosch', 120, 220, 5, $prov3->id],
-            ['REP-007', 'Bujia NGK', 'Encendido', 'NGK', 15, 30, 20, $prov1->id],
-            ['REP-008', 'Amortiguador Delantero', 'Suspension', 'Monroe', 180, 350, 6, $prov1->id],
-            ['REP-009', 'Amortiguador Trasero', 'Suspension', 'Monroe', 160, 320, 6, $prov1->id],
-            ['REP-010', 'Correa de Distribucion', 'Motor', 'Gates', 90, 180, 5, $prov1->id],
-            ['REP-011', 'Alternador 12V 70A', 'Electrico', 'Bosch', 400, 700, 3, $prov1->id],
-            ['REP-012', 'Bateria 60Ah', 'Electrico', 'LTH', 350, 600, 4, $prov1->id],
+            ['REP-007', 'Bujía NGK Iridium', 'Sistema Eléctrico', 'NGK', 25, 45, 20, $prov1->id],
+            ['REP-008', 'Amortiguador Delantero', 'Suspensión y Dirección', 'Monroe', 180, 350, 6, $prov1->id],
+            ['REP-009', 'Amortiguador Trasero', 'Suspensión y Dirección', 'Monroe', 160, 320, 6, $prov1->id],
+            ['REP-010', 'Correa de Distribución', 'Motor y Transmisión', 'Gates', 90, 180, 5, $prov1->id],
+            ['REP-011', 'Alternador 12V 70A', 'Sistema Eléctrico', 'Bosch', 400, 750, 3, $prov4->id],
+            ['REP-012', 'Batería 60Ah LTH', 'Sistema Eléctrico', 'LTH', 350, 600, 4, $prov4->id],
             ['REP-013', 'Filtro de Combustible', 'Filtros', 'Mann', 18, 35, 12, $prov2->id],
-            ['REP-014', 'Liquido de Frenos 1L', 'Lubricantes', 'Castrol', 22, 45, 10, $prov2->id],
-            ['REP-015', 'Refrigerante 1L', 'Lubricantes', 'Shell', 18, 35, 15, $prov2->id],
-            ['REP-016', 'Kit de Embrague', 'Motor', 'Valeo', 500, 900, 3, $prov1->id],
-            ['REP-017', 'Sensor de Oxigeno', 'Electrico', 'Bosch', 120, 250, 5, $prov1->id],
-            ['REP-018', 'Limpiaparabrisas Jgo', 'Carroceria', 'Bosch', 35, 70, 15, $prov1->id],
-            ['REP-019', 'Foco LED H4', 'Electrico', 'Philips', 25, 55, 20, $prov1->id],
-            ['REP-020', 'Aceite Transmision ATF 1L', 'Lubricantes', 'Castrol', 30, 55, 8, $prov2->id],
+            ['REP-014', 'Líquido de Frenos DOT4 1L', 'Frenos', 'Castrol', 22, 45, 10, $prov2->id],
+            ['REP-015', 'Refrigerante 50/50 1L', 'Motor y Transmisión', 'Shell', 18, 35, 15, $prov2->id],
+            ['REP-016', 'Kit de Embrague', 'Motor y Transmisión', 'Valeo', 500, 950, 3, $prov1->id],
+            ['REP-017', 'Sensor de Oxígeno', 'Sistema Eléctrico', 'Bosch', 120, 250, 5, $prov4->id],
+            ['REP-018', 'Limpiaparabrisas Jgo', 'Carrocería y Accesorios', 'Bosch', 35, 70, 15, $prov1->id],
+            ['REP-019', 'Foco LED H4', 'Sistema Eléctrico', 'Philips', 25, 55, 20, $prov4->id],
+            ['REP-020', 'Aceite Transmisión ATF 1L', 'Motor y Transmisión', 'Castrol', 30, 55, 8, $prov2->id],
+            ['REP-021', 'Gas Refrigerante R134a 1Kg', 'Aire Acondicionado', 'Chemours', 80, 150, 5, $prov4->id],
+            ['REP-022', 'Compresor de Aire Acondicionado', 'Aire Acondicionado', 'Sanden', 800, 1400, 2, $prov4->id],
+            ['REP-023', 'Rótula de Suspensión', 'Suspensión y Dirección', 'Moog', 60, 120, 8, $prov1->id],
+            ['REP-024', 'Terminal de Dirección', 'Suspensión y Dirección', 'Moog', 45, 90, 10, $prov1->id],
+            ['REP-025', 'Aceite Motor Diésel 15W40 1L', 'Motor y Transmisión', 'Shell', 28, 50, 12, $prov2->id],
         ];
         $repuestos = [];
         foreach ($repuestosData as $r) {
@@ -303,30 +403,72 @@ class TestDataSeeder extends Seeder
             );
         }
 
-        $this->command->info('Creando inventario...');
-        foreach ($repuestos as $rep) {
-            Inventario::firstOrCreate(
-                ['sucursal_id' => $sucursal->id, 'repuesto_id' => $rep->id],
-                [
-                    'cantidad_actual' => rand(10, 50),
-                    'cantidad_reservada' => 0,
-                    'fecha_actualizacion' => now(),
-                ]
-            );
+        $this->command->info('=== CREANDO INVENTARIO POR SUCURSAL ===');
+        $inventarioPorSucursal = [];
+
+        $stockPorSucursal = [
+            $sucPrincipal->id => [
+                'altos' => [0, 1, 2, 3, 6, 12, 14, 18, 19, 23],
+                'medios' => [4, 5, 7, 8, 9, 10, 13, 15, 20, 24],
+                'bajos' => [11, 16, 17, 21, 22],
+            ],
+            $sucNorte->id => [
+                'altos' => [0, 1, 2, 3, 4, 12, 13, 14, 24],
+                'medios' => [5, 6, 7, 9, 10, 15, 17, 20],
+                'bajos' => [8, 11, 16, 18, 19, 21, 22, 23],
+            ],
+            $sucSur->id => [
+                'altos' => [0, 1, 2, 3, 6, 12, 13, 14, 18, 19],
+                'medios' => [4, 7, 8, 10, 15, 17, 20, 23, 24],
+                'bajos' => [5, 9, 11, 16, 21, 22],
+            ],
+        ];
+
+        foreach ($sucursales as $suc) {
+            $config = $stockPorSucursal[$suc->id];
+            $sucRepuestos = [];
+
+            foreach ($repuestos as $idx => $rep) {
+                $cantidad = 0;
+                if (in_array($idx, $config['altos'])) {
+                    $cantidad = rand(25, 60);
+                } elseif (in_array($idx, $config['medios'])) {
+                    $cantidad = rand(8, 20);
+                } elseif (in_array($idx, $config['bajos'])) {
+                    $cantidad = rand(1, 5);
+                } else {
+                    $cantidad = rand(10, 30);
+                }
+
+                $inv = Inventario::firstOrCreate(
+                    ['sucursal_id' => $suc->id, 'repuesto_id' => $rep->id],
+                    [
+                        'cantidad_actual' => $cantidad,
+                        'cantidad_reservada' => rand(0, min(3, $cantidad)),
+                        'costo_promedio' => $rep->costo_compra,
+                        'fecha_actualizacion' => now(),
+                    ]
+                );
+                $sucRepuestos[] = $inv;
+            }
+            $inventarioPorSucursal[$suc->id] = $sucRepuestos;
+            $this->command->info("  Inventario creado para {$suc->nombre}");
         }
 
-        $this->command->info('Creando clientes...');
+        $this->command->info('=== CREANDO CLIENTES ===');
         $clientesData = [
-            ['Juan Carlos Mamani', '45678901', '3-7001001', 'juancarlos@gmail.com', 'Calle Bolivar #123'],
-            ['Ana Maria Rojas', '56789012', '3-7001002', 'anamaria@hotmail.com', 'Av. Irala #456'],
-            ['Pedro Pablo Quispe', '67890123', '3-7001003', 'pedroquispe@gmail.com', 'Calle Sucre #789'],
-            ['Maria Elena Vargas', '78901234', '3-7001004', 'mariaelena@yahoo.com', 'Av. San Martin #321'],
-            ['Roberto Carlos Ruiz', '89012345', '3-7001005', 'robertoruiz@gmail.com', 'Calle 21 de Mayo #654'],
-            ['Carmen Lourdes Flores', '90123456', '3-7001006', 'carmenflores@gmail.com', 'Av. Busch #987'],
-            ['Diego Armando Castillo', '01234567', '3-7001007', 'diego.castillo@outlook.com', 'Calle La Paz #147'],
-            ['Sofia Alejandra Rios', '11234567', '3-7001008', 'sofia.rios@gmail.com', 'Av. Ejercito Nacional #258'],
-            ['Jose Luis Gutierrez', '12234567', '3-7001009', 'joseluis@hotmail.com', 'Calle Arenales #369'],
-            ['Patricia Fernanda Vargas', '13234567', '3-7001010', 'patriciavargas@gmail.com', 'Av. Monseñor Rivero #159'],
+            ['Juan Carlos Mamani', '45678901', '3-7001001', 'juancarlos.mamani@gmail.com', 'Calle Bolívar #123, Santa Cruz'],
+            ['Ana María Rojas', '56789012', '3-7001002', 'anamaria.rojas@hotmail.com', 'Av. Irala #456, Santa Cruz'],
+            ['Pedro Pablo Quispe', '67890123', '3-7001003', 'pedro.quispe@gmail.com', 'Calle Sucre #789, Montero'],
+            ['María Elena Vargas', '78901234', '3-7001004', 'mariaelena.vargas@yahoo.com', 'Av. San Martín #321, Santa Cruz'],
+            ['Roberto Carlos Ruiz', '89012345', '3-7001005', 'roberto.ruiz@gmail.com', 'Calle 21 de Mayo #654, Montero'],
+            ['Carmen Lourdes Flores', '90123456', '3-7001006', 'carmen.flores@gmail.com', 'Av. Busch #987, Santa Cruz'],
+            ['Diego Armando Castillo', '01234567', '3-7001007', 'diego.castillo@outlook.com', 'Calle La Paz #147, La Guardia'],
+            ['Sofía Alejandra Ríos', '11234567', '3-7001008', 'sofia.rios@gmail.com', 'Av. Ejército Nacional #258, Montero'],
+            ['José Luis Gutiérrez', '12234567', '3-7001009', 'joseluis.gutierrez@hotmail.com', 'Calle Arenales #369, Santa Cruz'],
+            ['Patricia Fernanda Vargas', '13234567', '3-7001010', 'patricia.vargas@gmail.com', 'Av. Monseñor Rivero #159, La Guardia'],
+            ['Ricardo Antonio Morales', '14234567', '3-7001011', 'ricardo.morales@gmail.com', 'Calle La Paz #456, La Guardia'],
+            ['Gabriela Andrea Paredes', '15234567', '3-7001012', 'gabriela.paredes@gmail.com', 'Barrio Jardín, Montero'],
         ];
         $clientes = [];
         foreach ($clientesData as $c) {
@@ -343,23 +485,25 @@ class TestDataSeeder extends Seeder
             );
         }
 
-        $this->command->info('Creando vehiculos...');
+        $this->command->info('=== CREANDO VEHÍCULOS ===');
         $vehiculosData = [
-            ['ABC-123', 'Toyota', 'Corolla', 2018, 'Blanco', '8XABCDEFG12345678', 85000],
-            ['DEF-456', 'Suzuki', 'Swift', 2020, 'Rojo', '9YBCDEFGH23456789', 35000],
-            ['GHI-789', 'Nissan', 'Sentra', 2019, 'Gris', '7ZCDEFGHI34567890', 62000],
-            ['JKL-012', 'Toyota', 'Hilux', 2021, 'Negro', '6ADEFGHIJ45678901', 28000],
-            ['MNO-345', 'Honda', 'Civic', 2017, 'Azul', '5BDEFGHIJK56789012', 92000],
-            ['PQR-678', 'Mitsubishi', 'Montero', 2020, 'Plateado', '4CDEFGHIJL67890123', 45000],
-            ['STU-901', 'Suzuki', 'Grand Vitara', 2022, 'Verde', '3DEFGHIJKM78901234', 15000],
-            ['VWX-234', 'Toyota', 'Yaris', 2021, 'Blanco', '2EFGHIJKLN89012345', 22000],
-            ['YZA-567', 'Nissan', 'Frontier', 2019, 'Gris Oscuro', '1FGHIJKLMO90123456', 78000],
-            ['BCD-890', 'Honda', 'CR-V', 2023, 'Plateado', '0GHIJKLMNP01234567', 8000],
+            ['ABC-123', 'Toyota', 'Corolla', 2018, 'Blanco', '8XABCDEFG12345678', 85000, 0],
+            ['DEF-456', 'Suzuki', 'Swift', 2020, 'Rojo', '9YBCDEFGH23456789', 35000, 1],
+            ['GHI-789', 'Nissan', 'Sentra', 2019, 'Gris', '7ZCDEFGHI34567890', 62000, 2],
+            ['JKL-012', 'Toyota', 'Hilux', 2021, 'Negro', '6ADEFGHIJ45678901', 28000, 3],
+            ['MNO-345', 'Honda', 'Civic', 2017, 'Azul', '5BDEFGHIJK56789012', 92000, 4],
+            ['PQR-678', 'Mitsubishi', 'Montero', 2020, 'Plateado', '4CDEFGHIJL67890123', 45000, 5],
+            ['STU-901', 'Suzuki', 'Grand Vitara', 2022, 'Verde', '3DEFGHIJKM78901234', 15000, 6],
+            ['VWX-234', 'Toyota', 'Yaris', 2021, 'Blanco', '2EFGHIJKLN89012345', 22000, 7],
+            ['YZA-567', 'Nissan', 'Frontier', 2019, 'Gris Oscuro', '1FGHIJKLMO90123456', 78000, 8],
+            ['BCD-890', 'Honda', 'CR-V', 2023, 'Plateado', '0GHIJKLMNP01234567', 8000, 9],
+            ['EFG-111', 'Toyota', 'Land Cruiser', 2021, 'Blanco Perla', '9HIJKLMNOQ12345678', 18000, 10],
+            ['HIJ-222', 'Volkswagen', 'Amarok', 2022, 'Gris', '8IJKLMNOPR23456789', 12000, 11],
         ];
-        $vehiculos = [];
+        $vehiculos = collect();
         foreach ($vehiculosData as $i => $v) {
-            $cliente = $clientes[$i % count($clientes)];
-            $vehiculos[] = Vehiculo::firstOrCreate(
+            $cliente = $clientes[$v[7]];
+            $vehiculos->push(Vehiculo::firstOrCreate(
                 ['placa' => $v[0]],
                 [
                     'cliente_id' => $cliente->id,
@@ -371,181 +515,317 @@ class TestDataSeeder extends Seeder
                     'kilometraje_actual' => $v[6],
                     'estado' => true,
                 ]
-            );
+            ));
         }
 
+        $this->command->info('=== CREANDO CITAS POR SUCURSAL ===');
         $hoy = Carbon::today();
-        $citas = Cita::whereIn('estado', ['pendiente', 'confirmada', 'atendida'])->limit(10)->get();
-        $citasCount = Cita::count();
+        $todasLasCitas = [];
+        $horas = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
 
-        if ($citasCount <= 5) {
-            $this->command->info('Creando citas nuevas...');
-            $horas = ['08:00', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00'];
-            $tipos = ['diagnostico', 'mantenimiento', 'reparacion'];
-            $citas = [];
-            $idx = 0;
+        $citasConfig = [
+            $sucPrincipal->id => [
+                'offsets' => [-5, -3, -1, 0, 1, 2, 3],
+                'por_dia' => 3,
+                'user' => $usersPorSucursal[$sucPrincipal->id]['recepcion'],
+            ],
+            $sucNorte->id => [
+                'offsets' => [-4, -2, 0, 1, 3, 5],
+                'por_dia' => 2,
+                'user' => $usersPorSucursal[$sucNorte->id]['recepcion'],
+            ],
+            $sucSur->id => [
+                'offsets' => [-3, -1, 0, 2, 4],
+                'por_dia' => 2,
+                'user' => $usersPorSucursal[$sucSur->id]['recepcion'],
+            ],
+        ];
 
-            foreach ([-5, -4, -3, -2, -1, -0, 1, 2, 3, 4, 5, 6, 7] as $offset) {
+        $idx = 0;
+        foreach ($citasConfig as $sucId => $cfg) {
+            $userRec = $cfg['user'];
+            foreach ($cfg['offsets'] as $offset) {
                 $fecha = $hoy->copy()->addDays($offset);
-                $porDia = rand(1, 3);
-                for ($i = 0; $i < $porDia; $i++) {
+                for ($i = 0; $i < $cfg['por_dia']; $i++) {
                     $cliente = $clientes[$idx % count($clientes)];
                     $vehiculo = $vehiculos->where('cliente_id', $cliente->id)->first() ?? $vehiculos->first();
-                    $tipo = $tipos[array_rand($tipos)];
-                    $servicioId = $tipo === 'diagnostico' ? 5 : ($tipo === 'mantenimiento' ? 1 : null);
-                    $estado = $offset < 0 ? 'atendida' : (rand(0, 1) ? 'confirmada' : 'pendiente');
+                    $tipo = ['diagnostico', 'mantenimiento', 'reparacion'][array_rand(['diagnostico', 'mantenimiento', 'reparacion'])];
+                    $servicioId = $tipo === 'diagnostico' ? 5 : ($tipo === 'mantenimiento' ? 1 : 3);
+                    $estado = $offset < 0 ? 'atendida' : (rand(0, 2) > 0 ? 'confirmada' : 'pendiente');
 
-                    $citas[] = Cita::create([
+                    $cita = Cita::create([
                         'cliente_id' => $cliente->id,
                         'vehiculo_id' => $vehiculo->id,
-                        'sucursal_id' => $sucursal->id,
-                        'usuario_id' => ($userRecepcion ? $userRecepcion->id : ($userAdmin->id ?? 1)),
+                        'sucursal_id' => $sucId,
+                        'usuario_id' => $userRec->id,
                         'servicio_id' => $servicioId,
                         'fecha' => $fecha,
                         'hora' => $horas[array_rand($horas)],
                         'tipo' => $tipo,
-                        'descripcion_problema' => 'Cita de ' . $tipo . ' - ' . $cliente->nombre_completo,
+                        'descripcion_problema' => "Cita de {$tipo} - {$cliente->nombre_completo}",
                         'estado' => $estado,
-                        'estado_anterior' => null,
-                        'deja_vehiculo' => $tipo !== 'diagnostico' || rand(0, 1),
+                        'deja_vehiculo' => rand(0, 1),
                         'costo_consulta' => 0,
                     ]);
+                    $todasLasCitas[] = $cita;
                     $idx++;
                 }
             }
-        } else {
-            $this->command->info('Citas existentes: ' . $citasCount . ', se reutilizan.');
+            $this->command->info("  Citas creadas para " . Sucursal::find($sucId)->nombre);
         }
 
-        $this->command->info('Creando ordenes de trabajo...');
-        $ordenesData = [
-            [$clientes[0], $vehiculos[0], $hoy->copy()->subDays(5), 'Cambio de aceite y filtro programado', 'finalizada', 80, 45, 0, 125, isset($citas[0]) ? $citas[0] : null],
-            [$clientes[1], $vehiculos[1], $hoy->copy()->subDays(3), 'Ruido en frenos delanteros al frenar', 'finalizada', 150, 160, 10, 300, isset($citas[1]) ? $citas[1] : null],
-            [$clientes[8], $vehiculos[8], $hoy->copy()->subDays(12), 'Perdida de potencia y vibracion', 'en_proceso', 0, 450, 0, 450, null],
-            [$clientes[3], $vehiculos[3], $hoy->copy()->subDays(1), 'Alineacion y balanceo de las 4 ruedas', 'diagnostico', 120, 0, 0, 120, null],
-            [$clientes[6], $vehiculos[6], $hoy->copy()->subDays(2), 'Cambio de pastillas y discos de freno', 'finalizada', 150, 440, 20, 570, isset($citas[3]) ? $citas[3] : null],
-            [$clientes[7], $vehiculos[7], $hoy->copy()->subDays(7), 'Dificultad para encender en frio', 'finalizada', 200, 250, 0, 450, isset($citas[4]) ? $citas[4] : null],
-            [$clientes[4], $vehiculos[4], $hoy->copy()->subDays(1), 'Aire acondicionado no enfria lo suficiente', 'recibida', 400, 0, 0, 400, isset($citas[5]) ? $citas[5] : null],
-            [$clientes[9], $vehiculos[9], $hoy->copy()->subDays(3), 'Revision de 5000 km', 'finalizada', 100, 105, 0, 205, null],
+        $this->command->info('=== CREANDO ÓRDENES DE TRABAJO POR SUCURSAL ===');
+        $todasLasOrdenes = [];
+        $detallesGlobal = [];
+        $ordenIdx = 0;
+
+        $ordenesConfig = [
+            $sucPrincipal->id => [
+                'user' => $usersPorSucursal[$sucPrincipal->id]['recepcion'],
+                'data' => [
+                    [$clientes[0], $vehiculos[0], -5, 'Cambio de aceite y filtro programado', 'finalizada', 80, 70, 0, 150, 0],
+                    [$clientes[1], $vehiculos[1], -3, 'Ruido en frenos delanteros al frenar', 'finalizada', 150, 150, 10, 290, 1],
+                    [$clientes[5], $vehiculos[5], -1, 'Aire acondicionado no enfría', 'en_proceso', 500, 150, 0, 650, null],
+                    [$clientes[3], $vehiculos[3], 0, 'Alineación y balanceo 4 ruedas', 'diagnostico', 120, 0, 0, 120, 2],
+                    [$clientes[8], $vehiculos[8], -12, 'Pérdida de potencia y vibración', 'finalizada', 800, 950, 20, 1730, null],
+                ],
+                'detalles' => [
+                    [0, 'servicio', 0, null, 'Cambio de aceite 20W50 + filtro', 1, 80, 80],
+                    [0, 'repuesto', null, 0, 'Aceite Motor 20W50 1L', 1, 45, 45],
+                    [0, 'repuesto', null, 1, 'Filtro de Aceite', 1, 25, 25],
+                    [1, 'servicio', 3, null, 'Cambio de pastillas de freno delanteras', 1, 150, 150],
+                    [1, 'repuesto', null, 3, 'Pastillas de Freno Delanteras', 1, 150, 150],
+                    [2, 'servicio', 11, null, 'Diagnóstico y reparación de A/A', 1, 500, 500],
+                    [2, 'repuesto', null, 21, 'Gas Refrigerante R134a 1Kg', 1, 150, 150],
+                    [3, 'servicio', 1, null, 'Alineación y balanceo', 1, 120, 120],
+                    [4, 'servicio', 17, null, 'Cambio de correa de distribución + kit', 1, 500, 500],
+                    [4, 'repuesto', null, 9, 'Correa de Distribución', 1, 180, 180],
+                    [4, 'servicio', 20, null, 'Cambio de embrague completo', 1, 800, 800],
+                    [4, 'repuesto', null, 15, 'Kit de Embrague', 1, 950, 950],
+                ],
+            ],
+            $sucNorte->id => [
+                'user' => $usersPorSucursal[$sucNorte->id]['recepcion'],
+                'data' => [
+                    [$clientes[4], $vehiculos[4], -7, 'Dificultad para encender en frío', 'finalizada', 200, 250, 0, 450, 3],
+                    [$clientes[7], $vehiculos[7], -3, 'Revisión 5000 km + cambio de aceite', 'finalizada', 350, 45, 0, 395, 4],
+                    [$clientes[2], $vehiculos[2], -2, 'Vibración al acelerar en ruta', 'recibida', 150, 0, 0, 150, 5],
+                    [$clientes[11], $vehiculos[11], -1, 'Cambio de aceite de transmisión', 'diagnostico', 120, 0, 0, 120, null],
+                ],
+                'detalles' => [
+                    [0, 'servicio', 4, null, 'Diagnóstico computarizado', 1, 200, 200],
+                    [0, 'repuesto', null, 16, 'Sensor de Oxígeno Bosch', 1, 250, 250],
+                    [1, 'servicio', 22, null, 'Mantenimiento 10.000 km', 1, 350, 350],
+                    [1, 'repuesto', null, 0, 'Aceite Motor 20W50 1L', 1, 45, 45],
+                    [2, 'servicio', 4, null, 'Diagnóstico computarizado', 1, 200, 200],
+                    [3, 'servicio', 21, null, 'Cambio de aceite de transmisión', 1, 120, 120],
+                ],
+            ],
+            $sucSur->id => [
+                'user' => $usersPorSucursal[$sucSur->id]['recepcion'],
+                'data' => [
+                    [$clientes[6], $vehiculos[6], -2, 'Cambio de pastillas y discos de freno', 'finalizada', 150, 440, 20, 570, 6],
+                    [$clientes[9], $vehiculos[9], -3, 'Escaneo electrónico por check engine', 'finalizada', 150, 250, 0, 400, 7],
+                    [$clientes[10], $vehiculos[10], -1, 'Revisión de suspensión delantera', 'en_proceso', 80, 120, 0, 200, null],
+                ],
+                'detalles' => [
+                    [0, 'servicio', 3, null, 'Cambio de pastillas de freno', 1, 150, 150],
+                    [0, 'repuesto', null, 3, 'Pastillas de Freno Delanteras', 1, 150, 150],
+                    [0, 'repuesto', null, 5, 'Discos de Freno Delanteros', 2, 220, 440],
+                    [1, 'servicio', 18, null, 'Escaneo electrónico OBD2', 1, 150, 150],
+                    [1, 'repuesto', null, 16, 'Sensor de Oxígeno Bosch', 1, 250, 250],
+                    [2, 'servicio', 19, null, 'Revisión de suspensión', 1, 80, 80],
+                    [2, 'repuesto', null, 22, 'Rótula de Suspensión', 1, 120, 120],
+                ],
+            ],
         ];
 
-        $ordenes = [];
-        foreach ($ordenesData as $i => $o) {
-            $numOrden = 'OT-' . str_pad((string) ($i + 1), 6, '0', STR_PAD_LEFT);
-            $fechaEmision = $o[2];
-            $fechaInicio = in_array($o[4], ['en_proceso', 'finalizada', 'diagnostico']) ? (clone $fechaEmision)->addHours(1) : null;
-            $fechaFin = in_array($o[4], ['finalizada']) ? (clone $fechaEmision)->addDays(1) : null;
+        foreach ($ordenesConfig as $sucId => $cfg) {
+            $userRec = $cfg['user'];
+            $sucName = Sucursal::find($sucId)->nombre;
 
-            $ordenes[] = OrdenTrabajo::create([
-                'numero_orden' => $numOrden,
-                'cliente_id' => $o[0]->id,
-                'vehiculo_id' => $o[1]->id,
-                'sucursal_id' => $sucursal->id,
-                'usuario_recepcion_id' => $userRecepcion->id ?? ($userAdmin->id ?? 1),
-                'cita_id' => $o[9]?->id,
-                'fecha_emision' => $fechaEmision,
-                'fecha_inicio' => $fechaInicio,
-                'fecha_fin' => $fechaFin,
-                'kilometraje_ingreso' => rand(5000, 100000),
-                'descripcion_problema' => $o[3],
-                'estado' => $o[4],
-                'subtotal_servicios' => $o[5],
-                'subtotal_repuestos' => $o[6],
-                'descuento' => $o[7],
-                'total_general' => $o[8],
-            ]);
+            foreach ($cfg['data'] as $oi => $o) {
+                $ordenIdx++;
+                $numOrden = 'OT-' . str_pad((string) $ordenIdx, 6, '0', STR_PAD_LEFT);
+                $fechaEmision = $hoy->copy()->addDays($o[2]);
+                $fechaInicio = in_array($o[4], ['en_proceso', 'finalizada', 'diagnostico']) ? (clone $fechaEmision)->addHours(1) : null;
+                $fechaFin = $o[4] === 'finalizada' ? (clone $fechaEmision)->addDays(1) : null;
+                $citaRef = $o[9] !== null && isset($todasLasCitas[$o[9]]) ? $todasLasCitas[$o[9]]->id : null;
+
+                $orden = OrdenTrabajo::create([
+                    'numero_orden' => $numOrden,
+                    'cliente_id' => $o[0]->id,
+                    'vehiculo_id' => $o[1]->id,
+                    'sucursal_id' => $sucId,
+                    'usuario_recepcion_id' => $userRec->id,
+                    'cita_id' => $citaRef,
+                    'fecha_emision' => $fechaEmision,
+                    'fecha_inicio' => $fechaInicio,
+                    'fecha_fin' => $fechaFin,
+                    'kilometraje_ingreso' => $o[1]->kilometraje_actual,
+                    'descripcion_problema' => $o[3],
+                    'estado' => $o[4],
+                    'subtotal_servicios' => $o[5],
+                    'subtotal_repuestos' => $o[6],
+                    'descuento' => $o[7],
+                    'total_general' => $o[8],
+                ]);
+                $todasLasOrdenes[] = $orden;
+            }
+            $this->command->info("  Órdenes creadas para {$sucName}");
         }
 
-        $this->command->info('Creando detalles de ordenes de trabajo...');
-        $detallesData = [
-            [$ordenes[0], 'servicio', $servicios[0]->id, null, 'Cambio de aceite 20W50 + filtro', 1, 80, 80],
-            [$ordenes[0], 'repuesto', null, $repuestos[0]->id, 'Aceite Motor 20W50 1L', 1, 45, 45],
-            [$ordenes[0], 'repuesto', null, $repuestos[1]->id, 'Filtro de Aceite', 1, 25, 25],
-            [$ordenes[1], 'servicio', $servicios[3]->id, null, 'Cambio de pastillas de freno delanteras', 1, 150, 150],
-            [$ordenes[1], 'repuesto', null, $repuestos[4]->id, 'Pastillas de Freno Delanteras', 1, 150, 150],
-            [$ordenes[1], 'repuesto', null, $repuestos[3]->id, 'Pastillas de Freno Traseras', 1, 150, 150],
-            [$ordenes[2], 'servicio', $servicios[19]->id, null, 'Cambio de embrague completo', 1, 800, 800],
-            [$ordenes[3], 'servicio', $servicios[1]->id, null, 'Alineacion y balanceo', 1, 120, 120],
-            [$ordenes[4], 'servicio', $servicios[3]->id, null, 'Cambio de pastillas de freno', 1, 150, 150],
-            [$ordenes[4], 'repuesto', null, $repuestos[4]->id, 'Pastillas de Freno Delanteras Bosch', 1, 150, 150],
-            [$ordenes[4], 'repuesto', null, $repuestos[5]->id, 'Discos de Freno Delanteros', 2, 220, 440],
-            [$ordenes[5], 'servicio', $servicios[4]->id, null, 'Diagnostico computarizado', 1, 200, 200],
-            [$ordenes[5], 'repuesto', null, $repuestos[16]->id, 'Sensor de Oxigeno Bosch', 1, 250, 250],
-            [$ordenes[6], 'servicio', $servicios[10]->id, null, 'Revision y reparacion de A/A', 1, 400, 400],
-            [$ordenes[7], 'servicio', $servicios[5]->id, null, 'Revision general', 1, 100, 100],
-            [$ordenes[7], 'repuesto', null, $repuestos[2]->id, 'Filtro de Aire', 1, 40, 40],
-            [$ordenes[7], 'repuesto', null, $repuestos[12]->id, 'Filtro de Combustible', 1, 35, 35],
-        ];
+        $this->command->info('=== CREANDO DETALLES DE ÓRDENES ===');
+        $ordenGlobalIdx = 0;
+        foreach ($ordenesConfig as $sucId => $cfg) {
+            foreach ($cfg['detalles'] as $d) {
+                $ordenRelativaIdx = $d[0];
+                $ordenGlobal = $ordenGlobalIdx + $ordenRelativaIdx;
+                $orden = $todasLasOrdenes[$ordenGlobal] ?? null;
+                if (!$orden) continue;
 
-        foreach ($detallesData as $d) {
-            DetalleOrdenTrabajo::create([
-                'orden_trabajo_id' => $d[0]->id,
-                'tipo' => $d[1],
-                'servicio_id' => $d[2],
-                'repuesto_id' => $d[3],
-                'descripcion' => $d[4],
-                'cantidad' => $d[5],
-                'precio_unitario' => $d[6],
-                'subtotal' => $d[7],
-            ]);
+                $servicioId = $d[2] !== null ? $servicios[$d[2]]->id : null;
+                $repuestoId = $d[3] !== null ? $repuestos[$d[3]]->id : null;
+
+                DetalleOrdenTrabajo::create([
+                    'orden_trabajo_id' => $orden->id,
+                    'tipo' => $d[1],
+                    'servicio_id' => $servicioId,
+                    'repuesto_id' => $repuestoId,
+                    'descripcion' => $d[4],
+                    'cantidad' => $d[5],
+                    'precio_unitario' => $d[6],
+                    'subtotal' => $d[7],
+                ]);
+            }
+            $ordenGlobalIdx += count($cfg['data']);
         }
 
-        $this->command->info('Creando pagos...');
+        $this->command->info('=== CREANDO PAGOS ===');
         $metodos = MetodoPago::all()->keyBy('nombre');
         $efectivo = $metodos->get('Efectivo');
         $qr = $metodos->get('QR');
         $tarjeta = $metodos->get('Tarjeta');
 
-        $pagosData = [
-            [$ordenes[0], $efectivo->id, $hoy->subDays(5), 125, 'COMP-001', 'Pago en efectivo'],
-            [$ordenes[1], $tarjeta->id, $hoy->subDays(3), 300, 'COMP-002', 'Pago con tarjeta'],
-            [$ordenes[4], $efectivo->id, $hoy->subDays(2), 570, 'COMP-003', 'Pago en efectivo'],
-            [$ordenes[5], $qr->id, $hoy->subDays(7), 450, 'COMP-004', 'Pago con QR'],
-            [$ordenes[7], $efectivo->id, $hoy->subDays(3), 205, 'COMP-005', 'Pago en efectivo'],
-            [$ordenes[0], $qr->id, $hoy->subDays(5), 125, 'COMP-006', null],
-            [$ordenes[1], $efectivo->id, $hoy->subDays(3), 300, 'COMP-007', null],
+        $pagosConfig = [
+            ['orden_idx' => 0, 'metodo' => $efectivo->id, 'dias_resta' => 5, 'monto' => 150, 'comprobante' => 'COMP-001'],
+            ['orden_idx' => 1, 'metodo' => $tarjeta->id, 'dias_resta' => 3, 'monto' => 290, 'comprobante' => 'COMP-002'],
+            ['orden_idx' => 4, 'metodo' => $efectivo->id, 'dias_resta' => 2, 'monto' => 570, 'comprobante' => 'COMP-003'],
+            ['orden_idx' => 5, 'metodo' => $qr->id, 'dias_resta' => 7, 'monto' => 450, 'comprobante' => 'COMP-004'],
+            ['orden_idx' => 6, 'metodo' => $efectivo->id, 'dias_resta' => 3, 'monto' => 395, 'comprobante' => 'COMP-005'],
+            ['orden_idx' => 8, 'metodo' => $qr->id, 'dias_resta' => 2, 'monto' => 570, 'comprobante' => 'COMP-006'],
+            ['orden_idx' => 9, 'metodo' => $tarjeta->id, 'dias_resta' => 3, 'monto' => 400, 'comprobante' => 'COMP-007'],
         ];
 
         $pagos = [];
-        foreach ($pagosData as $p) {
+        foreach ($pagosConfig as $pc) {
+            $orden = $todasLasOrdenes[$pc['orden_idx']] ?? null;
+            if (!$orden) continue;
+
             $pagos[] = Pago::create([
-                'orden_trabajo_id' => $p[0]->id,
-                'metodo_pago_id' => $p[1],
+                'orden_trabajo_id' => $orden->id,
+                'metodo_pago_id' => $pc['metodo'],
                 'usuario_id' => $userAdmin->id ?? 1,
-                'fecha_pago' => $p[2],
-                'monto' => $p[3],
-                'numero_comprobante' => $p[4],
-                'referencia' => $p[5] ?? 'Pago por ' . ($p[1] == $efectivo?->id ? 'efectivo' : ($p[1] == $qr?->id ? 'QR' : 'tarjeta')),
+                'fecha_pago' => $hoy->copy()->subDays($pc['dias_resta']),
+                'monto' => $pc['monto'],
+                'numero_comprobante' => $pc['comprobante'],
+                'referencia' => 'Pago por ' . match ($pc['metodo']) { $efectivo?->id => 'efectivo', $qr?->id => 'QR', default => 'tarjeta' },
                 'estado' => 'confirmado',
             ]);
         }
 
-        $this->command->info('Creando comprobantes...');
+        $this->command->info('=== CREANDO COMPROBANTES ===');
         foreach ($pagos as $i => $p) {
-            if ($i >= 5) break;
             $orden = $p->ordenTrabajo;
             $cliente = $orden->cliente;
-            Comprobante::create([
-                'pago_id' => $p->id,
-                'cliente_id' => $cliente->id,
-                'numero' => 'FACT-' . str_pad((string) ($i + 1), 4, '0', STR_PAD_LEFT),
-                'fecha_emision' => $p->fecha_pago,
-                'nit_ci' => $cliente->ci,
-                'razon_social' => $cliente->nombre_completo,
-                'monto_total' => $p->monto,
-                'estado' => 'emitido',
-            ]);
+            Comprobante::firstOrCreate(
+                ['numero' => 'FACT-' . str_pad((string) ($i + 1), 4, '0', STR_PAD_LEFT)],
+                [
+                    'pago_id' => $p->id,
+                    'cliente_id' => $cliente->id,
+                    'fecha_emision' => $p->fecha_pago,
+                    'nit_ci' => $cliente->ci,
+                    'razon_social' => $cliente->nombre_completo,
+                    'monto_total' => $p->monto,
+                    'estado' => 'emitido',
+                ]
+            );
         }
+
+        $this->command->info('=== CREANDO MOVIMIENTOS DE INVENTARIO ===');
+        foreach ($inventarioPorSucursal as $sucId => $inventarios) {
+            foreach (array_slice($inventarios, 0, 3) as $inv) {
+                MovimientoInventario::firstOrCreate(
+                    [
+                        'inventario_id' => $inv->id,
+                        'tipo' => 'entrada_inicial',
+                        'fecha_movimiento' => now()->subDays(30),
+                    ],
+                    [
+                        'usuario_id' => $userAdmin->id ?? 1,
+                        'cantidad' => $inv->cantidad_actual,
+                        'existencia_anterior' => 0,
+                        'existencia_nueva' => $inv->cantidad_actual,
+                        'motivo' => 'Inventario inicial',
+                    ]
+                );
+            }
+        }
+
+        $this->command->info('=== CREANDO ASIGNACIONES ===');
+        $asignacionesCount = 0;
+        foreach ($ordenesConfig as $sucId => $cfg) {
+            $ordenIdxStart = ($sucId === $sucPrincipal->id ? 0 : ($sucId === $sucNorte->id ? 5 : 9));
+            $mecs = $usersPorSucursal[$sucId]['mecanicos'];
+
+            foreach ($cfg['data'] as $li => $o) {
+                if ($o[4] === 'recibida') continue;
+                $ordenGlobalIdx2 = $ordenIdxStart + $li;
+                $orden = $todasLasOrdenes[$ordenGlobalIdx2] ?? null;
+                if (!$orden || empty($mecs)) continue;
+
+                $mec = $mecs[array_rand($mecs)];
+                $mecanico = Mecanico::where('empleado_id', $mec->empleado_id)->first();
+                if (!$mecanico) continue;
+
+                $fechaAsig = $orden->fecha_emision->copy()->addHour();
+
+                AsignacionTrabajo::create([
+                    'orden_trabajo_id' => $orden->id,
+                    'mecanico_id' => $mecanico->id,
+                    'usuario_asignador_id' => $usersPorSucursal[$sucId]['recepcion']->id,
+                    'actividad_asignada' => $o[3],
+                    'prioridad' => $o[4] === 'en_proceso' ? 'alta' : 'normal',
+                    'estado' => $o[4] === 'finalizada' ? 'finalizada' : ($o[4] === 'en_proceso' ? 'en_proceso' : 'pendiente'),
+                    'fecha_asignacion' => $fechaAsig,
+                    'fecha_inicio' => $o[4] === 'finalizada' || $o[4] === 'en_proceso' ? $fechaAsig : null,
+                    'fecha_finalizacion' => $o[4] === 'finalizada' ? $fechaAsig->addHours(rand(2, 8)) : null,
+                ]);
+                $asignacionesCount++;
+            }
+        }
+        $this->command->info("  {$asignacionesCount} asignaciones creadas");
 
         $this->command->info('========================================');
         $this->command->info('DATOS DE PRUEBA CREADOS EXITOSAMENTE');
         $this->command->info('========================================');
-        $this->command->warn('Usuarios para pruebas:');
-        $this->command->warn('  admin / TallerPro2026! (Administrador)');
-        $this->command->warn('  gerente / TallerPro2026! (Gerente)');
-        $this->command->warn('  recepcion / TallerPro2026! (Recepcionista)');
-        $this->command->warn('  mecanico1 / TallerPro2026! (Mecanico)');
-        $this->command->warn('  mecanico2 / TallerPro2026! (Mecanico)');
+        $this->command->info('');
+        $this->command->warn('USUARIOS PARA PRUEBAS (password: TallerPro2026!)');
+        $this->command->warn('──────────────────────────────────────────────');
+        $this->command->warn('  admin                  - Administrador (sin sucursal fija)');
+        $this->command->warn('  gerente_sp             - Gerente Sucursal Principal');
+        $this->command->warn('  gerente_sn             - Gerente Sucursal Norte Montero');
+        $this->command->warn('  gerente_ss             - Gerente Sucursal Sur La Guardia');
+        $this->command->warn('  recepcion_sp           - Recepcionista Suc. Principal');
+        $this->command->warn('  recepcion_sn           - Recepcionista Suc. Norte');
+        $this->command->warn('  recepcion_ss           - Recepcionista Suc. Sur');
+        $this->command->warn('  mecanico_sp_1/2/3      - Mecánicos Suc. Principal');
+        $this->command->warn('  mecanico_sn_1/2        - Mecánicos Suc. Norte');
+        $this->command->warn('  mecanico_ss_1/2        - Mecánicos Suc. Sur');
+        $this->command->warn('  cliente                - Cliente de Prueba');
+        $this->command->warn('');
+        $this->command->warn('ADMIN también puede acceder como:');
+        $this->command->warn('  admin / TallerPro2026!');
         $this->command->info('========================================');
     }
 }

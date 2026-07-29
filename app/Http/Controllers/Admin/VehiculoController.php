@@ -22,6 +22,7 @@ class VehiculoController extends AdminController implements HasMiddleware
     public static function middleware(): array
     {
         return [
+            new Middleware('permiso:vehiculos.ver', only: ['index', 'show']),
             new Middleware('permiso:vehiculos.crear', only: ['create', 'store']),
             new Middleware('permiso:vehiculos.editar', only: ['edit', 'update', 'destroy', 'toggle']),
         ];

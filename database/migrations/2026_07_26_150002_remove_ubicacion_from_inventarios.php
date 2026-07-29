@@ -2,15 +2,22 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        try {
+            DB::statement('ALTER TABLE inventarios DROP FOREIGN KEY inventarios_ubicacion_id_foreign');
+        } catch (\Exception $e) {
+            //
+        }
+
         Schema::table('inventarios', function (Blueprint $table) {
             if (Schema::hasColumn('inventarios', 'ubicacion_id')) {
-                $table->dropConstrainedForeignId('ubicacion_id');
+                $table->dropColumn('ubicacion_id');
             }
         });
 

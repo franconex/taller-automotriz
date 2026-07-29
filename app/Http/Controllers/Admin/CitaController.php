@@ -12,12 +12,17 @@ use App\Models\OrdenTrabajo;
 use App\Models\Servicio;
 use App\Models\Sucursal;
 use App\Models\Vehiculo;
+use App\Notifications\CitaConfirmada;
+use App\Notifications\CitaRechazada;
+use App\Notifications\OrdenAsignada;
+use App\Notifications\VehiculoRecibido;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -108,7 +113,7 @@ class CitaController extends AdminController
             'sucursal_id'  => ['nullable', 'integer', Rule::exists('sucursales', 'id')],
             'servicio_id'  => ['nullable', 'integer', Rule::exists('servicios', 'id')],
             'mecanico_id'  => ['nullable', 'integer', Rule::exists('mecanicos', 'id')],
-            'estado'       => ['nullable', 'in:pendiente,confirmada,atendida,cancelada,no_asistio'],
+            'estado'       => ['nullable', 'in:solicitada,propuesta,pendiente,confirmada,atendida,cancelada,rechazada,no_asistio'],
         ], [
             'required' => 'El campo :attribute es obligatorio.',
             'date' => 'El campo :attribute debe ser una fecha válida.',
@@ -128,7 +133,7 @@ class CitaController extends AdminController
             ->when(! empty($validated['sucursal_id']), fn ($q) => $q->where('sucursal_id', $validated['sucursal_id']))
             ->when(! empty($validated['servicio_id']), fn ($q) => $q->where('servicio_id', $validated['servicio_id']))
             ->when(! empty($validated['mecanico_id']), fn ($q) => $q->where('mecanico_id', $validated['mecanico_id']))
-            ->when(! empty($validated['estado']), fn ($q) => $q->where('estado', $validated['estado']));
+            ->when(! empty($validated['estado']), fn ($q) => $q->where('estado', $validated['estado']), fn ($q) => $q->whereIn('estado', ['confirmada', 'atendida']));
 
         $eventos = $query->get()->map(function (Cita $cita) {
             $cliente  = $cita->cliente?->nombre_completo ?? '—';
@@ -351,56 +356,125 @@ class CitaController extends AdminController
         $this->asegurarSucursalPermitida($cita);
 
         if (! $cita->esPasableConfirmar()) {
-            return $this->respuestaAccion($request, 'Solo se pueden confirmar citas en estado pendiente.', false);
+            return $this->respuestaAccion($request, 'Solo se pueden confirmar citas solicitadas, propuestas o pendientes.', false);
         }
 
         if ($cita->ordenTrabajo) {
             return $this->respuestaAccion($request, 'La cita ya tiene una orden de trabajo asociada.', false);
         }
 
-        try {
-            $orden = DB::transaction(function () use ($cita) {
-                $cita->estado_anterior = $cita->estado;
-                $cita->estado = 'confirmada';
-                $cita->save();
+        $request->merge(['__accion' => 'confirmar']);
+        $datos = $request->validate([
+            'mecanico_id' => ['required', 'exists:mecanicos,id'],
+        ], [], ['mecanico_id' => 'mecánico']);
 
-                $siguienteId = (OrdenTrabajo::withTrashed()->max('id') ?? 0) + 1;
-                $numeroOrden = 'OT-' . str_pad((string) $siguienteId, 6, '0', STR_PAD_LEFT);
-
-                $orden = OrdenTrabajo::create([
-                    'numero_orden'          => $numeroOrden,
-                    'cliente_id'            => $cita->cliente_id,
-                    'vehiculo_id'           => $cita->vehiculo_id,
-                    'sucursal_id'           => $cita->sucursal_id,
-                    'usuario_recepcion_id'  => Auth::id(),
-                    'cita_id'               => $cita->id,
-                    'fecha_emision'         => now(),
-                    'descripcion_problema'  => $cita->descripcion_problema,
-                    'estado'                => 'recibida',
-                    'descuento'             => 0,
-                    'kilometraje_ingreso'   => 0,
-                ]);
-
-                $this->registrarAuditoria('citas', $cita->id, 'confirmar', [
-                    'antes'       => $cita->estado_anterior,
-                    'despues'     => 'confirmada',
-                    'orden_id'    => $orden->id,
-                    'orden_numero' => $orden->numero_orden,
-                ]);
-
-                return $orden;
-            });
-        } catch (\Throwable $e) {
-            return $this->respuestaAccion($request, 'No se pudo crear la orden: ' . $e->getMessage(), false);
+        $mecanico = Mecanico::with('empleado')->find($datos['mecanico_id']);
+        if (! $mecanico || ! $mecanico->empleado?->estado) {
+            return $this->respuestaAccion($request, 'El mecánico seleccionado no está activo.', false);
         }
 
-        $msg = "Cita confirmada. Se creó la orden {$orden->numero_orden}.";
+        if ($this->mecanicoOcupado($mecanico->id, $cita->fecha, $cita->hora, $cita->horaFinCalculada())) {
+            return $this->respuestaAccion($request, 'El mecánico ya tiene otra cita en ese horario.', false);
+        }
+
+        DB::transaction(function () use ($cita, $mecanico) {
+            $cita->estado_anterior = $cita->estado;
+            $cita->mecanico_id = $mecanico->id;
+            $cita->estado = 'confirmada';
+            $cita->save();
+
+            $this->registrarAuditoria('citas', $cita->id, 'confirmar', [
+                'antes'       => $cita->estado_anterior,
+                'despues'     => 'confirmada',
+                'mecanico_id' => $mecanico->id,
+            ]);
+        });
+
+        // Notificar al cliente
+        if ($cita->cliente?->user) {
+            $cita->cliente->user->notify(new CitaConfirmada($cita));
+        }
+
+        // Notificar al mecánico asignado
+        $userMecanico = $mecanico->empleado?->user;
+        if (! $userMecanico) {
+            $userMecanico = User::where('empleado_id', $mecanico->empleado_id)->first();
+        }
+        if ($userMecanico) {
+            $userMecanico->notify(new \App\Notifications\CitaSolicitada($cita));
+        }
+
+        $msg = 'Cita confirmada. ' . $cita->cliente?->nombre_completo . ' será atendido por ' . ($mecanico->empleado?->nombre_completo ?? 'el mecánico') . '.';
 
         if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['ok' => true, 'message' => $msg, 'orden_id' => $orden->id]);
+            return response()->json(['ok' => true, 'message' => $msg]);
         }
 
         return back()->with('success', $msg);
+    }
+
+    public function registrarLlegada(Request $request, Cita $cita): RedirectResponse|JsonResponse
+    {
+        $this->asegurarSucursalPermitida($cita);
+
+        if ($cita->estado !== 'confirmada') {
+            return $this->respuestaAccion($request, 'Solo se puede registrar llegada de citas confirmadas.', false);
+        }
+
+        $orden = $cita->ordenTrabajo;
+        if (! $orden) {
+            return $this->respuestaAccion($request, 'La cita no tiene una orden asociada.', false);
+        }
+
+        DB::transaction(function () use ($cita, $orden) {
+            $cita->update([
+                'estado' => 'atendida',
+                'estado_anterior' => $cita->estado,
+            ]);
+
+            $orden->update([
+                'estado' => 'recibida',
+                'fecha_inicio' => now(),
+            ]);
+
+            $orden->asignaciones()->whereNull('fecha_finalizacion')->update([
+                'fecha_inicio' => now(),
+            ]);
+
+            $this->registrarAuditoria('citas', $cita->id, 'registrar_llegada', [
+                'cita_estado' => 'atendida',
+                'orden_estado' => 'recibida',
+            ]);
+        });
+
+        // Notificar al mecánico asignado
+        $asignacion = $orden->asignaciones()->whereNull('fecha_finalizacion')->first();
+        if ($asignacion?->mecanico?->empleado?->user) {
+            $asignacion->mecanico->empleado->user->notify(new VehiculoRecibido($orden));
+        }
+
+        return $this->respuestaAccion($request, 'Llegada registrada. El vehículo está en taller.', true);
+    }
+
+    private function mecanicoOcupado(int $mecanicoId, $fecha, string $hora, string $horaFin): bool
+    {
+        try {
+            $inicio = Carbon::parse($fecha->format('Y-m-d') . ' ' . $hora);
+            $fin = Carbon::parse($fecha->format('Y-m-d') . ' ' . $horaFin);
+        } catch (\Throwable $e) {
+            return true;
+        }
+
+        return Cita::where('mecanico_id', $mecanicoId)
+            ->whereDate('fecha', $fecha)
+            ->whereIn('estado', ['confirmada', 'pendiente'])
+            ->get()
+            ->filter(function ($c) use ($inicio, $fin) {
+                $cInicio = Carbon::parse($c->fecha->format('Y-m-d') . ' ' . $c->hora);
+                $cFin = Carbon::parse($c->fecha->format('Y-m-d') . ' ' . ($c->hora_fin ?: Carbon::parse($c->hora)->addHour()->format('H:i')));
+                return $cInicio->lt($fin) && $cFin->gt($inicio);
+            })
+            ->isNotEmpty();
     }
 
     public function cancelar(Request $request, Cita $cita): RedirectResponse|JsonResponse
@@ -464,6 +538,73 @@ class CitaController extends AdminController
         return $this->respuestaAccion($request, 'La cita fue marcada como no asistida.', true);
     }
 
+    public function proponer(Request $request, Cita $cita): RedirectResponse|JsonResponse
+    {
+        $this->asegurarSucursalPermitida($cita);
+
+        if (! $cita->esPasableProponer()) {
+            return $this->respuestaAccion($request, 'Solo se pueden proponer citas solicitadas o pendientes.', false);
+        }
+
+        $request->merge(['__accion' => 'proponer']);
+        $datos = $request->validate([
+            'fecha'                 => ['required', 'date'],
+            'hora'                  => ['required', 'date_format:H:i'],
+            'hora_fin'              => ['nullable', 'date_format:H:i', 'after:hora'],
+            'duracion_minutos'      => ['nullable', 'integer', 'min:5', 'max:600'],
+            'sucursal_id'           => ['required', 'exists:sucursales,id'],
+            'motivo_reprogramacion' => ['required', 'string', 'min:3', 'max:1000'],
+        ], [], ['motivo_reprogramacion' => 'motivo de la propuesta']);
+
+        DB::transaction(function () use ($cita, $datos) {
+            $cita->update([
+                'fecha'                 => $datos['fecha'],
+                'hora'                  => $datos['hora'],
+                'hora_fin'              => $datos['hora_fin'] ?? $this->calcularHoraFin($datos['hora'], $datos['duracion_minutos'] ?? 60),
+                'duracion_minutos'      => $datos['duracion_minutos'] ?? null,
+                'sucursal_id'           => $datos['sucursal_id'],
+                'estado'                => 'propuesta',
+                'estado_anterior'       => $cita->estado,
+                'motivo_reprogramacion' => $datos['motivo_reprogramacion'],
+                'reprogramado_por_id'   => Auth::id(),
+                'reprogramado_en'       => now(),
+            ]);
+        });
+
+        return $this->respuestaAccion($request, 'Se propuso un nuevo horario al cliente.', true);
+    }
+
+    public function rechazar(Request $request, Cita $cita): RedirectResponse|JsonResponse
+    {
+        $this->asegurarSucursalPermitida($cita);
+
+        if (! $cita->esPasableRechazar()) {
+            return $this->respuestaAccion($request, 'No se puede rechazar esta cita en su estado actual.', false);
+        }
+
+        $request->merge(['__accion' => 'rechazar']);
+        $datos = $request->validate([
+            'cancelado_motivo' => ['required', 'string', 'min:3', 'max:1000'],
+        ], [], ['cancelado_motivo' => 'motivo de rechazo']);
+
+        DB::transaction(function () use ($cita, $datos) {
+            $cita->update([
+                'estado'          => 'rechazada',
+                'estado_anterior' => $cita->estado,
+                'cancelado_motivo'=> $datos['cancelado_motivo'],
+                'cancelado_por_id'=> Auth::id(),
+                'cancelado_en'    => now(),
+            ]);
+        });
+
+        // Notificar al cliente
+        if ($cita->cliente?->user) {
+            $cita->cliente->user->notify(new CitaRechazada($cita));
+        }
+
+        return $this->respuestaAccion($request, 'La cita fue rechazada.', true);
+    }
+
     public function convertirEnOrden(Request $request, Cita $cita): RedirectResponse|JsonResponse
     {
         $this->asegurarSucursalPermitida($cita);
@@ -494,6 +635,19 @@ class CitaController extends AdminController
                     'descuento'             => 0,
                     'kilometraje_ingreso'   => 0,
                 ]);
+
+                // Si la cita ya tiene mecánico asignado, crear asignación automáticamente
+                if ($cita->mecanico_id) {
+                    AsignacionTrabajo::create([
+                        'orden_trabajo_id'     => $orden->id,
+                        'mecanico_id'          => $cita->mecanico_id,
+                        'usuario_asignador_id' => Auth::id(),
+                        'actividad_asignada'   => $cita->descripcion_problema ?? 'Atención de orden',
+                        'prioridad'            => 'normal',
+                        'estado'               => 'pendiente',
+                        'fecha_asignacion'     => now(),
+                    ]);
+                }
 
                 $cita->estado_anterior = $cita->estado;
                 $cita->estado = 'atendida';

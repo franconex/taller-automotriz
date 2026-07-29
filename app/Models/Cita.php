@@ -12,18 +12,24 @@ class Cita extends Model
     use SoftDeletes;
 
     public const ESTADOS = [
-        'pendiente' => 'Pendiente',
+        'solicitada' => 'Solicitada',
+        'propuesta'  => 'Propuesta',
+        'pendiente'  => 'Pendiente',
         'confirmada' => 'Confirmada',
-        'atendida' => 'Atendida',
-        'cancelada' => 'Cancelada',
+        'atendida'   => 'Atendida',
+        'cancelada'  => 'Cancelada',
+        'rechazada'  => 'Rechazada',
         'no_asistio' => 'No asistió',
     ];
 
     public const COLORES = [
-        'confirmada' => '#16A34A',
+        'solicitada' => '#6B7280',
+        'propuesta'  => '#F59E0B',
         'pendiente'  => '#F59E0B',
+        'confirmada' => '#16A34A',
         'atendida'   => '#0891B2',
         'cancelada'  => '#9CA3AF',
+        'rechazada'  => '#DC2626',
         'no_asistio' => '#B91C1C',
     ];
 
@@ -198,17 +204,17 @@ class Cita extends Model
 
     public function esPasableReprogramar(): bool
     {
-        return ! in_array($this->estado, ['cancelada', 'atendida', 'no_asistio'], true);
+        return ! in_array($this->estado, ['cancelada', 'rechazada', 'atendida', 'no_asistio'], true);
     }
 
     public function esPasableConfirmar(): bool
     {
-        return $this->estado === 'pendiente';
+        return in_array($this->estado, ['pendiente', 'solicitada', 'propuesta'], true);
     }
 
     public function esPasableCancelar(): bool
     {
-        return ! in_array($this->estado, ['cancelada', 'atendida', 'no_asistio'], true);
+        return ! in_array($this->estado, ['cancelada', 'rechazada', 'atendida', 'no_asistio'], true);
     }
 
     public function esPasableNoAsistio(): bool
@@ -218,5 +224,15 @@ class Cita extends Model
         }
 
         return $this->yaPaso();
+    }
+
+    public function esPasableRechazar(): bool
+    {
+        return in_array($this->estado, ['solicitada', 'propuesta', 'pendiente'], true);
+    }
+
+    public function esPasableProponer(): bool
+    {
+        return in_array($this->estado, ['solicitada', 'pendiente'], true);
     }
 }

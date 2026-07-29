@@ -21,6 +21,11 @@ class Pago extends Model
         'referencia',
         'estado',
         'observaciones',
+        'stripe_payment_intent_id',
+        'confirmado_por_id',
+        'confirmado_en',
+        'comprobante_imagen',
+        'motivo_rechazo',
     ];
 
     protected function casts(): array

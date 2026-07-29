@@ -33,6 +33,9 @@
                 <option value="diagnostico" @selected(request('estado') === 'diagnostico')>En diagnóstico</option>
                 <option value="en_proceso" @selected(request('estado') === 'en_proceso')>En proceso</option>
                 <option value="esperando_repuestos" @selected(request('estado') === 'esperando_repuestos')>Esperando repuestos</option>
+                <option value="pendiente_autorizacion" @selected(request('estado') === 'pendiente_autorizacion')>Pendiente autorización</option>
+                <option value="finalizada_mecanico" @selected(request('estado') === 'finalizada_mecanico')>Finalizada (mecánico)</option>
+                <option value="lista_entrega" @selected(request('estado') === 'lista_entrega')>Lista para entrega</option>
                 <option value="finalizada" @selected(request('estado') === 'finalizada')>Finalizada</option>
                 <option value="entregada" @selected(request('estado') === 'entregada')>Entregada</option>
                 <option value="anulada" @selected(request('estado') === 'anulada')>Anulada</option>
@@ -76,9 +79,11 @@
                 </thead>
                 <tbody>
                     @forelse ($ordenes as $o)
-                        @php
-                            $asignacion = $o->asignaciones->first();
-                        @endphp
+                    @php
+                        $asignacion = $o->asignaciones->first();
+                        $puedeCobrar = in_array($o->estado, ['finalizada_mecanico', 'lista_entrega', 'finalizada']);
+                        $puedeFinalizar = in_array($o->estado, ['recibida', 'diagnostico', 'en_proceso', 'esperando_repuesto', 'pausada', 'pendiente_autorizacion']);
+                    @endphp
                         <tr>
                             <td>
                                 <div class="cell-strong">{{ $o->numero_orden }}</div>
@@ -100,6 +105,8 @@
                                         'recibida' => 'info',
                                         'diagnostico' => 'warning',
                                         'en_proceso' => 'warning',
+                                        'finalizada_mecanico' => 'success',
+                                        'lista_entrega' => 'success',
                                         'finalizada' => 'success',
                                         'entregada' => 'success',
                                         'anulada' => 'danger',
@@ -109,6 +116,8 @@
                                         'recibida' => 'bi-inbox-fill',
                                         'diagnostico' => 'bi-search',
                                         'en_proceso' => 'bi-gear-fill',
+                                        'finalizada_mecanico' => 'bi-check-circle-fill',
+                                        'lista_entrega' => 'bi-check-circle-fill',
                                         'finalizada' => 'bi-check-circle-fill',
                                         'entregada' => 'bi-truck',
                                         'anulada' => 'bi-x-circle-fill',
@@ -136,6 +145,33 @@
                                        aria-label="Editar">
                                         <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                     </a>
+                                    @endif
+                                    @if (!$esMecanico && $puedeCobrar)
+                                    <button type="button"
+                                       class="btn btn-sm btn-success"
+                                       title="Cobrar"
+                                       data-modal-cobrar
+                                       data-orden-id="{{ $o->id }}">
+                                        <i class="bi bi-cash-coin" aria-hidden="true"></i>
+                                        <span class="d-none d-lg-inline">Cobrar</span>
+                                    </button>
+                                    @endif
+                                    @if (!$esMecanico && $puedeFinalizar)
+                                    <form method="POST"
+                                          action="{{ route('admin.ordenes.cambiar-estado', $o) }}"
+                                          class="d-inline"
+                                          onsubmit="return confirm('¿Finalizar esta orden? Se marcará como completada.')">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="estado" value="finalizada">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                title="Finalizar orden"
+                                                aria-label="Finalizar">
+                                            <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                                            <span class="d-none d-lg-inline">Finalizar</span>
+                                        </button>
+                                    </form>
                                     @endif
                                     @if (!$esMecanico && $o->estado !== 'anulada')
                                     <form method="POST"
@@ -167,4 +203,42 @@
             <x-admin.table-pagination :paginator="$ordenes" />
         </div>
     @endif
+
+{{-- MODAL COBRAR --}}
+<div class="modal fade" id="modalCobrar" tabindex="-1" aria-labelledby="modalCobrarLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="border:1px solid #d1d5db;border-radius:0;">
+      <div class="modal-header" style="background:#0B1D3A;color:#fff;border-bottom:0;padding:1rem 1.25rem;">
+        <h6 class="modal-title fw-bold" id="modalCobrarLabel"><i class="bi bi-cash-coin me-2"></i> Cobrar orden</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" id="modalCobrarBody" style="padding:1.25rem;">
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-cash-coin" style="font-size:2rem;display:block;margin-bottom:.5rem;opacity:.3;"></i>
+          <p class="small mb-0">Cargando...</p>
+        </div>
+      </div>
+      {{-- STRIPE FIELDS --}}
+      <div id="stripe-fields" style="display:none;padding:0 1.25rem 1rem;">
+        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;color:#6B7280;letter-spacing:.04em;margin-bottom:.4rem;">Datos de la tarjeta</div>
+        <div style="border:1px solid #d1d5db;padding:.6rem .75rem;margin-bottom:.35rem;" id="stripe-card-number"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;">
+          <div style="border:1px solid #d1d5db;padding:.6rem .75rem;" id="stripe-card-expiry"></div>
+          <div style="border:1px solid #d1d5db;padding:.6rem .75rem;" id="stripe-card-cvc"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="border-top:1px solid #e5e7eb;padding:.75rem 1.25rem;">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="modalCobrarCancelar" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-sm btn-success" id="modalCobrarConfirmar" disabled>
+          <i class="bi bi-check2-circle me-1"></i> Confirmar pago
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@push('scripts')
+    @vite(['resources/js/admin/pago-modal.js'])
+@endpush
 @endsection
