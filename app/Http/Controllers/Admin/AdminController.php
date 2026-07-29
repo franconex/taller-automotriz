@@ -14,7 +14,34 @@ class AdminController extends Controller
 {
     protected function usuarioSucursalId(): ?int
     {
-        return Auth::user()?->sucursal_id;
+        $user = Auth::user();
+
+        if ($user === null) {
+            return null;
+        }
+
+        if ($user->sucursal_id !== null) {
+            return $user->sucursal_id;
+        }
+
+        $sucursalId = session('admin_sucursal_id');
+
+        return $sucursalId ? (int) $sucursalId : null;
+    }
+
+    protected function sucursalesPermitidas(): array
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            return [];
+        }
+
+        if ($user->sucursal_id !== null) {
+            return [$user->sucursal_id];
+        }
+
+        return \App\Models\Sucursal::where('estado', true)->pluck('id')->toArray();
     }
 
     protected function scopeSucursal(Builder $query, string $column = 'sucursal_id'): Builder

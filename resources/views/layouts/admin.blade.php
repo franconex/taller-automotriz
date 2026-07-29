@@ -28,6 +28,8 @@
             collect($partesNombre)->take(2)->map(fn($p) => mb_substr($p, 0, 1))->implode('')
         );
         if ($iniciales === '') { $iniciales = 'U'; }
+        $sucursalesDisponibles = \App\Models\Sucursal::where('estado', true)->orderBy('nombre')->get();
+        $sucursalActiva = $usuario->sucursal ?? $sucursalesDisponibles->firstWhere('id', session('admin_sucursal_id'));
     @endphp
 
     <div class="admin-shell">
@@ -98,7 +100,36 @@
 
                 <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
                     <x-notificaciones-campana />
-                    @if ($usuario->sucursal)
+                    @if ($usuario->sucursal_id === null)
+                        <div class="dropdown d-none d-md-inline-flex">
+                            <button class="admin-navbar__branch dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sucursal activa">
+                                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                {{ $sucursalActiva?->nombre ?? 'Todas las sucursales' }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end admin-dropdown">
+                                <li>
+                                    <form method="POST" action="{{ route('admin.sucursales.seleccionar') }}">
+                                        @csrf
+                                        <input type="hidden" name="sucursal_id" value="">
+                                        <button type="submit" class="dropdown-item {{ session('admin_sucursal_id') === null ? 'active' : '' }}">
+                                            <i class="bi bi-building"></i> Todas las sucursales
+                                        </button>
+                                    </form>
+                                </li>
+                                @foreach ($sucursalesDisponibles as $s)
+                                    <li>
+                                        <form method="POST" action="{{ route('admin.sucursales.seleccionar') }}">
+                                            @csrf
+                                            <input type="hidden" name="sucursal_id" value="{{ $s->id }}">
+                                            <button type="submit" class="dropdown-item {{ (int) session('admin_sucursal_id') === (int) $s->id ? 'active' : '' }}">
+                                                <i class="bi bi-building"></i> {{ $s->nombre }}
+                                            </button>
+                                        </form>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @elseif ($usuario->sucursal)
                         <span class="admin-navbar__branch d-none d-md-inline-flex" title="Sucursal activa">
                             <i class="bi bi-geo-alt" aria-hidden="true"></i>
                             {{ $usuario->sucursal->nombre }}

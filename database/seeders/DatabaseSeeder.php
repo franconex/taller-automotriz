@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             MetodoPagoSeeder::class,
             UserSeeder::class,
             CategoriaSeeder::class,
+            TestDataSeeder::class,
         ]);
     }
 }
