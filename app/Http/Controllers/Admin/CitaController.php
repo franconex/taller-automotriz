@@ -828,7 +828,9 @@ class CitaController extends AdminController
 
     protected function asegurarSucursalPermitida(Cita $cita): void
     {
-        $sucursalId = $this->usuarioSucursalId();
+        $user = Auth::user();
+        if ($user === null) abort(403);
+        $sucursalId = $user->sucursal_id;
         if ($sucursalId !== null && (int) $cita->sucursal_id !== (int) $sucursalId) {
             abort(403, 'No tienes acceso a esta cita.');
         }
