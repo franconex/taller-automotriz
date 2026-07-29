@@ -465,7 +465,7 @@ class DashboardController extends Controller
         $cita = Cita::create($data);
 
         $recepcionistas = User::whereHas('rol', fn ($q) => $q->where('nombre', 'Recepcionista'))
-            ->where('sucursal_id', $cita->sucursal_id)
+            ->whereHas('empleado', fn ($q) => $q->where('sucursal_id', $cita->sucursal_id))
             ->get();
         Notification::send($recepcionistas, new CitaSolicitada($cita));
 
