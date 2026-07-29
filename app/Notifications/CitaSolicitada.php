@@ -20,12 +20,19 @@ class CitaSolicitada extends Notification
 
     public function toDatabase(object $notifiable): array
     {
+        $esMecanico = $notifiable->tieneRol('Mecánico');
+
         return [
-            'titulo' => 'Nueva cita solicitada',
-            'mensaje' => 'El cliente ' . ($this->cita->cliente?->nombre_completo ?? '—') .
-                ' ha solicitado una cita para el ' . $this->cita->fecha?->format('d/m/Y') .
-                ' a las ' . $this->cita->hora . '.',
-            'url' => route('admin.citas.index') . '?cita=' . $this->cita->id,
+            'titulo' => $esMecanico ? 'Nueva cita asignada' : 'Nueva cita solicitada',
+            'mensaje' => $esMecanico
+                ? 'Te asignaron una cita para el ' . $this->cita->fecha?->format('d/m/Y') .
+                  ' a las ' . $this->cita->hora . ' — ' . ($this->cita->cliente?->nombre_completo ?? '—')
+                : 'El cliente ' . ($this->cita->cliente?->nombre_completo ?? '—') .
+                  ' ha solicitado una cita para el ' . $this->cita->fecha?->format('d/m/Y') .
+                  ' a las ' . $this->cita->hora . '.',
+            'url' => $esMecanico
+                ? route('mecanico.ordenes.index')
+                : route('admin.citas.index') . '?cita=' . $this->cita->id,
             'icono' => 'bi-calendar-plus',
         ];
     }
