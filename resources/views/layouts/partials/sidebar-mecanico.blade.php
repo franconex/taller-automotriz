@@ -3,6 +3,7 @@
 
     $items = [
         ['route' => 'mecanico.dashboard', 'icon' => 'bi-grid-1x2-fill', 'label' => 'Panel'],
+        ['route' => 'mecanico.citas.index', 'icon' => 'bi-calendar-check', 'label' => 'Citas asignadas'],
         ['route' => 'mecanico.ordenes.index', 'icon' => 'bi-journal-text', 'label' => 'Mis órdenes'],
     ];
 

@@ -119,23 +119,14 @@
             @endif
         @endif
 
-        @php
-            $hoy = now()->format('Y-m-d');
-            $citasHoy = \App\Models\Cita::where('mecanico_id', $mecanicoId??0)
-                ->whereDate('fecha', $hoy)
-                ->whereIn('estado', ['confirmada', 'pendiente'])
-                ->with(['cliente:id,nombre_completo,telefono', 'vehiculo:id,placa,marca,modelo'])
-                ->orderBy('hora')
-                ->get();
-        @endphp
-
-        @if ($citasHoy->isNotEmpty())
+        @if ($citasPendientes->isNotEmpty())
             <div class="d-flex align-items-center gap-2 mt-3 mb-2 px-1">
                 <i class="bi bi-calendar-check text-primary" style="font-size:.9rem;"></i>
-                <span class="fw-semibold text-uppercase" style="font-size:.8rem;letter-spacing:.3px;">Citas de hoy</span>
-                <span class="ms-auto badge rounded-0 px-2 py-1 small" style="background:#1a7ab3;font-size:.65rem;">{{ $citasHoy->count() }}</span>
+                <span class="fw-semibold text-uppercase" style="font-size:.8rem;letter-spacing:.3px;">Citas asignadas</span>
+                <span class="ms-auto badge rounded-0 px-2 py-1 small" style="background:#1a7ab3;font-size:.65rem;">{{ $citasPendientes->count() }}</span>
+                <a href="{{ route('mecanico.citas.index') }}" class="btn btn-sm px-2" style="border:1px solid #dee2e6;border-radius:3px;font-size:.7rem;text-decoration:none;color:#0B1D3A;">Ver todas</a>
             </div>
-            @foreach ($citasHoy as $c)
+            @foreach ($citasPendientes as $c)
                 <div class="d-flex align-items-center p-2 mb-1" style="border:1px solid #dee2e6;border-radius:3px;background:#fff;">
                     <div style="width:40px;flex-shrink:0;text-align:center;">
                         <div class="fw-bold" style="font-size:.85rem;">{{ \Carbon\Carbon::parse($c->hora)->format('H:i') }}</div>
@@ -144,9 +135,20 @@
                         <div class="fw-semibold small">{{ $c->cliente?->nombre_completo ?? '—' }}</div>
                         <div class="small text-muted" style="font-size:.7rem;">{{ $c->vehiculo?->marca ?? '' }} {{ $c->vehiculo?->modelo ?? '' }} · {{ $c->vehiculo?->placa ?? '—' }}</div>
                     </div>
-                    <a href="tel:{{ $c->cliente?->telefono }}" class="btn btn-sm px-2" style="border:1px solid #dee2e6;border-radius:3px;font-size:.75rem;">
-                        <i class="bi bi-telephone"></i>
-                    </a>
+                    <div class="d-flex gap-1">
+                        <a href="{{ route('mecanico.cotizacion.create', $c) }}" class="btn btn-sm px-2" style="border:1px solid #d4a017;border-radius:3px;color:#d4a017;font-size:.7rem;" title="Diagnosticar y cotizar">
+                            <i class="bi bi-search-heart"></i>
+                        </a>
+                        <form method="POST" action="{{ route('mecanico.citas.iniciar', $c) }}" class="d-inline" onsubmit="return confirm('¿Iniciar trabajo? Se creará la orden.');">
+                            @csrf
+                            <button type="submit" class="btn btn-sm px-2" style="border:1px solid #16A34A;border-radius:3px;color:#16A34A;font-size:.7rem;" title="Iniciar trabajo">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </form>
+                        <a href="tel:{{ $c->cliente?->telefono }}" class="btn btn-sm px-2" style="border:1px solid #dee2e6;border-radius:3px;font-size:.75rem;" title="Llamar">
+                            <i class="bi bi-telephone"></i>
+                        </a>
+                    </div>
                 </div>
             @endforeach
         @endif

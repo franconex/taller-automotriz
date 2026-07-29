@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Mecanico;
 
 use App\Http\Controllers\Controller;
 use App\Models\AsignacionTrabajo;
+use App\Models\Cita;
 use App\Models\OrdenTrabajo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -58,8 +59,30 @@ class DashboardController extends Controller
                 ->get();
         }
 
+        $citasPendientes = Cita::where('mecanico_id', $mecanicoId)
+            ->whereIn('estado', ['confirmada'])
+            ->whereDate('fecha', '>=', now())
+            ->with(['cliente:id,nombre_completo,telefono', 'vehiculo:id,placa,marca,modelo', 'servicio:id,nombre'])
+            ->orderBy('fecha')
+            ->orderBy('hora')
+            ->get();
+
         return view('mecanico.dashboard', compact(
-            'counts', 'activas', 'finalizadasHoy', 'ordenesDisponibles'
+            'counts', 'activas', 'finalizadasHoy', 'ordenesDisponibles', 'citasPendientes'
         ));
+    }
+
+    public function citasIndex(): View
+    {
+        $mecanicoId = $this->mecanicoId();
+
+        $citas = Cita::where('mecanico_id', $mecanicoId)
+            ->with(['cliente:id,nombre_completo,telefono', 'vehiculo:id,placa,marca,modelo', 'servicio:id,nombre', 'sucursal:id,nombre'])
+            ->orderByRaw("FIELD(estado, 'confirmada', 'atendida', 'cancelada')")
+            ->orderBy('fecha', 'desc')
+            ->orderBy('hora', 'desc')
+            ->paginate(20);
+
+        return view('mecanico.citas.index', compact('citas'));
     }
 }

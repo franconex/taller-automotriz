@@ -247,6 +247,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('ordenes/{orden}/estado', [MecanicoOrdenController::class, 'cambiarEstado'])->name('ordenes.estado');
         Route::patch('ordenes/{orden}/finalizar', [MecanicoOrdenController::class, 'finalizar'])->name('ordenes.finalizar');
         Route::post('ordenes/{orden}/tomar', [MecanicoOrdenController::class, 'tomar'])->name('ordenes.tomar');
+            Route::get('citas', [MecanicoDashboardController::class, 'citasIndex'])->name('citas.index');
         // Cotización desde orden (nueva)
         Route::get('ordenes/{orden}/cotizar', [MecanicoCotizacionController::class, 'ordenCreate'])->name('ordenes.cotizar-nueva');
         Route::post('ordenes/{orden}/cotizar/enviar', [MecanicoCotizacionController::class, 'ordenEnviar'])->name('ordenes.cotizar-enviar');
