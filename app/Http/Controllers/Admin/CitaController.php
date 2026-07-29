@@ -830,8 +830,9 @@ class CitaController extends AdminController
     {
         $user = Auth::user();
         if ($user === null) abort(403);
-        if (! $user->tienePermiso('citas.ver')) {
-            abort(403, 'Sin permiso para ver citas.');
+        $sucursalId = $user->sucursal_id;
+        if ($sucursalId !== null && (int) $cita->sucursal_id !== (int) $sucursalId) {
+            abort(403, 'No tienes acceso a esta cita.');
         }
     }
 
