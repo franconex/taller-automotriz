@@ -84,15 +84,20 @@
                     el.addEventListener('click', function () {
                         var id = this.getAttribute('data-id');
                         var url = this.getAttribute('data-url');
-                        fetch(baseUrl + '/' + id + '/leer', { method: 'PATCH', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '' } })
-                            .then(function (r) {
-                                if (r.ok && url && url !== '#' && url !== '' && url.startsWith('/')) {
-                                    window.location.href = url;
+                    fetch(baseUrl + '/' + id + '/leer', { method: 'PATCH', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || '' } })
+                        .then(function (r) {
+                            var ct = r.headers.get('content-type') || '';
+                            if (ct.includes('application/json') && r.ok && url && url !== '#' && url !== '') {
+                                window.location.href = url;
+                            } else {
+                                if (!ct.includes('application/json')) {
+                                    window.location.reload();
                                 } else {
                                     cargarNoLeidas();
                                 }
-                            })
-                            .catch(function () { cargarNoLeidas(); });
+                            }
+                        })
+                        .catch(function () { cargarNoLeidas(); });
                     });
                 });
             }
