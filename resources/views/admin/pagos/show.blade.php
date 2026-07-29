@@ -60,12 +60,12 @@
                     <dt>Cliente</dt><dd>{{ $pago->ordenTrabajo->cliente->nombre_completo ?? '—' }}</dd>
                     <dt>Comprobante</dt><dd>{{ $pago->numero_comprobante ?? '—' }}</dd>
                     @if ($pago->comprobante)
-                        <dt>Comprobante fiscal</dt>
+                        <dt>Factura</dt>
                         <dd>
-                            <a href="{{ route('admin.comprobantes.show', $pago->comprobante) }}" class="d-inline-flex align-items-center gap-1">
-                                <i class="bi bi-receipt"></i>
-                                {{ $pago->comprobante->numero }}
-                            </a>
+                            <span>{{ $pago->comprobante->numero }}</span>
+                            @if ($pago->comprobante->nit_ci)
+                                <span class="text-muted small"> · NIT: {{ $pago->comprobante->nit_ci }}</span>
+                            @endif
                             <a href="{{ route('admin.factura.show', $pago->comprobante) }}" target="_blank" class="btn btn-sm ms-2" style="border:1px solid #0B1D3A;border-radius:3px;font-size:.75rem;">
                                 <i class="bi bi-printer"></i> Factura
                             </a>
@@ -91,66 +91,86 @@
             </div>
         </div>
         <div class="col-12 col-lg-6">
-            <div class="admin-table-wrap p-4">
+            @php
+                $orden = $pago->ordenTrabajo;
+                $servicios = $orden?->serviciosMecanico ?? collect();
+                $repuestos = $orden?->repuestosMecanico ?? collect();
+                $manoDeObra = (float) ($orden?->autorizaciones->sum('mano_de_obra') ?? 0);
+            @endphp
+
+            <div class="admin-table-wrap p-4 mb-3">
                 <h2 class="h6 fw-bold mb-3">
                     <i class="bi bi-tools me-1"></i>
                     Servicios realizados
                 </h2>
-                @php
-                    $servicios = $pago->ordenTrabajo?->detalles?->where('tipo', 'servicio') ?? collect();
-                @endphp
                 @if ($servicios->isNotEmpty())
                     <div class="small">
-                        @foreach ($servicios as $d)
+                        @foreach ($servicios as $s)
                             <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
                                 <div>
                                     <i class="bi bi-tools text-secondary me-1"></i>
-                                    {{ $d->descripcion ?: ($d->servicio->nombre ?? 'Servicio') }}
-                                    <div class="text-muted" style="font-size:.8em;">
-                                        <i class="bi bi-person-badge"></i>
-                                        {{ $d->asignacionTrabajo?->mecanico?->empleado?->nombre_completo ?? '—' }}
-                                    </div>
+                                    {{ $s->nombre_servicio ?? $s->servicio?->nombre ?? 'Servicio' }}
+                                    @if ($s->mecanico)
+                                        <div class="text-muted" style="font-size:.8em;">
+                                            <i class="bi bi-person-badge"></i>
+                                            {{ $s->mecanico->empleado?->nombre_completo ?? '—' }}
+                                        </div>
+                                    @endif
                                 </div>
-                                <span class="fw-semibold ms-2">{{ number_format((float) $d->subtotal, 2, ',', '.') }}</span>
+                                <span class="fw-semibold ms-2">{{ number_format((float) $s->precio_base, 2, ',', '.') }}</span>
                             </div>
                         @endforeach
                     </div>
                 @else
                     <p class="cell-muted small mb-0">No hay servicios registrados en esta orden.</p>
                 @endif
+            </div>
 
-                <hr class="my-3">
-
+            <div class="admin-table-wrap p-4 mb-3">
                 <h2 class="h6 fw-bold mb-3">
                     <i class="bi bi-box-seam me-1"></i>
-                    Repuestos
+                    Repuestos / Piezas
                 </h2>
-                @php
-                    $repuestos = $pago->ordenTrabajo?->detalles?->where('tipo', 'repuesto') ?? collect();
-                @endphp
                 @if ($repuestos->isNotEmpty())
                     <div class="small">
-                        @foreach ($repuestos as $d)
+                        @foreach ($repuestos as $r)
                             <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
                                 <div>
                                     <i class="bi bi-box-seam text-secondary me-1"></i>
-                                    {{ $d->descripcion ?: ($d->repuesto->nombre ?? 'Repuesto') }}
-                                    <span class="text-muted"> x{{ (int) $d->cantidad }}</span>
+                                    {{ $r->repuesto?->nombre ?? 'Repuesto' }}
+                                    <span class="text-muted"> x{{ (float) $r->cantidad }}</span>
                                 </div>
-                                <span class="fw-semibold ms-2">{{ number_format((float) $d->subtotal, 2, ',', '.') }}</span>
+                                <span class="fw-semibold ms-2">{{ number_format((float) $r->cantidad * (float) $r->precio_unitario_snapshot, 2, ',', '.') }}</span>
                             </div>
                         @endforeach
                     </div>
                 @else
                     <p class="cell-muted small mb-0">No hay repuestos asignados.</p>
                 @endif
+            </div>
 
-                <hr class="my-3">
+            @if ($manoDeObra > 0)
+                <div class="admin-table-wrap p-4 mb-3">
+                    <h2 class="h6 fw-bold mb-3">
+                        <i class="bi bi-person-gear me-1"></i>
+                        Mano de Obra
+                    </h2>
+                    <div class="d-flex justify-content-between align-items-center py-1">
+                        <span>Mano de obra</span>
+                        <span class="fw-semibold">{{ number_format($manoDeObra, 2, ',', '.') }}</span>
+                    </div>
+                </div>
+            @endif
+
+            <div class="admin-table-wrap p-4">
                 <div class="d-flex justify-content-between fw-bold">
                     <span>Totales:</span>
                     <span>
-                        Servicios: {{ number_format((float) ($pago->ordenTrabajo->subtotal_servicios ?? 0), 2, ',', '.') }} |
-                        Repuestos: {{ number_format((float) ($pago->ordenTrabajo->subtotal_repuestos ?? 0), 2, ',', '.') }}
+                        Servicios: {{ number_format((float) $servicios->sum('precio_base'), 2, ',', '.') }} |
+                        Repuestos: {{ number_format((float) $repuestos->sum(fn($r) => $r->cantidad * $r->precio_unitario_snapshot), 2, ',', '.') }}
+                        @if ($manoDeObra > 0)
+                            | Mano obra: {{ number_format($manoDeObra, 2, ',', '.') }}
+                        @endif
                     </span>
                 </div>
             </div>

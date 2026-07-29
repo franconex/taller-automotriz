@@ -209,9 +209,9 @@ class PagoController extends AdminController implements HasMiddleware
     {
         $pago->load([
             'ordenTrabajo.cliente',
-            'ordenTrabajo.detalles.servicio',
-            'ordenTrabajo.detalles.repuesto',
-            'ordenTrabajo.detalles.asignacionTrabajo.mecanico.empleado',
+            'ordenTrabajo.serviciosMecanico.mecanico.empleado',
+            'ordenTrabajo.repuestosMecanico.repuesto',
+            'ordenTrabajo.autorizaciones',
             'metodoPago',
             'usuario',
             'comprobante',
