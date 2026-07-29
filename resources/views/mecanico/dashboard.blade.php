@@ -35,6 +35,7 @@
             ['label' => 'ESP. REPUESTO','key' => 'esperando_repuesto', 'bg' => '#5a3d8a', 'icon' => 'bi-box-seam'],
             ['label' => 'PAUSADAS',    'key' => 'pausada',     'bg' => '#4a4a4a', 'icon' => 'bi-pause-circle'],
             ['label' => 'PEND. AUTORIZACIÓN', 'key' => 'pendiente_autorizacion', 'bg' => '#b33a3a', 'icon' => 'bi-file-earmark-text'],
+            ['label' => 'COTIZ. PENDIENTES', 'key' => 'cotizaciones_pendientes', 'bg' => '#d97706', 'icon' => 'bi-file-earmark-text'],
             ['label' => 'FINALIZADAS HOY', 'key' => 'finalizadas_hoy', 'bg' => '#2b7a4a', 'icon' => 'bi-check-circle'],
         ];
     @endphp
@@ -161,13 +162,24 @@
             @endforeach
         @endif
 
-        @if ($finalizadasHoy->isNotEmpty())
+        @php
+            $finalizadasList = $mecanicoId
+                ? \App\Models\AsignacionTrabajo::where('mecanico_id', $mecanicoId)
+                    ->whereHas('ordenTrabajo', fn($q) => $q->where('estado', 'finalizada_mecanico'))
+                    ->whereDate('fecha_finalizacion', now()->toDateString())
+                    ->with('ordenTrabajo.cliente', 'ordenTrabajo.vehiculo')
+                    ->orderByDesc('fecha_finalizacion')
+                    ->limit(10)
+                    ->get()
+                : collect();
+        @endphp
+        @if ($finalizadasList->isNotEmpty())
             <div class="d-flex align-items-center gap-2 mt-3 mb-2 px-1">
                 <i class="bi bi-check-circle text-success" style="font-size:.9rem;"></i>
                 <span class="fw-semibold text-uppercase" style="font-size:.8rem;letter-spacing:.3px;">Finalizados hoy</span>
-                <span class="ms-auto badge rounded-0 px-2 py-1 small" style="background:#2b7a4a;font-size:.65rem;">{{ $finalizadasHoy->count() }}</span>
+                <span class="ms-auto badge rounded-0 px-2 py-1 small" style="background:#2b7a4a;font-size:.65rem;">{{ $finalizadasList->count() }}</span>
             </div>
-            @foreach ($finalizadasHoy as $a)
+            @foreach ($finalizadasList as $a)
                 @php $o = $a->ordenTrabajo; @endphp
                 <div class="d-flex align-items-center p-2 mb-1" style="border:1px solid #dee2e6;border-radius:3px;background:#f9fdf9;">
                     <div class="flex-fill min-w-0">
