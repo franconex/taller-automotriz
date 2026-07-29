@@ -170,8 +170,6 @@ Route::middleware('auth')->group(function () {
         Route::post('pagos/qr-data', [\App\Http\Controllers\Admin\PagoQRController::class, 'qrData'])->name('pagos.qr-data');
         Route::get('pagos/modal-data/{orden}', [\App\Http\Controllers\Admin\PagoController::class, 'modalData'])->middleware('permiso:pagos.registrar')->name('pagos.modal-data');
         Route::post('pagos/cobrar-modal', [\App\Http\Controllers\Admin\PagoController::class, 'cobrarDesdeModal'])->middleware('permiso:pagos.registrar')->name('pagos.cobrar-modal');
-        Route::resource('comprobantes', ComprobanteController::class)->except(['create', 'store']);
-        Route::patch('comprobantes/{comprobante}/anular', [ComprobanteController::class, 'anular'])->name('comprobantes.anular');
         Route::get('factura/{comprobante}', [\App\Http\Controllers\Admin\FacturaController::class, 'show'])->name('factura.show');
         Route::get('verificar-nit', [\App\Http\Controllers\Admin\NitController::class, 'verificar'])->name('nit.verificar');
         Route::get('configuracion', [ConfiguracionController::class, 'index'])->name('configuracion.index');
