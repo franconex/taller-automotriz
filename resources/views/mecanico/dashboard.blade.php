@@ -1,279 +1,174 @@
 @extends('layouts.admin')
 
-@section('title', 'Mi Panel — Mecánico')
-@section('navbar-title', 'Mi Panel')
+@section('title', 'Mi Panel')
+@section('navbar-title', 'Panel de Trabajo')
 
 @section('content')
-
-    {{-- HEADER --}}
-    <div class="d-flex justify-content-between align-items-start mb-4">
-        <div>
-            <h4 class="mb-1 fw-bold">
-                <i class="bi bi-grid-1x2-fill text-primary me-2"></i>Bienvenido, {{ Auth::user()->nombre }}
-            </h4>
-            <p class="text-muted mb-0 small"><i class="bi bi-geo-alt me-1"></i> Panel de trabajo del mecánico</p>
-        </div>
-        <div>
-            <a href="{{ route('mecanico.ordenes.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                <i class="bi bi-journal-text me-1"></i> Mis órdenes
-                @if ($misAsignaciones->count() > 0)
-                    <span class="badge bg-primary ms-1">{{ $misAsignaciones->count() }}</span>
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="d-flex align-items-center gap-3">
+            <h5 class="fw-bold mb-0 text-uppercase tracking-wide" style="letter-spacing:.5px;">
+                <i class="bi bi-grid-1x2-fill me-2"></i>Bienvenido, {{ Auth::user()->nombre }}
+            </h5>
+            <a href="{{ route('mecanico.ordenes.index') }}" class="btn btn-sm ms-auto px-3" style="border:1px solid var(--tp-border);border-radius:4px;font-size:.8rem;">
+                <i class="bi bi-journal-text me-1"></i> Ver todas
+                @if ($counts['total_activas'] > 0)
+                    <span class="badge bg-dark ms-1 rounded-0">{{ $counts['total_activas'] }}</span>
                 @endif
             </a>
         </div>
     </div>
 
-    {{-- TARJETAS DE ESTADOS --}}
-    <div class="row g-2 mb-4">
-        @php
-            $tarjetas = [
-                ['label' => 'Programadas',  'key' => 'programada',  'color' => '#6c757d', 'icon' => 'bi-calendar2'],
-                ['label' => 'Recibidas',    'key' => 'recibida',    'color' => '#0dcaf0', 'icon' => 'bi-inbox'],
-                ['label' => 'Diagnóstico',  'key' => 'diagnostico', 'color' => '#ffc107', 'icon' => 'bi-search-heart'],
-                ['label' => 'En proceso',   'key' => 'en_proceso',  'color' => '#fd7e14', 'icon' => 'bi-gear-wide-connected'],
-                ['label' => 'Esp. repuesto','key' => 'esperando_repuesto', 'color' => '#6f42c1', 'icon' => 'bi-box-seam'],
-                ['label' => 'Pend. autorización', 'key' => 'pendiente_autorizacion', 'color' => '#dc3545', 'icon' => 'bi-file-earmark-text'],
-            ];
-        @endphp
-        @foreach ($tarjetas as $t)
-            <div class="col-6 col-md-4 col-lg-2">
-                <div class="card border-0 shadow-sm h-100" style="border-left:3px solid {{ $t['color'] }} !important;">
-                    <div class="card-body text-center p-2">
-                        <div class="h4 mb-0 fw-bold" style="color:{{ $t['color'] }}">{{ $counts[$t['key']] }}</div>
-                        <small class="text-muted d-flex align-items-center justify-content-center gap-1 mt-1">
-                            <i class="{{ $t['icon'] }}" style="font-size:.7rem;"></i>
-                            {{ $t['label'] }}
-                        </small>
+    @php
+        $tarjetas = [
+            ['label' => 'EN PROCESO',  'key' => 'en_proceso',  'bg' => '#e87a1a', 'icon' => 'bi-gear-wide-connected'],
+            ['label' => 'DIAGNÓSTICO','key' => 'diagnostico', 'bg' => '#d4a017', 'icon' => 'bi-search-heart'],
+            ['label' => 'ESP. REPUESTO','key' => 'esperando_repuesto', 'bg' => '#5a3d8a', 'icon' => 'bi-box-seam'],
+            ['label' => 'PAUSADAS',    'key' => 'pausada',     'bg' => '#4a4a4a', 'icon' => 'bi-pause-circle'],
+            ['label' => 'PEND. AUTORIZACIÓN', 'key' => 'pendiente_autorizacion', 'bg' => '#b33a3a', 'icon' => 'bi-file-earmark-text'],
+            ['label' => 'FINALIZADAS HOY', 'key' => 'finalizadas_hoy', 'bg' => '#2b7a4a', 'icon' => 'bi-check-circle'],
+        ];
+    @endphp
+    @foreach ($tarjetas as $t)
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="d-flex flex-column justify-content-center p-3 h-100" style="border:1px solid #dee2e6;border-radius:4px;background:#fff;">
+                <div class="fw-bold mb-1" style="font-size:2rem;color:{{ $t['bg'] }};line-height:1;">{{ $counts[$t['key']] ?? 0 }}</div>
+                <div class="d-flex align-items-center gap-1 small text-uppercase tracking-wide" style="color:#6c757d;letter-spacing:.3px;font-size:.65rem;">
+                    <i class="{{ $t['icon'] }}" style="font-size:.7rem;"></i>
+                    {{ $t['label'] }}
+                </div>
+            </div>
+        </div>
+    @endforeach
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="d-flex align-items-center gap-2 mb-2 px-1">
+            <i class="bi bi-tools" style="font-size:.9rem;"></i>
+            <span class="fw-semibold text-uppercase" style="font-size:.8rem;letter-spacing:.3px;">Trabajos activos</span>
+            <span class="ms-auto small text-muted">{{ $activas->count() }} asignados</span>
+        </div>
+
+        @if ($activas->isEmpty())
+            <div class="d-flex flex-column align-items-center justify-content-center p-5" style="border:1px solid #dee2e6;border-radius:4px;background:#fafafa;">
+                <i class="bi bi-inbox" style="font-size:2.5rem;color:#ccc;"></i>
+                <p class="fw-semibold mt-3 mb-0">Sin trabajos activos</p>
+                <p class="small text-muted mb-0">No tenés órdenes asignadas en este momento.</p>
+                @if ($ordenesDisponibles->isNotEmpty())
+                    <p class="small text-success mt-2 mb-0"><i class="bi bi-arrow-down me-1"></i>Hay {{ $ordenesDisponibles->count() }} órdenes disponibles abajo.</p>
+                @endif
+            </div>
+        @else
+            @foreach ($activas as $a)
+                @php $o = $a->ordenTrabajo; @endphp
+                <div class="d-flex align-items-stretch mb-2" style="border:1px solid #dee2e6;border-radius:4px;background:#fff;">
+                    <div style="width:5px;flex-shrink:0;background:{{ match($o->estado) { 'en_proceso'=>'#e87a1a', 'diagnostico'=>'#d4a017', 'esperando_repuesto'=>'#5a3d8a', 'pausada'=>'#4a4a4a', 'pendiente_autorizacion'=>'#b33a3a', 'recibida'=>'#1a7ab3', default=>'#6c757d' } }};"></div>
+                    <div class="flex-fill p-3">
+                        <div class="d-flex align-items-start gap-2">
+                            <div class="flex-fill min-w-0">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-bold" style="font-size:.9rem;">{{ $o->numero_orden }}</span>
+                                    <span class="small text-muted">·</span>
+                                    <span class="small text-muted text-truncate">{{ $o->cliente?->nombre_completo ?? '—' }}</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mt-1">
+                                    <span class="small text-muted"><i class="bi bi-car-front me-1" style="font-size:.65rem;"></i>{{ $o->vehiculo?->marca ?? '' }} {{ $o->vehiculo?->modelo ?? '' }}</span>
+                                    <span class="small text-muted">·</span>
+                                    <span class="small fw-semibold" style="background:#f0f0f0;padding:1px 6px;font-size:.7rem;border-radius:2px;">{{ $o->vehiculo?->placa ?? '—' }}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                <span class="small fw-semibold px-2 py-1 text-uppercase tracking-wide" style="font-size:.6rem;letter-spacing:.5px;background:{{ match($o->estado) { 'en_proceso'=>'#fff0e0', 'diagnostico'=>'#fff6d9', 'esperando_repuesto'=>'#efe6ff', 'pausada'=>'#f0f0f0', 'pendiente_autorizacion'=>'#ffe6e6', default=>'#f0f0f0' } }};color:{{ match($o->estado) { 'en_proceso'=>'#e87a1a', 'diagnostico'=>'#b8860b', 'esperando_repuesto'=>'#5a3d8a', 'pausada'=>'#4a4a4a', 'pendiente_autorizacion'=>'#b33a3a', default=>'#6c757d' } }};border-radius:2px;">
+                                    {{ str_replace('_', ' ', $o->estado) }}
+                                </span>
+                                <a href="{{ route('mecanico.ordenes.show', $o) }}" class="btn btn-sm px-2" style="border:1px solid #dee2e6;border-radius:3px;font-size:.75rem;">
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        @endforeach
+            @endforeach
+        @endif
     </div>
 
-    {{-- PRÓXIMAS CITAS CONFIRMADAS --}}
-    @if ($citasSinOrden->isNotEmpty())
-        <div class="card border-0 shadow-sm mb-4 overflow-hidden">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
-                <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                    <span class="badge bg-primary rounded-pill d-flex align-items-center justify-content-center" style="width:26px;height:26px;font-size:.75rem;"><i class="bi bi-calendar-check"></i></span>
-                    Próximas citas confirmadas
-                </h6>
-                <span class="badge bg-primary rounded-pill fs-6">{{ $citasSinOrden->count() }}</span>
+    <div class="col-lg-5">
+        @if ($ordenesDisponibles->isNotEmpty())
+            <div class="d-flex align-items-center gap-2 mb-2 px-1">
+                <i class="bi bi-box-arrow-in-down text-success" style="font-size:.9rem;"></i>
+                <span class="fw-semibold text-uppercase" style="font-size:.8rem;letter-spacing:.3px;">Disponibles</span>
+                <span class="ms-auto badge rounded-0 px-2 py-1 small" style="background:#2b7a4a;font-size:.65rem;">{{ $ordenesDisponibles->count() }}</span>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table mb-0 align-middle">
-                        <thead class="table-light small">
-                            <tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Vehículo</th><th>Servicio</th><th>Contacto</th><th class="text-end">Acciones</th></tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($citasSinOrden as $c)
-                                <tr>
-                                    <td class="fw-semibold">{{ $c->fecha?->format('d/m/Y') }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($c->hora)->format('H:i') }}</td>
-                                    <td><span class="fw-semibold">{{ $c->cliente?->nombre_completo ?? '—' }}</span></td>
-                                    <td>{{ $c->vehiculo?->placa ?? '—' }} <small class="text-muted">{{ $c->vehiculo?->marca }} {{ $c->vehiculo?->modelo }}</small></td>
-                                    <td><span class="badge bg-info bg-opacity-10 text-info">{{ $c->servicio?->nombre ?? $c->tipo ?? '—' }}</span></td>
-                                    <td><small class="text-muted"><i class="bi bi-telephone me-1" style="font-size:.65rem;"></i>{{ $c->cliente?->telefono ?? '—' }}</small></td>
-                                    <td class="text-end">
-                                        <div class="d-flex gap-1 justify-content-end">
-                                            <form method="POST" action="{{ route('mecanico.citas.iniciar', $c) }}" class="d-inline">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-success rounded-pill px-3" onclick="return confirm('¿Iniciar trabajo? Se creará la orden.');">
-                                                    <i class="bi bi-play-fill"></i> Iniciar
-                                                </button>
-                                            </form>
-                                            <a href="{{ route('mecanico.cotizacion.create', $c) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                                <i class="bi bi-file-earmark-text"></i> Cotizar
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+            @foreach ($ordenesDisponibles->take(5) as $o)
+                <div class="d-flex align-items-center p-2 mb-1" style="border:1px solid #dee2e6;border-radius:3px;background:#fafafa;">
+                    <div class="flex-fill min-w-0">
+                        <div class="fw-semibold small">{{ $o->numero_orden }} <span class="text-muted fw-normal">· {{ $o->cliente?->nombre_completo ?? '—' }}</span></div>
+                        <div class="small text-muted" style="font-size:.7rem;">{{ $o->vehiculo?->marca ?? '' }} {{ $o->vehiculo?->modelo ?? '' }} <span class="fw-semibold">· {{ $o->vehiculo?->placa ?? '—' }}</span></div>
+                    </div>
+                    <form method="POST" action="{{ route('mecanico.ordenes.tomar', $o) }}" class="d-inline ms-2" onsubmit="return confirm('¿Tomar esta orden?');">
+                        @csrf
+                        <button type="submit" class="btn btn-sm px-2" style="border:1px solid #2b7a4a;border-radius:3px;color:#2b7a4a;font-size:.75rem;">
+                            <i class="bi bi-hand-index-thumb"></i>
+                        </button>
+                    </form>
                 </div>
-            </div>
-            <div class="card-footer bg-light bg-opacity-50 py-2 small text-muted d-flex align-items-center gap-2">
-                <i class="bi bi-info-circle text-primary"></i>
-                <span>Cliente presente → <strong>"Iniciar"</strong> · Va a dejar el vehículo → <strong>"Cotizar"</strong></span>
-            </div>
-        </div>
-    @else
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                    <i class="bi bi-calendar-check text-primary"></i> Próximas citas
-                </h6>
-            </div>
-            <div class="card-body p-4 text-center text-muted">
-                <i class="bi bi-calendar2-week display-5 d-block mb-2 opacity-25 text-primary"></i>
-                <p class="mb-0 fw-semibold">No tenés citas próximas</p>
-                <small>Cuando te asignen una cita, aparecerá aquí.</small>
-            </div>
-        </div>
-    @endif
-
-    {{-- TRABAJOS ACTUALES ASIGNADOS --}}
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
-            <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                <i class="bi bi-tools text-primary"></i> Mis trabajos actuales
-            </h6>
-            <span class="badge bg-primary rounded-pill">{{ $misAsignaciones->count() }}</span>
-        </div>
-        <div class="card-body p-0">
-            @if ($misAsignaciones->isEmpty())
-                <div class="p-5 text-center">
-                    <i class="bi bi-inbox display-4 d-block mb-3 opacity-25 text-primary"></i>
-                    <p class="fw-semibold mb-1">No tenés trabajos asignados</p>
-                    <p class="small text-muted mb-0">Cuando te asignen una orden, aparecerá aquí.</p>
-                    @if ($ordenesDisponibles->isNotEmpty())
-                        <p class="small mt-2 text-success"><i class="bi bi-arrow-down"></i> Hay órdenes disponibles para tomar más abajo.</p>
-                    @endif
-                </div>
-            @else
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 align-middle">
-                        <thead class="table-light small">
-                            <tr>
-                                <th>Orden</th>
-                                <th>Cliente</th>
-                                <th>Vehículo</th>
-                                <th>Placa</th>
-                                <th>Estado</th>
-                                <th class="text-center">Serv.</th>
-                                <th class="text-center">Rep.</th>
-                                <th class="text-end"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($misAsignaciones as $a)
-                                @php $o = $a->ordenTrabajo; @endphp
-                                <tr>
-                                    <td class="fw-semibold small">{{ $o->numero_orden }}</td>
-                                    <td>{{ $o->cliente?->nombre_completo ?? '—' }}</td>
-                                    <td>{{ $o->vehiculo?->marca ?? '' }} {{ $o->vehiculo?->modelo ?? '' }}</td>
-                                    <td><span class="badge bg-light text-dark border">{{ $o->vehiculo?->placa ?? '—' }}</span></td>
-                                    <td>
-                                        @php
-                                            $badgeClass = match($o->estado) {
-                                                'programada' => 'bg-secondary',
-                                                'recibida' => 'bg-info',
-                                                'diagnostico' => 'bg-warning text-dark',
-                                                'en_proceso' => 'bg-primary',
-                                                'esperando_repuesto' => 'bg-secondary',
-                                                'pausada' => 'bg-dark',
-                                                'pendiente_autorizacion' => 'bg-danger',
-                                                default => 'bg-secondary',
-                                            };
-                                            $iconEstado = match($o->estado) {
-                                                'programada' => 'bi-calendar2',
-                                                'recibida' => 'bi-inbox',
-                                                'diagnostico' => 'bi-search-heart',
-                                                'en_proceso' => 'bi-gear-wide-connected',
-                                                'esperando_repuesto' => 'bi-box-seam',
-                                                'pausada' => 'bi-pause-circle',
-                                                'pendiente_autorizacion' => 'bi-file-earmark-text',
-                                                default => 'bi-question-circle',
-                                            };
-                                        @endphp
-                                        <span class="badge {{ $badgeClass }} d-flex align-items-center gap-1" style="max-width:fit-content;">
-                                            <i class="{{ $iconEstado }}" style="font-size:.6rem;"></i>
-                                            {{ ucfirst(str_replace('_', ' ', $o->estado)) }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center small fw-semibold">{{ $o->serviciosMecanico->count() }}</td>
-                                    <td class="text-center small fw-semibold">{{ $o->repuestosMecanico->count() }}</td>
-                                    <td class="text-end">
-                                        <a href="{{ route('mecanico.ordenes.show', $o) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                                            <i class="bi bi-eye me-1"></i> Ver
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+            @endforeach
+            @if ($ordenesDisponibles->count() > 5)
+                <div class="text-center small text-muted mt-1">+{{ $ordenesDisponibles->count() - 5 }} más</div>
             @endif
-        </div>
+        @endif
+
+        @php
+            $hoy = now()->format('Y-m-d');
+            $citasHoy = \App\Models\Cita::where('mecanico_id', $mecanicoId??0)
+                ->whereDate('fecha', $hoy)
+                ->whereIn('estado', ['confirmada', 'pendiente'])
+                ->with(['cliente:id,nombre_completo,telefono', 'vehiculo:id,placa,marca,modelo'])
+                ->orderBy('hora')
+                ->get();
+        @endphp
+
+        @if ($citasHoy->isNotEmpty())
+            <div class="d-flex align-items-center gap-2 mt-3 mb-2 px-1">
+                <i class="bi bi-calendar-check text-primary" style="font-size:.9rem;"></i>
+                <span class="fw-semibold text-uppercase" style="font-size:.8rem;letter-spacing:.3px;">Citas de hoy</span>
+                <span class="ms-auto badge rounded-0 px-2 py-1 small" style="background:#1a7ab3;font-size:.65rem;">{{ $citasHoy->count() }}</span>
+            </div>
+            @foreach ($citasHoy as $c)
+                <div class="d-flex align-items-center p-2 mb-1" style="border:1px solid #dee2e6;border-radius:3px;background:#fff;">
+                    <div style="width:40px;flex-shrink:0;text-align:center;">
+                        <div class="fw-bold" style="font-size:.85rem;">{{ \Carbon\Carbon::parse($c->hora)->format('H:i') }}</div>
+                    </div>
+                    <div class="flex-fill min-w-0 px-2">
+                        <div class="fw-semibold small">{{ $c->cliente?->nombre_completo ?? '—' }}</div>
+                        <div class="small text-muted" style="font-size:.7rem;">{{ $c->vehiculo?->marca ?? '' }} {{ $c->vehiculo?->modelo ?? '' }} · {{ $c->vehiculo?->placa ?? '—' }}</div>
+                    </div>
+                    <a href="tel:{{ $c->cliente?->telefono }}" class="btn btn-sm px-2" style="border:1px solid #dee2e6;border-radius:3px;font-size:.75rem;">
+                        <i class="bi bi-telephone"></i>
+                    </a>
+                </div>
+            @endforeach
+        @endif
+
+        @if ($finalizadasHoy->isNotEmpty())
+            <div class="d-flex align-items-center gap-2 mt-3 mb-2 px-1">
+                <i class="bi bi-check-circle text-success" style="font-size:.9rem;"></i>
+                <span class="fw-semibold text-uppercase" style="font-size:.8rem;letter-spacing:.3px;">Finalizados hoy</span>
+                <span class="ms-auto badge rounded-0 px-2 py-1 small" style="background:#2b7a4a;font-size:.65rem;">{{ $finalizadasHoy->count() }}</span>
+            </div>
+            @foreach ($finalizadasHoy as $a)
+                @php $o = $a->ordenTrabajo; @endphp
+                <div class="d-flex align-items-center p-2 mb-1" style="border:1px solid #dee2e6;border-radius:3px;background:#f9fdf9;">
+                    <div class="flex-fill min-w-0">
+                        <span class="fw-semibold small">{{ $o->numero_orden }}</span>
+                        <span class="text-muted small"> · {{ $o->cliente?->nombre_completo ?? '—' }}</span>
+                        <div class="small text-muted" style="font-size:.7rem;">{{ $o->vehiculo?->marca ?? '' }} {{ $o->vehiculo?->modelo ?? '' }} · {{ $o->vehiculo?->placa ?? '—' }}</div>
+                    </div>
+                    <span class="small text-muted" style="font-size:.65rem;">{{ $a->fecha_finalizacion?->format('H:i') }}</span>
+                </div>
+            @endforeach
+        @endif
     </div>
-
-    {{-- ÓRDENES DISPONIBLES (SIN MECÁNICO) --}}
-    @if ($ordenesDisponibles->isNotEmpty())
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 fw-bold text-success"><i class="bi bi-box-arrow-in-down"></i> Órdenes disponibles para tomar</h6>
-                <span class="badge bg-success">{{ $ordenesDisponibles->count() }}</span>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 align-middle">
-                        <thead class="table-light">
-                            <tr><th>Orden</th><th>Cliente</th><th>Vehículo</th><th>Placa</th><th>Ingreso</th><th>Estado</th><th></th></tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($ordenesDisponibles as $o)
-                                <tr>
-                                    <td class="fw-semibold">{{ $o->numero_orden }}</td>
-                                    <td>{{ $o->cliente?->nombre_completo ?? '—' }}</td>
-                                    <td>{{ $o->vehiculo?->marca ?? '' }} {{ $o->vehiculo?->modelo ?? '' }}</td>
-                                    <td>{{ $o->vehiculo?->placa ?? '—' }}</td>
-                                    <td class="small">{{ $o->fecha_emision?->format('d/m H:i') }}</td>
-                                    <td><span class="badge bg-secondary">{{ ucfirst(str_replace('_', ' ', $o->estado)) }}</span></td>
-                                    <td>
-                                        <form method="POST" action="{{ route('mecanico.ordenes.show', $o) }}/tomar" class="d-inline" onsubmit="return confirm('¿Tomar esta orden?');">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-success">
-                                                <i class="bi bi-hand-index-thumb"></i> Tomar
-                                            </button>
-                                        </form>
-                                        <a href="{{ route('mecanico.ordenes.show', $o) }}" class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    {{-- TRABAJOS TERMINADOS --}}
-    @if ($terminados->isNotEmpty())
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-bold text-success"><i class="bi bi-check-circle"></i> Trabajos terminados recientemente</h6>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr><th>Orden</th><th>Cliente</th><th>Vehículo</th><th>Placa</th><th>Finalizado</th><th></th></tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($terminados as $a)
-                                @php $o = $a->ordenTrabajo; @endphp
-                                <tr>
-                                    <td class="fw-semibold">{{ $o->numero_orden }}</td>
-                                    <td>{{ $o->cliente?->nombre_completo ?? '—' }}</td>
-                                    <td>{{ $o->vehiculo?->marca ?? '' }} {{ $o->vehiculo?->modelo ?? '' }}</td>
-                                    <td>{{ $o->vehiculo?->placa ?? '—' }}</td>
-                                    <td class="small">{{ $a->fecha_finalizacion?->format('d/m/Y H:i') }}</td>
-                                    <td>
-                                        <a href="{{ route('mecanico.ordenes.show', $o) }}" class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    @endif
-
+</div>
 @endsection
