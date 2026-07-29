@@ -134,7 +134,7 @@ class CitaController extends AdminController
             ->when(! empty($validated['sucursal_id']), fn ($q) => $q->where('sucursal_id', $validated['sucursal_id']))
             ->when(! empty($validated['servicio_id']), fn ($q) => $q->where('servicio_id', $validated['servicio_id']))
             ->when(! empty($validated['mecanico_id']), fn ($q) => $q->where('mecanico_id', $validated['mecanico_id']))
-            ->when(! empty($validated['estado']), fn ($q) => $q->where('estado', $validated['estado']), fn ($q) => $q->whereIn('estado', ['confirmada', 'atendida']));
+            ->when(! empty($validated['estado']), fn ($q) => $q->where('estado', $validated['estado']));
 
         $eventos = $query->get()->map(function (Cita $cita) {
             $cliente  = $cita->cliente?->nombre_completo ?? '—';
