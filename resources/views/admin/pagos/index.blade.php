@@ -13,10 +13,10 @@
         title="Pagos"
         description="Pagos registrados a órdenes de trabajo con su método y estado.">
         <x-slot:actions>
-            <a href="{{ route('admin.pagos.create') }}" class="btn btn-primary">
+            <button type="button" class="btn btn-primary" onclick="window.TPPago?.abrirModal()">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i>
                 Registrar pago
-            </a>
+            </button>
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -45,7 +45,7 @@
             icon="bi-cash-coin"
             title="Aún no hay pagos registrados"
             message="Registra el primer pago para empezar a controlar la cobranza."
-            :action-label="'Registrar pago'"
+            action-label="Registrar pago"
             :action-href="route('admin.pagos.create')" />
     @else
         <div class="admin-table-wrap">
@@ -62,6 +62,15 @@
                 </thead>
                 <tbody>
                     @forelse ($pagos as $p)
+                        @php
+                            $metodoNombre = strtolower($p->metodoPago->nombre ?? '');
+                            $metodoIcono = match(true) {
+                                str_contains($metodoNombre, 'efectivo') => 'bi-cash-stack',
+                                str_contains($metodoNombre, 'tarjeta') => 'bi-credit-card-2-front',
+                                str_contains($metodoNombre, 'qr') => 'bi-qr-code-scan',
+                                default => 'bi-coin',
+                            };
+                        @endphp
                         <tr>
                             <td>
                                 <div class="cell-strong">{{ $p->fecha_pago?->format('d/m/Y') ?? '—' }}</div>
@@ -71,7 +80,12 @@
                                 <div class="cell-strong">{{ $p->ordenTrabajo->numero_orden ?? '—' }}</div>
                                 <div class="cell-muted small">{{ $p->numero_comprobante ?? 'Sin comprobante' }}</div>
                             </td>
-                            <td class="d-none d-md-table-cell">{{ $p->metodoPago->nombre ?? '—' }}</td>
+                            <td class="d-none d-md-table-cell">
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    <i class="bi {{ $metodoIcono }} text-secondary" aria-hidden="true"></i>
+                                    {{ $p->metodoPago->nombre ?? '—' }}
+                                </span>
+                            </td>
                             <td class="text-end cell-strong">{{ number_format((float) $p->monto, 2, ',', '.') }}</td>
                             <td>
                                 <x-admin.status-badge
@@ -124,3 +138,11 @@
         </div>
     @endif
 @endsection
+
+@push('modals')
+    @include('admin.pagos.partials.modal-registrar-pago')
+@endpush
+
+@push('scripts')
+    @vite(['resources/js/admin/modal-registrar-pago.js'])
+@endpush

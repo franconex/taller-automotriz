@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
 
     @vite(['resources/css/app.css', 'resources/css/admin.css', 'resources/js/app.js', 'resources/js/admin.js', 'resources/js/admin/pago-stripe.js'])
     @stack('styles')
@@ -193,6 +194,10 @@
         </div>
     </div>
 
+    <button class="admin-fab" id="fabRegistrarPago" title="Registrar pago rápido" aria-label="Registrar pago">
+        <i class="bi bi-cash-coin" aria-hidden="true"></i>
+    </button>
+
     @stack('modals')
     @stack('offcanvas')
     @stack('scripts')
@@ -211,6 +216,17 @@
                 });
             });
         });
+
+        var fab = document.getElementById('fabRegistrarPago');
+        if (fab) {
+            fab.addEventListener('click', function () {
+                if (typeof window.TPPago !== 'undefined' && window.TPPago?.abrirModal) {
+                    window.TPPago.abrirModal();
+                } else {
+                    window.location.href = '{{ route("admin.pagos.index") }}';
+                }
+            });
+        }
     });
     </script>
 </body>

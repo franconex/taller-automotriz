@@ -48,10 +48,19 @@ class PagoController extends AdminController implements HasMiddleware
         $pagos = $query->orderByDesc('fecha_pago')->paginate(15)->withQueryString();
 
         $metodos = MetodoPago::orderBy('nombre')->get();
+        $ordenes = OrdenTrabajo::with(['cliente', 'vehiculo.modelo.marcaVehiculo'])
+            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('sucursal_id', $this->usuarioSucursalId()))
+            ->where('estado', 'finalizada')
+            ->orderByDesc('fecha_emision')
+            ->limit(50)
+            ->get();
+        $metodosPago = MetodoPago::where('estado', true)->orderBy('nombre')->get();
 
         return view('admin.pagos.index', [
             'pagos' => $pagos,
             'metodos' => $metodos,
+            'ordenes' => $ordenes,
+            'metodosPago' => $metodosPago,
         ]);
     }
 
@@ -60,7 +69,7 @@ class PagoController extends AdminController implements HasMiddleware
         $ordenId = $request->input('orden_id');
         $ordenes = OrdenTrabajo::with(['cliente', 'vehiculo'])
             ->when($this->usuarioSucursalId(), fn ($q) => $q->where('sucursal_id', $this->usuarioSucursalId()))
-            ->whereIn('estado', ['recibida', 'diagnostico', 'en_proceso', 'finalizada'])
+            ->where('estado', 'finalizada')
             ->orderByDesc('fecha_emision')
             ->limit(50)
             ->get();
@@ -80,7 +89,8 @@ class PagoController extends AdminController implements HasMiddleware
         $datos['estado'] = 'confirmado';
         $datos['usuario_id'] = auth()->id();
 
-        Pago::create($datos);
+        $pago = Pago::create($datos);
+        $this->generarComprobante($pago);
 
         return $this->redirigirALista('admin.pagos.index', 'Pago registrado con éxito.');
     }
@@ -183,7 +193,15 @@ class PagoController extends AdminController implements HasMiddleware
 
     public function show(Pago $pago): View
     {
-        $pago->load(['ordenTrabajo.cliente', 'metodoPago', 'usuario', 'comprobante']);
+        $pago->load([
+            'ordenTrabajo.cliente',
+            'ordenTrabajo.detalles.servicio',
+            'ordenTrabajo.detalles.repuesto',
+            'ordenTrabajo.detalles.asignacionTrabajo.mecanico.empleado',
+            'metodoPago',
+            'usuario',
+            'comprobante',
+        ]);
 
         return view('admin.pagos.show', [
             'pago' => $pago,
@@ -239,5 +257,126 @@ class PagoController extends AdminController implements HasMiddleware
         $pago->save();
 
         return back()->with('success', 'El pago fue anulado correctamente.');
+    }
+
+    public function detallesOrden(OrdenTrabajo $orden): JsonResponse
+    {
+        $orden->load([
+            'cliente',
+            'vehiculo.modelo.marcaVehiculo',
+            'detalles.servicio',
+            'detalles.repuesto',
+            'detalles.asignacionTrabajo.mecanico.empleado',
+        ]);
+
+        $servicios = $orden->detalles->where('tipo', 'servicio')->values()->map(function ($d) {
+            return [
+                'id' => $d->id,
+                'descripcion' => $d->descripcion ?: ($d->servicio->nombre ?? ''),
+                'cantidad' => (float) $d->cantidad,
+                'precio_unitario' => (float) $d->precio_unitario,
+                'subtotal' => (float) $d->subtotal,
+                'mecanico' => $d->asignacionTrabajo?->mecanico?->empleado?->nombre_completo ?? '—',
+            ];
+        });
+
+        $repuestos = $orden->detalles->where('tipo', 'repuesto')->values()->map(function ($d) {
+            return [
+                'id' => $d->id,
+                'descripcion' => $d->descripcion ?: ($d->repuesto->nombre ?? ''),
+                'cantidad' => (float) $d->cantidad,
+                'precio_unitario' => (float) $d->precio_unitario,
+                'subtotal' => (float) $d->subtotal,
+            ];
+        });
+
+        $totalPagado = (float) $orden->pagos()->where('estado', 'confirmado')->sum('monto');
+        $saldoPendiente = max(0, (float) $orden->total_general - $totalPagado);
+
+        return response()->json([
+            'ok' => true,
+            'orden' => [
+                'id' => $orden->id,
+                'numero_orden' => $orden->numero_orden,
+                'cliente' => $orden->cliente?->nombre_completo ?? '—',
+                'vehiculo' => $orden->vehiculo?->placa ?? '—',
+                'marca' => $orden->vehiculo?->modelo?->marcaVehiculo?->nombre ?? '',
+                'modelo' => $orden->vehiculo?->modelo?->nombre ?? '',
+                'descripcion_problema' => $orden->descripcion_problema,
+                'servicios' => $servicios,
+                'repuestos' => $repuestos,
+                'subtotal_servicios' => (float) $orden->subtotal_servicios,
+                'subtotal_repuestos' => (float) $orden->subtotal_repuestos,
+                'descuento' => (float) $orden->descuento,
+                'total_general' => (float) $orden->total_general,
+                'total_pagado' => $totalPagado,
+                'saldo_pendiente' => $saldoPendiente,
+            ],
+        ]);
+    }
+
+    public function storeAjax(PagoRequest $request): JsonResponse
+    {
+        $datos = $request->validated();
+        $datos['estado'] = 'confirmado';
+        $datos['usuario_id'] = auth()->id();
+
+        try {
+            $pago = DB::transaction(function () use ($datos) {
+                $pago = Pago::create($datos);
+                $comprobante = $this->generarComprobante($pago);
+                $pago->load('comprobante');
+                return $pago;
+            });
+
+            $pago->load(['metodoPago', 'ordenTrabajo.cliente', 'comprobante']);
+
+            return response()->json([
+                'ok' => true,
+                'message' => 'Pago registrado con éxito.',
+                'pago' => [
+                    'id' => $pago->id,
+                    'monto' => (float) $pago->monto,
+                    'metodo' => $pago->metodoPago->nombre ?? '—',
+                    'referencia' => $pago->referencia,
+                    'fecha' => $pago->fecha_pago?->format('d/m/Y H:i'),
+                ],
+                'comprobante' => $pago->comprobante ? [
+                    'id' => $pago->comprobante->id,
+                    'numero' => $pago->comprobante->numero,
+                    'url' => route('admin.comprobantes.show', $pago->comprobante),
+                ] : null,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Error al registrar el pago: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function generarComprobante(Pago $pago): Comprobante
+    {
+        $anio = now()->format('Y');
+        $ultimo = Comprobante::where('numero', 'like', "COMP-{$anio}-%")
+            ->orderByDesc('numero')
+            ->first();
+
+        $correlativo = 1;
+        if ($ultimo) {
+            $partes = explode('-', $ultimo->numero);
+            $correlativo = ((int) end($partes)) + 1;
+        }
+
+        $numero = sprintf('COMP-%s-%04d', $anio, $correlativo);
+
+        return Comprobante::create([
+            'pago_id' => $pago->id,
+            'cliente_id' => $pago->ordenTrabajo->cliente_id,
+            'numero' => $numero,
+            'fecha_emision' => now(),
+            'monto_total' => $pago->monto,
+            'estado' => 'emitido',
+        ]);
     }
 }

@@ -10,6 +10,7 @@ use App\Models\DetalleOrdenTrabajo;
 use App\Models\EstimacionOrden;
 use App\Models\EvidenciaTrabajo;
 use App\Models\Mecanico;
+use App\Models\MetodoPago;
 use App\Models\NotaTrabajo;
 use App\Models\OrdenTrabajo;
 use App\Models\Repuesto;
@@ -173,11 +174,23 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             'detalles.repuesto',
             'detalles.servicio',
             'fotos',
+            'detalles.asignacionTrabajo.mecanico.empleado',
         ]);
+
+        $ordenes = OrdenTrabajo::with(['cliente', 'vehiculo.modelo.marcaVehiculo'])
+            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('sucursal_id', $this->usuarioSucursalId()))
+            ->where('estado', 'finalizada')
+            ->where('id', '!=', $ordene->id)
+            ->orderByDesc('fecha_emision')
+            ->limit(50)
+            ->get();
+        $metodosPago = MetodoPago::where('estado', true)->orderBy('nombre')->get();
 
         return view('admin.ordenes.show', [
             'orden' => $ordene,
             'mecanicoAsignadoId' => $this->mecanicoDelUsuario(),
+            'ordenes' => $ordenes,
+            'metodosPago' => $metodosPago,
         ]);
     }
 

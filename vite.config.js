@@ -18,6 +18,7 @@ export default defineConfig({
                 'resources/js/admin/pago-qr.js',
                 'resources/js/admin/pago-modal.js',
                 'resources/js/admin/citas-calendario.js',
+                'resources/js/admin/pago-qr.js',
             ],
             refresh: true,
         }),
