@@ -63,6 +63,7 @@ class CitaController extends AdminController
         $servicios  = Servicio::where('estado', true)->orderBy('nombre')->get();
         $mecanicos  = Mecanico::with('empleado')
             ->where('disponibilidad', 'disponible')
+            ->when($this->usuarioSucursalId(), fn ($q) => $q->whereHas('empleado', fn ($sq) => $sq->where('sucursal_id', $this->usuarioSucursalId())))
             ->get()
             ->filter(fn ($m) => $m->empleado && $m->empleado->estado)
             ->sortBy(fn ($m) => $m->empleado->nombre_completo)
@@ -371,6 +372,11 @@ class CitaController extends AdminController
         $mecanico = Mecanico::with('empleado')->find($datos['mecanico_id']);
         if (! $mecanico || ! $mecanico->empleado?->estado) {
             return $this->respuestaAccion($request, 'El mecánico seleccionado no está activo.', false);
+        }
+
+        $sucursalId = Auth::user()->sucursal_id;
+        if ($sucursalId !== null && (int) $mecanico->empleado->sucursal_id !== (int) $sucursalId) {
+            return $this->respuestaAccion($request, 'El mecánico no pertenece a tu sucursal.', false);
         }
 
         if ($this->mecanicoOcupado($mecanico->id, $cita->fecha, $cita->hora, $cita->horaFinCalculada())) {
