@@ -139,10 +139,4 @@
     @endif
 @endsection
 
-@push('modals')
-    @include('admin.pagos.partials.modal-registrar-pago')
-@endpush
 
-@push('scripts')
-    @vite(['resources/js/admin/modal-registrar-pago.js'])
-@endpush

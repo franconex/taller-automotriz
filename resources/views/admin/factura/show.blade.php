@@ -154,7 +154,7 @@
 <body>
     <div class="no-print">
         <button onclick="window.print()">Imprimir Factura</button>
-        <button onclick="window.close()" style="background:#666;margin-left:8px;">Cerrar</button>
+        <button onclick="history.back()" style="background:#666;margin-left:8px;">Volver</button>
     </div>
 
     <div class="factura-wrap">
@@ -294,7 +294,7 @@
 
     <div class="no-print" style="margin-top:10px;">
         <button onclick="window.print()">Imprimir Factura</button>
-        <button onclick="window.close()" style="background:#666;margin-left:8px;">Cerrar</button>
+        <button onclick="history.back()" style="background:#666;margin-left:8px;">Volver</button>
     </div>
 </body>
 </html>

@@ -192,10 +192,6 @@
         </div>
     </div>
 
-    <button class="admin-fab" id="fabRegistrarPago" title="Registrar pago rápido" aria-label="Registrar pago">
-        <i class="bi bi-cash-coin" aria-hidden="true"></i>
-    </button>
-
     @stack('modals')
     @stack('offcanvas')
     @stack('scripts')
@@ -215,16 +211,6 @@
             });
         });
 
-        var fab = document.getElementById('fabRegistrarPago');
-        if (fab) {
-            fab.addEventListener('click', function () {
-                if (typeof window.TPPago !== 'undefined' && window.TPPago?.abrirModal) {
-                    window.TPPago.abrirModal();
-                } else {
-                    window.location.href = '{{ route("admin.pagos.index") }}';
-                }
-            });
-        }
     });
     </script>
 </body>

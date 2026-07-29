@@ -6,6 +6,7 @@ use App\Models\Comprobante;
 use App\Models\MetodoPago;
 use App\Models\OrdenTrabajo;
 use App\Models\Pago;
+use App\Models\Setting;
 use App\Services\StripeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -41,7 +42,8 @@ class PagoStripeController extends AdminController
         }
 
         $montoCentavos = (int) round($saldoPendiente * 100);
-        $moneda = strtolower(config('app.moneda', 'usd'));
+        $monedaRaw = Setting::obtener('moneda', 'BOB');
+        $moneda = strtolower(trim(explode(' —', $monedaRaw)[0]));
 
         session()->put('stripe_pago', [
             'orden_id' => $orden->id,

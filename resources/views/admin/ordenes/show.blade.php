@@ -288,7 +288,6 @@
         </div>
     </div>
 
-@include('admin.pagos.partials.modal-registrar-pago')
 @endsection
 
 
