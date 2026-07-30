@@ -42,6 +42,8 @@ class SucursalController extends AdminController implements HasMiddleware
     {
         return view('admin.sucursales.create', [
             'sucursal' => new \App\Models\Sucursal(),
+            'codigo_pais' => '+591',
+            'telefono_numero' => '',
         ]);
     }
 
@@ -49,6 +51,8 @@ class SucursalController extends AdminController implements HasMiddleware
     {
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? true);
+        $datos['telefono'] = $datos['codigo_pais'] . ' ' . $datos['telefono_numero'];
+        unset($datos['codigo_pais'], $datos['telefono_numero']);
 
         Sucursal::create($datos);
 
@@ -66,8 +70,14 @@ class SucursalController extends AdminController implements HasMiddleware
 
     public function edit(Sucursal $sucursale): View
     {
+        $parts = explode(' ', $sucursale->telefono, 2);
+        $codigo_pais = $parts[0] ?? '+591';
+        $telefono_numero = $parts[1] ?? '';
+
         return view('admin.sucursales.edit', [
             'sucursal' => $sucursale,
+            'codigo_pais' => $codigo_pais,
+            'telefono_numero' => $telefono_numero,
         ]);
     }
 
@@ -75,6 +85,8 @@ class SucursalController extends AdminController implements HasMiddleware
     {
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? false);
+        $datos['telefono'] = $datos['codigo_pais'] . ' ' . $datos['telefono_numero'];
+        unset($datos['codigo_pais'], $datos['telefono_numero']);
 
         $sucursale->update($datos);
 

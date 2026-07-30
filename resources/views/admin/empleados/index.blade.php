@@ -73,34 +73,47 @@
                 </thead>
                 <tbody>
                     @forelse ($empleados as $emp)
-                        <tr>
+                        <tr class="row-accent-empleado">
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="admin-avatar admin-avatar--sm" aria-hidden="true">
+                                    <span class="admin-avatar admin-avatar--sm" aria-hidden="true" style="background:#e8f4fd;color:#2563eb;font-weight:700;">
                                         {{ mb_strtoupper(mb_substr($emp->nombre_completo, 0, 1)) }}
                                     </span>
                                     <div>
                                         <div class="cell-strong">{{ $emp->nombre_completo }}</div>
-                                        <div class="cell-muted small">{{ $emp->telefono }}</div>
+                                        <div class="cell-secondary">
+                                            <i class="bi bi-telephone" style="font-size:0.7rem;"></i>
+                                            {{ $emp->telefono }}
+                                        </div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="d-none d-md-table-cell col-muted">{{ $emp->ci }}</td>
+                            <td class="d-none d-md-table-cell">
+                                <span class="cell-label">
+                                    <i class="bi bi-card-text"></i>
+                                    {{ $emp->ci }}
+                                </span>
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 <x-admin.status-badge
                                     tone="info"
                                     icon="bi-shield-lock"
                                     :label="$emp->rol->nombre ?? '—'" />
                                 @if ($emp->cargo)
-                                    <div class="cell-muted small mt-1">{{ $emp->cargo }}</div>
+                                    <div class="cell-secondary small mt-1">{{ $emp->cargo }}</div>
                                 @endif
                             </td>
-                            <td class="d-none d-lg-table-cell cell-muted">{{ $emp->sucursal->nombre ?? '—' }}</td>
+                            <td class="d-none d-lg-table-cell">
+                                <span class="cell-label">
+                                    <i class="bi bi-building"></i>
+                                    {{ $emp->sucursal->nombre ?? '—' }}
+                                </span>
+                            </td>
                             <td class="d-none d-lg-table-cell">
                                 @if ($emp->user)
                                     <x-admin.status-badge tone="info" icon="bi-person-badge" :label="$emp->user->username" />
                                 @else
-                                    <span class="cell-muted small">Sin cuenta</span>
+                                    <span class="cell-secondary small">Sin cuenta</span>
                                 @endif
                             </td>
                             <td>

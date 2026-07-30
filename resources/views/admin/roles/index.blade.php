@@ -55,13 +55,23 @@
                 </thead>
                 <tbody>
                     @forelse ($roles as $rol)
-                        <tr>
+                        <tr class="row-accent-rol">
                             <td>
-                                <div class="cell-strong">{{ $rol->nombre }}</div>
-                                <div class="cell-muted small">Rol #{{ $rol->id }}</div>
+                                <div class="cell-label">
+                                    <i class="bi bi-shield-lock"></i>
+                                    <div>
+                                        <div class="cell-strong">{{ $rol->nombre }}</div>
+                                        <div class="cell-secondary">Rol #{{ $rol->id }}</div>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="d-none d-md-table-cell cell-muted">{{ $rol->descripcion ?? '—' }}</td>
-                            <td class="d-none d-md-table-cell">{{ $rol->users_count }}</td>
+                            <td class="d-none d-md-table-cell cell-secondary">{{ $rol->descripcion ?? '—' }}</td>
+                            <td class="d-none d-md-table-cell">
+                                <span class="cell-label">
+                                    <i class="bi bi-people"></i>
+                                    {{ $rol->users_count }}
+                                </span>
+                            </td>
                             <td>
                                 <x-admin.status-badge
                                     :tone="$rol->estado ? 'success' : 'neutral'"

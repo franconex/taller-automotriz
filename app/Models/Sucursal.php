@@ -23,6 +23,24 @@ class Sucursal extends Model
         'estado',
     ];
 
+    protected $casts = [
+        'estado' => 'boolean',
+    ];
+
+    public function getHorarioAtencionAttribute($value): array|string|null
+    {
+        if (is_null($value)) {
+            return null;
+        }
+        $decoded = json_decode($value, true);
+        return is_array($decoded) ? $decoded : $value;
+    }
+
+    public function setHorarioAtencionAttribute($value): void
+    {
+        $this->attributes['horario_atencion'] = is_array($value) ? json_encode($value) : $value;
+    }
+
     public function empleados(): HasMany
     {
         return $this->hasMany(Empleado::class);

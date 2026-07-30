@@ -14,7 +14,7 @@ class RolSeeder extends Seeder
             ['nombre' => 'Gerente', 'descripcion' => 'Supervisión, reportes y autorizaciones', 'estado' => true],
             ['nombre' => 'Recepcionista', 'descripcion' => 'Atención al cliente, citas y órdenes', 'estado' => true],
             ['nombre' => 'Mecánico', 'descripcion' => 'Asignaciones, diagnóstico y servicios', 'estado' => true],
-            ['nombre' => 'Cliente', 'descripcion' => 'Portal de seguimiento para clientes', 'estado' => true],
+
         ];
 
         foreach ($roles as $rol) {

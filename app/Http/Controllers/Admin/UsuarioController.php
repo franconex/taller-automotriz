@@ -39,7 +39,7 @@ class UsuarioController extends AdminController implements HasMiddleware
 
         $usuarios = $query->orderBy('nombre')->paginate(15)->withQueryString();
 
-        $roles = Rol::orderBy('nombre')->get();
+        $roles = Rol::where('nombre', '!=', 'Cliente')->orderBy('nombre')->get();
 
         return view('admin.usuarios.index', [
             'usuarios' => $usuarios,

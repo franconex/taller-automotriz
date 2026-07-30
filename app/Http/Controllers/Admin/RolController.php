@@ -23,7 +23,7 @@ class RolController extends AdminController implements HasMiddleware
     }
     public function index(Request $request): View
     {
-        $query = Rol::query();
+        $query = Rol::where('nombre', '!=', 'Cliente');
 
         $this->aplicarFiltros($request, $query, ['estado']);
         $this->aplicarBusqueda($query, $request, [

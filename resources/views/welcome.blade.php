@@ -347,7 +347,15 @@
                             </div>
                             <div class="sucursal__row">
                                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 4.5V8l2.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                                <span>{{ $sucursal->horario_atencion }}</span>
+                                <span>
+                                    @php $h = $sucursal->horario_atencion; @endphp
+                                    @if (is_array($h))
+                                        Lun-Vie {{ $h['weekday']['open'] ?? '--' }}-{{ $h['weekday']['close'] ?? '--' }},
+                                        Sáb {{ $h['saturday']['open'] ?? '--' }}-{{ $h['saturday']['close'] ?? '--' }}
+                                    @else
+                                        {{ $h }}
+                                    @endif
+                                </span>
                             </div>
                         </div>
                         <div class="sucursal__actions">

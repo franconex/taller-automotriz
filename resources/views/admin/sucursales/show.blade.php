@@ -27,13 +27,33 @@
 
     <div class="row g-3">
         <div class="col-12 col-lg-6">
-            <div class="admin-table-wrap p-4">
-                <h2 class="h6 fw-bold mb-3">Datos generales</h2>
+            <div class="admin-card-module">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#e8f4fd;color:#2563eb;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-building"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Datos generales</h2>
+                </div>
                 <dl class="admin-meta">
                     <dt>Nombre</dt><dd>{{ $sucursal->nombre }}</dd>
                     <dt>Dirección</dt><dd>{{ $sucursal->direccion }}</dd>
                     <dt>Teléfono</dt><dd>{{ $sucursal->telefono }}</dd>
-                    <dt>Horario</dt><dd>{{ $sucursal->horario_atencion ?? '—' }}</dd>
+                    <dt>Horario</dt>
+                    <dd>
+                        @php
+                            $h = $sucursal->horario_atencion;
+                            $isArr = is_array($h);
+                        @endphp
+                        @if ($isArr)
+                            <div style="font-size:0.9rem;">
+                                <div><strong>Lun-Vie:</strong> {{ $h['weekday']['open'] ?? '—' }} — {{ $h['weekday']['close'] ?? '—' }}</div>
+                                <div><strong>Sáb:</strong> {{ $h['saturday']['open'] ?? '—' }} — {{ $h['saturday']['close'] ?? '—' }}</div>
+                                <div><strong>Dom:</strong> Cerrado</div>
+                            </div>
+                        @else
+                            {{ $h ?? '—' }}
+                        @endif
+                    </dd>
                     <dt>Estado</dt>
                     <dd>
                         <x-admin.status-badge
@@ -46,19 +66,39 @@
         </div>
 
         <div class="col-12 col-lg-6">
-            <div class="admin-table-wrap p-4">
-                <h2 class="h6 fw-bold mb-3">Resumen</h2>
-                <dl class="admin-meta">
-                    <dt>Empleados</dt><dd>{{ $sucursal->empleados->count() }}</dd>
-                    <dt>Repuestos en inventario</dt><dd>{{ $sucursal->inventarios->count() }}</dd>
-                </dl>
+            <div class="admin-card-module d-flex flex-column">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#f0fdf4;color:#16a34a;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-graph-up"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Resumen</h2>
+                </div>
+                <div class="row g-3 mt-0">
+                    <div class="col-6">
+                        <div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">
+                            <div class="text-muted small fw-medium">Empleados</div>
+                            <div class="fw-bold" style="font-size:1.5rem;">{{ $sucursal->empleados->count() }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">
+                            <div class="text-muted small fw-medium">Repuestos</div>
+                            <div class="fw-bold" style="font-size:1.5rem;">{{ $sucursal->inventarios->count() }}</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     @if ($sucursal->latitud && $sucursal->longitud)
-    <div class="admin-table-wrap mt-3 p-4">
-        <h2 class="h6 fw-bold mb-3">Ubicación</h2>
+    <div class="admin-card-module mt-3">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="badge-module" style="background:#fef2f2;color:#dc2626;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                <i class="bi bi-geo-alt"></i>
+            </span>
+            <h2 class="fw-bold mb-0" style="font-size:1rem;">Ubicación</h2>
+        </div>
         <div id="sucursal-show-map" style="height: 350px; border-radius: 8px;"></div>
     </div>
     @endif

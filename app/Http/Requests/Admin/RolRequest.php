@@ -13,7 +13,8 @@ class RolRequest extends AdminFormRequest
         return [
             'nombre' => [
                 'required', 'string', 'max:50',
-                Rule::unique('roles', 'nombre')->ignore($id)->whereNull('deleted_at'),
+                'regex:/^[\pL\s]+$/u',
+                Rule::unique('roles', 'nombre')->ignore($id),
             ],
             'descripcion' => ['nullable', 'string', 'max:255'],
             'estado' => ['nullable', 'boolean'],
@@ -26,6 +27,13 @@ class RolRequest extends AdminFormRequest
             'nombre' => 'nombre',
             'descripcion' => 'descripción',
             'estado' => 'estado',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'nombre.regex' => 'El nombre del rol solo puede contener letras y espacios, no se permiten números ni caracteres especiales.',
         ];
     }
 }

@@ -46,7 +46,10 @@ class EmpleadoController extends AdminController implements HasMiddleware
             ->orderBy('nombre')
             ->get();
 
-        $roles = Rol::where('estado', true)->orderBy('nombre')->get();
+        $roles = Rol::where('estado', true)
+            ->where('nombre', '!=', 'Cliente')
+            ->orderBy('nombre')
+            ->get();
 
         return view('admin.empleados.index', [
             'empleados' => $empleados,
@@ -62,7 +65,11 @@ class EmpleadoController extends AdminController implements HasMiddleware
             ->orderBy('nombre')
             ->get();
 
-        $roles = Rol::where('estado', true)->orderBy('nombre')->get();
+        $roles = Rol::where('estado', true)
+            ->where('nombre', '!=', 'Cliente')
+            ->orderBy('nombre')
+            ->get();
+
         $especialidades = Especialidad::orderBy('nombre')->get();
 
         return view('admin.empleados.create', [
@@ -70,6 +77,8 @@ class EmpleadoController extends AdminController implements HasMiddleware
             'sucursales' => $sucursales,
             'roles' => $roles,
             'especialidades' => $especialidades,
+            'codigo_pais' => '+591',
+            'telefono_numero' => '',
         ]);
     }
 
@@ -77,6 +86,9 @@ class EmpleadoController extends AdminController implements HasMiddleware
     {
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? true);
+        $datos['telefono'] = $datos['codigo_pais'] . ' ' . $datos['telefono_numero'];
+        unset($datos['codigo_pais'], $datos['telefono_numero']);
+        $datos['nombre_completo'] = preg_replace('/\s+/', ' ', trim($datos['nombre_completo']));
 
         $rol = Rol::findOrFail($datos['rol_id']);
         $esMecanico = strcasecmp($rol->nombre, 'Mecánico') === 0;
@@ -117,15 +129,25 @@ class EmpleadoController extends AdminController implements HasMiddleware
             ->orderBy('nombre')
             ->get();
 
-        $roles = Rol::where('estado', true)->orderBy('nombre')->get();
+        $roles = Rol::where('estado', true)
+            ->where('nombre', '!=', 'Cliente')
+            ->orderBy('nombre')
+            ->get();
+
         $especialidades = Especialidad::orderBy('nombre')->get();
         $empleado->load('mecanico');
+
+        $parts = explode(' ', $empleado->telefono, 2);
+        $codigo_pais = $parts[0] ?? '+591';
+        $telefono_numero = $parts[1] ?? '';
 
         return view('admin.empleados.edit', [
             'empleado' => $empleado,
             'sucursales' => $sucursales,
             'roles' => $roles,
             'especialidades' => $especialidades,
+            'codigo_pais' => $codigo_pais,
+            'telefono_numero' => $telefono_numero,
         ]);
     }
 
@@ -133,6 +155,9 @@ class EmpleadoController extends AdminController implements HasMiddleware
     {
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? false);
+        $datos['telefono'] = $datos['codigo_pais'] . ' ' . $datos['telefono_numero'];
+        unset($datos['codigo_pais'], $datos['telefono_numero']);
+        $datos['nombre_completo'] = preg_replace('/\s+/', ' ', trim($datos['nombre_completo']));
 
         $rol = Rol::findOrFail($datos['rol_id']);
         $esMecanico = strcasecmp($rol->nombre, 'Mecánico') === 0;

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Cliente;
 use App\Models\Rol;
 use App\Models\Sucursal;
 use App\Models\User;
@@ -17,8 +16,11 @@ class UserSeeder extends Seeder
             ['nombre' => 'Sucursal Principal'],
             [
                 'direccion' => 'Av. Principal #100, Santa Cruz',
-                'telefono' => '3-1234567',
-                'horario_atencion' => 'Lun-Vie 8:00-18:00, Sáb 8:00-13:00',
+                'telefono' => '+591 70000001',
+                'horario_atencion' => json_encode([
+                    'weekday' => ['open' => '08:00', 'close' => '18:00'],
+                    'saturday' => ['open' => '09:00', 'close' => '13:00'],
+                ]),
             ]
         );
 
@@ -78,32 +80,6 @@ class UserSeeder extends Seeder
             );
 
             $this->command->info("Usuario {$datos['username']} sincronizado ({$datos['rol']->nombre}).");
-        }
-
-        $clienteRole = Rol::where('nombre', 'Cliente')->first();
-
-        if ($clienteRole && ! User::where('email', 'cliente@tallerpro.com')->exists()) {
-            $cliente = Cliente::create([
-                'nombre_completo' => 'Cliente de Prueba',
-                'email' => 'cliente@tallerpro.com',
-                'telefono' => '7-1234567',
-                'ci' => '1234567',
-                'fecha_registro' => now(),
-                'estado' => true,
-            ]);
-
-            User::create([
-                'cliente_id' => $cliente->id,
-                'rol_id' => $clienteRole->id,
-                'nombre' => 'Cliente de Prueba',
-                'username' => 'cliente',
-                'email' => 'cliente@tallerpro.com',
-                'password' => Hash::make($passwordPlano),
-                'estado' => 'activo',
-                'origen_registro' => 'manual',
-            ]);
-
-            $this->command->info('Usuario cliente creado (cliente@tallerpro.com).');
         }
 
         $this->command->warn('Contraseña común para pruebas: ' . $passwordPlano . ' — CAMBIAR EN PRODUCCIÓN.');

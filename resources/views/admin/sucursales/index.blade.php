@@ -55,14 +55,32 @@
                 </thead>
                 <tbody>
                     @forelse ($sucursales as $sucursal)
-                        <tr>
+                        <tr class="row-accent-sucursal">
                             <td>
-                                <div class="cell-strong">{{ $sucursal->nombre }}</div>
-                                <div class="cell-muted small">Sucursal #{{ $sucursal->id }}</div>
+                                <div class="cell-label">
+                                    <i class="bi bi-building"></i>
+                                    <div>
+                                        <div class="cell-strong">{{ $sucursal->nombre }}</div>
+                                        <div class="cell-secondary">Sucursal #{{ $sucursal->id }}</div>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="d-none d-md-table-cell">{{ $sucursal->direccion }}</td>
-                            <td class="d-none d-lg-table-cell">{{ $sucursal->telefono }}</td>
-                            <td class="d-none d-lg-table-cell cell-muted">{{ $sucursal->horario_atencion ?? '—' }}</td>
+                            <td class="d-none d-md-table-cell cell-secondary">{{ $sucursal->direccion }}</td>
+                            <td class="d-none d-lg-table-cell">
+                                <span class="cell-label">
+                                    <i class="bi bi-telephone"></i>
+                                    {{ $sucursal->telefono }}
+                                </span>
+                            </td>
+                            <td class="d-none d-lg-table-cell" style="font-size:0.8rem;">
+                                @php $h = $sucursal->horario_atencion; @endphp
+                                @if (is_array($h))
+                                    <div class="cell-secondary">Lun-Vie: {{ $h['weekday']['open'] ?? '—' }}-{{ $h['weekday']['close'] ?? '—' }}</div>
+                                    <div class="cell-secondary">Sáb: {{ $h['saturday']['open'] ?? '—' }}-{{ $h['saturday']['close'] ?? '—' }}</div>
+                                @else
+                                    <span class="cell-secondary">{{ $h ?? '—' }}</span>
+                                @endif
+                            </td>
                             <td>
                                 <x-admin.status-badge
                                     :tone="$sucursal->estado ? 'success' : 'neutral'"

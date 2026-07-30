@@ -22,12 +22,21 @@ class EmpleadoRequest extends AdminFormRequest
         return array_merge([
             'sucursal_id' => ['required', 'exists:sucursales,id'],
             'rol_id' => ['required', 'exists:roles,id'],
-            'nombre_completo' => ['required', 'string', 'max:150'],
+            'nombre_completo' => [
+                'required', 'string', 'max:150',
+                'regex:/^[\pL\s]+$/u',
+                function ($attribute, $value, $fail) {
+                    if (preg_match('/\s{2,}/', $value)) {
+                        $fail('El nombre completo no debe contener espacios dobles.');
+                    }
+                },
+            ],
             'ci' => [
-                'required', 'string', 'max:20',
+                'required', 'string', 'max:20', 'regex:/^\d+$/u',
                 Rule::unique('empleados', 'ci')->ignore($id)->whereNull('deleted_at'),
             ],
-            'telefono' => ['required', 'string', 'max:20'],
+            'codigo_pais' => ['required', 'string', 'in:+591'],
+            'telefono_numero' => ['required', 'string', 'regex:/^\d+$/', 'max:15'],
             'email' => [
                 'nullable', 'email', 'max:100',
                 Rule::unique('empleados', 'email')->ignore($id)->whereNull('deleted_at'),
@@ -46,7 +55,8 @@ class EmpleadoRequest extends AdminFormRequest
             'rol_id' => 'rol',
             'nombre_completo' => 'nombre completo',
             'ci' => 'cédula de identidad',
-            'telefono' => 'teléfono',
+            'codigo_pais' => 'código de país',
+            'telefono_numero' => 'número de teléfono',
             'email' => 'correo electrónico',
             'direccion' => 'dirección',
             'cargo' => 'cargo',
@@ -55,6 +65,17 @@ class EmpleadoRequest extends AdminFormRequest
             'especialidad' => 'especialidad',
             'disponibilidad' => 'disponibilidad',
             'observaciones_mecanico' => 'observaciones',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'nombre_completo.regex' => 'El nombre completo solo puede contener letras y espacios, no se permiten números ni caracteres especiales.',
+            'ci.regex' => 'La cédula de identidad solo debe contener dígitos.',
+            'codigo_pais.in' => 'El código de país seleccionado no es válido.',
+            'telefono_numero.regex' => 'El número de teléfono solo debe contener dígitos.',
+            'email.email' => 'El correo electrónico debe tener un formato válido (ej: usuario@dominio.com).',
         ];
     }
 }

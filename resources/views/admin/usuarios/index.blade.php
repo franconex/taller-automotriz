@@ -61,21 +61,34 @@
                 </thead>
                 <tbody>
                     @forelse ($usuarios as $u)
-                        <tr>
+                        <tr class="row-accent-usuario">
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="admin-avatar admin-avatar--sm" aria-hidden="true">
+                                    <span class="admin-avatar admin-avatar--sm" aria-hidden="true" style="background:#fef2f2;color:#dc2626;font-weight:700;">
                                         {{ mb_strtoupper(mb_substr($u->nombre, 0, 1)) }}
                                     </span>
                                     <div>
                                         <div class="cell-strong">{{ $u->nombre }}</div>
-                                        <div class="cell-muted small">{{ $u->email }}</div>
+                                        <div class="cell-secondary">
+                                            <i class="bi bi-envelope" style="font-size:0.7rem;"></i>
+                                            {{ $u->email }}
+                                        </div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="d-none d-md-table-cell cell-muted">{{ $u->username }}</td>
-                            <td><x-admin.status-badge tone="info" :label="$u->rol->nombre ?? '—'" /></td>
-                            <td class="d-none d-lg-table-cell cell-muted">{{ $u->sucursal->nombre ?? '—' }}</td>
+                            <td class="d-none d-md-table-cell">
+                                <span class="cell-label">
+                                    <i class="bi bi-person-badge"></i>
+                                    {{ $u->username }}
+                                </span>
+                            </td>
+                            <td><x-admin.status-badge tone="info" icon="bi-shield-lock" :label="$u->rol->nombre ?? '—'" /></td>
+                            <td class="d-none d-lg-table-cell">
+                                <span class="cell-label">
+                                    <i class="bi bi-building"></i>
+                                    {{ $u->sucursal->nombre ?? '—' }}
+                                </span>
+                            </td>
                             <td>
                                 <x-admin.status-badge
                                     :tone="match($u->estado) {
