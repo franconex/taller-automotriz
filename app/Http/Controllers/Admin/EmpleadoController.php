@@ -164,7 +164,12 @@ class EmpleadoController extends AdminController implements HasMiddleware
 
         try {
             DB::transaction(function () use ($empleado, $datos, $esMecanico) {
+                $oldSucursalId = $empleado->sucursal_id;
                 $empleado->update($datos);
+
+                if ($empleado->user && $oldSucursalId !== $empleado->sucursal_id) {
+                    $empleado->user->update(['sucursal_id' => $empleado->sucursal_id]);
+                }
 
                 if ($esMecanico) {
                     $mecanicoExistente = Mecanico::withTrashed()

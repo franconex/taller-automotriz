@@ -21,7 +21,7 @@ use App\Http\Controllers\Admin\RepuestoController;
 use App\Http\Controllers\Admin\RolController;
 use App\Http\Controllers\Admin\ServicioController;
 use App\Http\Controllers\Admin\SolicitudCompraController;
-use App\Http\Controllers\Admin\SolicitudPermisoController;
+
 use App\Http\Controllers\Admin\SucursalController;
 use App\Http\Controllers\Admin\TipoServicioController;
 use App\Http\Controllers\Admin\UsuarioController;
@@ -135,14 +135,6 @@ session(['admin_sucursal_id' => $request->filled('sucursal_id') ? (int) $request
         Route::patch('servicios/{servicio}/toggle', [ServicioController::class, 'toggle'])->name('servicios.toggle');
         Route::resource('proveedores', ProveedorController::class);
         Route::patch('proveedores/{proveedore}/toggle', [ProveedorController::class, 'toggle'])->name('proveedores.toggle');
-
-        Route::resource('solicitudes-permiso', SolicitudPermisoController::class)
-            ->parameters(['solicitudes-permiso' => 'solicitudPermiso'])
-            ->except(['edit', 'update', 'destroy']);
-        Route::patch('solicitudes-permiso/{solicitudPermiso}/aprobar', [SolicitudPermisoController::class, 'aprobar'])
-            ->name('solicitudes-permiso.aprobar');
-        Route::patch('solicitudes-permiso/{solicitudPermiso}/rechazar', [SolicitudPermisoController::class, 'rechazar'])
-            ->name('solicitudes-permiso.rechazar');
 
         Route::resource('vacaciones', VacacionController::class)
             ->only(['index', 'create', 'store']);

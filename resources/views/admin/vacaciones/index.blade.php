@@ -49,23 +49,58 @@
                 </thead>
                 <tbody>
                     @foreach ($vacaciones as $v)
-                        <tr>
-                            <td class="cell-muted">{{ $v->created_at->format('d/m/Y') }}</td>
-                            @if ($esAdmin)
-                                <td>{{ $v->solicitante->nombre ?? '—' }}</td>
-                            @endif
-                            <td>{{ $v->fecha_inicio->format('d/m/Y') }}</td>
-                            <td>{{ $v->fecha_fin->format('d/m/Y') }}</td>
-                            <td>{{ $v->fecha_inicio->diffInDays($v->fecha_fin) + 1 }}</td>
-                            <td class="cell-muted" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $v->motivo }}</td>
+                        <tr style="border-left:3px solid {{ match($v->estado) { 'pendiente' => '#f59e0b', 'aprobada' => '#16a34a', 'rechazada' => '#dc2626', default => '#e2e8f0' } }};">
                             <td>
-                                <x-admin.status-badge
-                                    :tone="match($v->estado) {
+                                <span class="cell-label">
+                                    <i class="bi bi-calendar2"></i>
+                                    {{ $v->created_at->format('d/m/Y') }}
+                                </span>
+                            </td>
+                            @if ($esAdmin)
+                                <td>
+                                    <span class="cell-label">
+                                        <i class="bi bi-person"></i>
+                                        {{ $v->solicitante->nombre ?? '—' }}
+                                    </span>
+                                </td>
+                            @endif
+                            <td>
+                                <span class="cell-label">
+                                    <i class="bi bi-play-circle" style="color:#16a34a;"></i>
+                                    {{ $v->fecha_inicio->format('d/m/Y') }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="cell-label">
+                                    <i class="bi bi-stop-circle" style="color:#dc2626;"></i>
+                                    {{ $v->fecha_fin->format('d/m/Y') }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="fw-bold" style="font-size:1.1rem;">{{ $v->fecha_inicio->diffInDays($v->fecha_fin) + 1 }}</span>
+                                <span class="cell-secondary small">días</span>
+                            </td>
+                            <td class="cell-secondary" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                {{ $v->motivo }}
+                            </td>
+                            <td>
+                                @php
+                                    $estadoTone = match($v->estado) {
                                         'pendiente' => 'warning',
                                         'aprobada' => 'success',
                                         'rechazada' => 'danger',
                                         default => 'neutral',
-                                    }"
+                                    };
+                                    $estadoIcon = match($v->estado) {
+                                        'pendiente' => 'bi-hourglass-split',
+                                        'aprobada' => 'bi-check-circle-fill',
+                                        'rechazada' => 'bi-x-circle-fill',
+                                        default => 'bi-question-circle',
+                                    };
+                                @endphp
+                                <x-admin.status-badge
+                                    :tone="$estadoTone"
+                                    :icon="$estadoIcon"
                                     :label="match($v->estado) {
                                         'pendiente' => 'Pendiente',
                                         'aprobada' => 'Aprobada',

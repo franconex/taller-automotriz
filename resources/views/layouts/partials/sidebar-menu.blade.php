@@ -49,7 +49,6 @@
     ];
 
     $sistema = [
-        ['route' => 'admin.solicitudes-permiso.index', 'permission' => 'solicitudes-permiso.ver', 'icon' => 'bi-shield-exclamation', 'label' => 'Solicitudes de permiso'],
         ['route' => 'admin.vacaciones.index', 'permission' => null, 'icon' => 'bi-sun', 'label' => 'Vacaciones'],
     ];
 
