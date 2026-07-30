@@ -15,6 +15,10 @@ class DatabaseSeeder extends Seeder
             MetodoPagoSeeder::class,
             UserSeeder::class,
             CategoriaSeeder::class,
+            TipoVehiculoSeeder::class,
+            TipoUsoSeeder::class,
+            MarcaVehiculoSeeder::class,
+            ModeloVehiculoSeeder::class,
             TestDataSeeder::class,
         ]);
     }
