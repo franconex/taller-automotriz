@@ -11,16 +11,7 @@
 @section('content')
     <x-admin.page-header
         title="Mecánicos"
-        description="Personal técnico disponible para asignación de órdenes de trabajo.">
-        <x-slot:actions>
-            @if (Auth::user()->tienePermiso('mecanicos.crear'))
-            <a href="{{ route('admin.mecanicos.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                Nuevo mecánico
-            </a>
-            @endif
-        </x-slot:actions>
-    </x-admin.page-header>
+        description="Personal técnico disponible para asignación de órdenes de trabajo." />
 
     <x-admin.filters
         :action="route('admin.mecanicos.index')"
@@ -40,12 +31,7 @@
         <x-admin.empty-state
             icon="bi-tools"
             title="Aún no hay mecánicos registrados"
-            message="Asigna el primer mecánico para iniciar las operaciones técnicas."
-            @if (Auth::user()->tienePermiso('mecanicos.crear'))
-            :action-label="'Nuevo mecánico'"
-            :action-href="route('admin.mecanicos.create')"
-            @endif
-            />
+            message="Registra un empleado con rol Mecánico desde la sección Empleados." />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de mecánicos">
@@ -60,15 +46,15 @@
                 </thead>
                 <tbody>
                     @forelse ($mecanicos as $m)
-                        <tr>
+                        <tr style="border-left:3px solid {{ match($m->disponibilidad) { 'disponible' => '#16a34a', 'ocupado' => '#d97706', 'ausente' => '#dc2626', default => '#e2e8f0' } }};">
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="admin-avatar admin-avatar--sm" aria-hidden="true">
+                                    <span class="admin-avatar admin-avatar--sm" style="background:{{ match($m->disponibilidad) { 'disponible' => '#f0fdf4', 'ocupado' => '#fffbeb', 'ausente' => '#fef2f2', default => '#f8fafc' } }};color:{{ match($m->disponibilidad) { 'disponible' => '#16a34a', 'ocupado' => '#d97706', 'ausente' => '#dc2626', default => '#64748b' } }};font-weight:700;">
                                         {{ mb_strtoupper(mb_substr($m->empleado->nombre_completo ?? 'M', 0, 1)) }}
                                     </span>
                                     <div>
                                         <div class="cell-strong">{{ $m->empleado->nombre_completo ?? '—' }}</div>
-                                        <div class="cell-muted small">
+                                        <div class="cell-secondary small">
                                             {{ $m->empleado->rol->nombre ?? '' }}
                                             @if ($m->empleado->cargo)
                                                 — {{ $m->empleado->cargo }}
@@ -78,7 +64,7 @@
                                 </div>
                             </td>
                             <td class="d-none d-md-table-cell">{{ $m->especialidad->nombre ?? '—' }}</td>
-                            <td class="d-none d-lg-table-cell cell-muted">{{ $m->empleado->sucursal->nombre ?? '—' }}</td>
+                            <td class="d-none d-lg-table-cell cell-secondary">{{ $m->empleado->sucursal->nombre ?? '—' }}</td>
                             <td>
                                 <x-admin.status-badge
                                     :tone="match($m->disponibilidad) {

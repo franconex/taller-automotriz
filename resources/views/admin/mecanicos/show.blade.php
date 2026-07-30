@@ -29,13 +29,18 @@
 
     <div class="row g-3">
         <div class="col-12 col-lg-6">
-            <div class="admin-table-wrap p-4">
-                <h2 class="h6 fw-bold mb-3">Datos personales</h2>
+            <div class="admin-card-module">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#e8f4fd;color:#2563eb;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-person"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Datos personales</h2>
+                </div>
                 <dl class="admin-meta">
                     <dt>Empleado</dt>
                     <dd>
                         @if ($mecanico->empleado)
-                            <a href="{{ route('admin.empleados.show', $mecanico->empleado) }}">{{ $mecanico->empleado->nombre_completo }}</a>
+                            <a href="{{ route('admin.empleados.show', $mecanico->empleado) }}" class="text-decoration-none fw-semibold">{{ $mecanico->empleado->nombre_completo }}</a>
                         @else — @endif
                     </dd>
                     <dt>Rol</dt><dd>{{ $mecanico->empleado->rol->nombre ?? '—' }}</dd>
@@ -48,8 +53,13 @@
             </div>
         </div>
         <div class="col-12 col-lg-6">
-            <div class="admin-table-wrap p-4">
-                <h2 class="h6 fw-bold mb-3">Datos técnicos</h2>
+            <div class="admin-card-module">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#f0fdf4;color:#16a34a;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-tools"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Datos técnicos</h2>
+                </div>
                 <dl class="admin-meta">
                     <dt>Especialidad</dt><dd>{{ $mecanico->especialidad->nombre ?? '—' }}</dd>
                     <dt>Disponibilidad</dt>
@@ -72,8 +82,10 @@
                     <dt>Asignaciones activas</dt><dd>{{ $mecanico->asignaciones->where('estado', '!=', 'finalizada')->count() }}</dd>
                 </dl>
                 @if ($mecanico->observaciones)
-                    <h3 class="h6 fw-bold mt-3 mb-2">Observaciones</h3>
-                    <p class="cell-muted small mb-0">{{ $mecanico->observaciones }}</p>
+                    <div class="mt-3 pt-3 border-top">
+                        <div class="fw-semibold mb-1" style="font-size:0.85rem;">Observaciones</div>
+                        <p class="cell-secondary small mb-0">{{ $mecanico->observaciones }}</p>
+                    </div>
                 @endif
             </div>
         </div>

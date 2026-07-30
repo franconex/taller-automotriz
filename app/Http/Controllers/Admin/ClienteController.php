@@ -48,6 +48,8 @@ class ClienteController extends AdminController implements HasMiddleware
     {
         return view('admin.clientes.create', [
             'cliente' => new \App\Models\Cliente(),
+            'codigo_pais' => '+591',
+            'telefono_numero' => '',
         ]);
     }
 
@@ -56,6 +58,9 @@ class ClienteController extends AdminController implements HasMiddleware
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? true);
         $datos['fecha_registro'] = now();
+        $datos['telefono'] = $datos['codigo_pais'] . ' ' . $datos['telefono_numero'];
+        unset($datos['codigo_pais'], $datos['telefono_numero']);
+        $datos['nombre_completo'] = preg_replace('/\s+/', ' ', trim($datos['nombre_completo']));
 
         $cliente = DB::transaction(function () use ($request, $datos) {
             $cliente = Cliente::create($datos);
@@ -91,8 +96,14 @@ class ClienteController extends AdminController implements HasMiddleware
 
     public function edit(Cliente $cliente): View
     {
+        $parts = explode(' ', $cliente->telefono, 2);
+        $codigo_pais = $parts[0] ?? '+591';
+        $telefono_numero = $parts[1] ?? '';
+
         return view('admin.clientes.edit', [
             'cliente' => $cliente,
+            'codigo_pais' => $codigo_pais,
+            'telefono_numero' => $telefono_numero,
         ]);
     }
 
@@ -100,6 +111,9 @@ class ClienteController extends AdminController implements HasMiddleware
     {
         $datos = $request->validated();
         $datos['estado'] = (bool) ($datos['estado'] ?? false);
+        $datos['telefono'] = $datos['codigo_pais'] . ' ' . $datos['telefono_numero'];
+        unset($datos['codigo_pais'], $datos['telefono_numero']);
+        $datos['nombre_completo'] = preg_replace('/\s+/', ' ', trim($datos['nombre_completo']));
 
         $cliente->update($datos);
 
@@ -126,7 +140,3 @@ class ClienteController extends AdminController implements HasMiddleware
         return $this->cambiarEstado($request, $cliente, 'clientes');
     }
 }
-
-
-
-

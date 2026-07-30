@@ -224,6 +224,7 @@ session(['admin_sucursal_id' => $request->filled('sucursal_id') ? (int) $request
 
         // Registrar llegada (recepcionista)
         Route::patch('citas/{cita}/registrar-llegada', [\App\Http\Controllers\Admin\CitaController::class, 'registrarLlegada'])->name('citas.registrar-llegada');
+        Route::get('mecanicos-por-sucursal', [OrdenTrabajoController::class, 'mecanicosPorSucursal'])->name('mecanicos.por-sucursal');
     });
 
     // Citas

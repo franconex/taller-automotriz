@@ -39,10 +39,15 @@
 
     <div class="row g-3">
         <div class="col-12 col-lg-6">
-            <div class="admin-table-wrap p-4">
-                <h2 class="h6 fw-bold mb-3">Datos de la orden</h2>
+            <div class="admin-card-module">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#e8f4fd;color:#2563eb;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-journal-text"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Datos de la orden</h2>
+                </div>
                 <dl class="admin-meta">
-                    <dt>Número</dt><dd>{{ $orden->numero_orden }}</dd>
+                    <dt>Número</dt><dd class="fw-bold">{{ $orden->numero_orden }}</dd>
                     <dt>Cliente</dt>
                     <dd><a href="{{ route('admin.clientes.show', $orden->cliente) }}">{{ $orden->cliente->nombre_completo ?? '—' }}</a></dd>
                     <dt>Vehículo</dt>
@@ -111,9 +116,13 @@
             @endphp
 
             @if ($mecanicoPuedeEditar)
-            {{-- AVANCE DE ESTADO --}}
-            <div class="admin-table-wrap p-4 mb-3">
-                <h2 class="h6 fw-bold mb-3"><i class="bi bi-arrow-up-circle" aria-hidden="true"></i> Avance del trabajo</h2>
+            <div class="admin-card-module mb-3">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#e8f4fd;color:#2563eb;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-arrow-up-circle"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Avance del trabajo</h2>
+                </div>
                 <form method="POST" action="{{ route('admin.ordenes.actualizar-mi-estado', $orden) }}">
                     @csrf @method('PATCH')
                     <div class="row g-2 align-items-end">
@@ -127,15 +136,19 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-arrow-up-circle" aria-hidden="true"></i> Avanzar</button>
+                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-arrow-up-circle"></i> Avanzar</button>
                         </div>
                     </div>
                 </form>
             </div>
 
-            {{-- SERVICIO RAPIDO --}}
-            <div class="admin-table-wrap p-4 mb-3">
-                <h2 class="h6 fw-bold mb-3"><i class="bi bi-tools" aria-hidden="true"></i> Agregar servicio realizado</h2>
+            <div class="admin-card-module mb-3">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#f0fdf4;color:#16a34a;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-tools"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Agregar servicio realizado</h2>
+                </div>
                 <form method="POST" action="{{ route('admin.ordenes.servicio-mecanico', $orden) }}">
                     @csrf
                     <div class="row g-2">
@@ -152,22 +165,26 @@
                 </form>
             </div>
 
-            {{-- FINALIZAR TRABAJO --}}
             @if ($asignacion->estado !== 'finalizado')
-            <div class="admin-table-wrap p-4 mb-3" style="border-left:4px solid var(--bs-success,#10b981);">
-                <h2 class="h6 fw-bold mb-3 text-success"><i class="bi bi-check2-circle" aria-hidden="true"></i> Finalizar trabajo</h2>
+            <div class="admin-card-module mb-3" style="border-left:4px solid #16a34a;">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#f0fdf4;color:#16a34a;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-check2-circle"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;color:#16a34a;">Finalizar trabajo</h2>
+                </div>
                 <form method="POST" action="{{ route('admin.ordenes.finalizar', $orden) }}" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-2">
                         <label class="form-label small">Nota de finalización</label>
-                        <textarea name="nota_final" class="form-control" rows="2" maxlength="2000" placeholder="Ej: Trabajo completado. Se reparó el sistema de frenos..."></textarea>
+                        <textarea name="nota_final" class="form-control" rows="2" maxlength="2000" placeholder="Ej: Trabajo completado..."></textarea>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small">Foto del trabajo terminado (opcional)</label>
                         <input type="file" name="foto_final" class="form-control form-control-sm" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
                     </div>
                     <button type="submit" class="btn btn-success w-100">
-                        <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                        <i class="bi bi-check2-circle"></i>
                         Marcar como finalizado y quedar disponible
                     </button>
                 </form>
@@ -175,29 +192,37 @@
             @endif
             @endif
 
-            {{-- OBSERVACIONES --}}
             @if ($mecanicoPuedeEditar)
-            <div class="admin-table-wrap p-4 mb-3">
-                <h2 class="h6 fw-bold mb-3"><i class="bi bi-chat-left-text" aria-hidden="true"></i> Observación técnica</h2>
+            <div class="admin-card-module mb-3">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#fffbeb;color:#d97706;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-chat-left-text"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Observación técnica</h2>
+                </div>
                 <form method="POST" action="{{ route('admin.ordenes.observacion', $orden) }}">
                     @csrf
                     <div class="mb-2">
                         <textarea name="observaciones" class="form-control" rows="2" maxlength="2000" placeholder="Ej: Se encontró una falla adicional..." required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-send" aria-hidden="true"></i> Agregar</button>
+                    <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-send"></i> Agregar</button>
                 </form>
             </div>
             @endif
 
-            {{-- GALERIA DE FOTOS --}}
             @if ($orden->fotos->isNotEmpty())
-            <div class="admin-table-wrap p-4 mb-3">
-                <h2 class="h6 fw-bold mb-3"><i class="bi bi-images" aria-hidden="true"></i> Fotos del trabajo</h2>
+            <div class="admin-card-module mb-3">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#fef2f2;color:#dc2626;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-images"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Fotos del trabajo</h2>
+                </div>
                 <div class="row g-2">
                     @foreach ($orden->fotos as $foto)
                         <div class="col-4 col-md-3">
                             <a href="{{ asset('storage/' . $foto->ruta) }}" target="_blank" rel="noopener">
-                                <img src="{{ asset('storage/' . $foto->ruta) }}" alt="{{ $foto->descripcion ?? 'Foto' }}" class="img-fluid rounded" style="height:100px;width:100%;object-fit:cover;">
+                                <img src="{{ asset('storage/' . $foto->ruta) }}" alt="{{ $foto->descripcion ?? 'Foto' }}" class="img-fluid rounded" style="height:100px;width:100%;object-fit:cover;border:1px solid #e2e8f0;">
                             </a>
                             @if ($foto->descripcion)
                                 <small class="text-muted d-block text-center">{{ $foto->descripcion }}</small>
@@ -208,8 +233,13 @@
             </div>
             @endif
 
-            <div class="admin-table-wrap p-4">
-                <h2 class="h6 fw-bold mb-3">Totales</h2>
+            <div class="admin-card-module">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#fef2f2;color:#dc2626;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-coin"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Totales</h2>
+                </div>
                 <dl class="admin-meta">
                     <dt>Subtotal servicios</dt>
                     <dd>{{ number_format((float) $orden->subtotal_servicios, 2, ',', '.') }}</dd>
@@ -218,29 +248,34 @@
                     <dt>Descuento</dt>
                     <dd>{{ number_format((float) $orden->descuento, 2, ',', '.') }}</dd>
                     <dt>Total</dt>
-                    <dd><strong>{{ number_format((float) $orden->total_general, 2, ',', '.') }}</strong></dd>
+                    <dd class="fw-bold" style="font-size:1.1rem;">Bs {{ number_format((float) $orden->total_general, 2, ',', '.') }}</dd>
                 </dl>
                 <hr>
-                <h3 class="h6 fw-bold mb-2">Descripción del problema</h3>
-                <p class="cell-muted small">{{ $orden->descripcion_problema }}</p>
+                <div class="fw-semibold mb-1" style="font-size:0.85rem;">Descripción del problema</div>
+                <p class="cell-secondary small">{{ $orden->descripcion_problema }}</p>
                 @if ($orden->diagnostico_general)
-                    <h3 class="h6 fw-bold mt-3 mb-2">Diagnóstico</h3>
-                    <p class="cell-muted small">{{ $orden->diagnostico_general }}</p>
+                    <div class="fw-semibold mt-3 mb-1" style="font-size:0.85rem;">Diagnóstico</div>
+                    <p class="cell-secondary small">{{ $orden->diagnostico_general }}</p>
                 @endif
                 @if ($orden->observaciones)
-                    <h3 class="h6 fw-bold mt-3 mb-2">Observaciones</h3>
-                    <p class="cell-muted small">{{ $orden->observaciones }}</p>
+                    <div class="fw-semibold mt-3 mb-1" style="font-size:0.85rem;">Observaciones</div>
+                    <p class="cell-secondary small">{{ $orden->observaciones }}</p>
                 @endif
             </div>
         </div>
     </div>
 
-    <div class="admin-table-wrap mt-3">
-        <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h2 class="h6 fw-bold mb-0">Repuestos asignados</h2>
+    <div class="admin-card-modern mt-3 p-0 overflow-hidden">
+        <div class="px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="d-inline-flex align-items-center justify-content-center" style="width:28px;height:28px;border-radius:6px;background:#e8f4fd;color:#2563eb;font-size:0.85rem;">
+                    <i class="bi bi-box-seam"></i>
+                </span>
+                <h2 class="fw-bold mb-0" style="font-size:0.95rem;">Repuestos asignados</h2>
+            </div>
             @if ($orden->estado !== 'anulada')
                 <a href="{{ route('admin.ordenes.repuestos', $orden) }}" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                    <i class="bi bi-plus-lg"></i>
                     Agregar repuesto
                 </a>
             @endif
@@ -257,13 +292,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php
-                        $detallesRepuestos = $orden->detalles->where('tipo', 'repuesto');
-                    @endphp
+                    @php $detallesRepuestos = $orden->detalles->where('tipo', 'repuesto'); @endphp
                     @forelse ($detallesRepuestos as $detalle)
-                        @php
-                            $sinStock = str_contains((string) $detalle->observaciones, 'SIN STOCK');
-                        @endphp
+                        @php $sinStock = str_contains((string) $detalle->observaciones, 'SIN STOCK'); @endphp
                         <tr>
                             <td>
                                 <div class="cell-strong">{{ $detalle->repuesto->nombre ?? $detalle->descripcion }}</div>
@@ -335,4 +366,3 @@ function cerrarQr() {
 @endpush
 
 @endsection
-

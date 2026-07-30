@@ -27,26 +27,50 @@
 
     <div class="row g-3">
         <div class="col-12 col-lg-6">
-            <div class="admin-table-wrap p-4">
-                <h2 class="h6 fw-bold mb-3">Datos del vehículo</h2>
+            <div class="admin-card-module">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#e8f4fd;color:#0ea5e9;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-car-front"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Datos del vehículo</h2>
+                </div>
                 <dl class="admin-meta">
-                    <dt>Placa</dt><dd>{{ $vehiculo->placa }}</dd>
+                    <dt>Placa</dt><dd><strong>{{ $vehiculo->placa }}</strong></dd>
                     <dt>Marca</dt><dd>{{ $vehiculo->marca ?? '—' }}</dd>
                     <dt>Modelo</dt><dd>{{ $vehiculo->modelo ?? '—' }}</dd>
                     <dt>Año</dt><dd>{{ $vehiculo->anio ?? '—' }}</dd>
-                    <dt>Color</dt><dd>{{ $vehiculo->color ?? '—' }}</dd>
-                    <dt>N° chasis</dt><dd>{{ $vehiculo->numero_chasis ?? '—' }}</dd>
+                    <dt>Color</dt>
+                    <dd>
+                        @if ($vehiculo->color)
+                            <span class="badge rounded-pill" style="background:#e2e8f0;color:#475569;">{{ $vehiculo->color }}</span>
+                        @else
+                            —
+                        @endif
+                    </dd>
+                    <dt>N° chasis</dt><dd class="font-monospace">{{ $vehiculo->numero_chasis ?? '—' }}</dd>
                     <dt>Kilometraje</dt><dd>{{ number_format((int) $vehiculo->kilometraje_actual, 0, ',', '.') }} km</dd>
                 </dl>
             </div>
         </div>
         <div class="col-12 col-lg-6">
-            <div class="admin-table-wrap p-4">
-                <h2 class="h6 fw-bold mb-3">Propietario y estado</h2>
+            <div class="admin-card-module">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#f0fdf4;color:#16a34a;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-person"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Propietario y estado</h2>
+                </div>
                 <dl class="admin-meta">
                     <dt>Cliente</dt>
                     <dd>
-                        <a href="{{ route('admin.clientes.show', $vehiculo->cliente) }}">{{ $vehiculo->cliente->nombre_completo ?? '—' }}</a>
+                        @if ($vehiculo->cliente)
+                            <a href="{{ route('admin.clientes.show', $vehiculo->cliente) }}" class="text-decoration-none fw-semibold">
+                                <i class="bi bi-person-vcard me-1" style="color:#64748b;"></i>
+                                {{ $vehiculo->cliente->nombre_completo ?? '—' }}
+                            </a>
+                        @else
+                            —
+                        @endif
                     </dd>
                     <dt>Estado</dt>
                     <dd>
@@ -57,11 +81,23 @@
                     </dd>
                 </dl>
                 @if ($vehiculo->observaciones)
-                    <h3 class="h6 fw-bold mt-3 mb-2">Observaciones</h3>
-                    <p class="cell-muted small mb-0">{{ $vehiculo->observaciones }}</p>
+                    <div class="mt-3 pt-3 border-top">
+                        <div class="fw-semibold mb-1" style="font-size:0.85rem;">Observaciones</div>
+                        <p class="cell-secondary small mb-0">{{ $vehiculo->observaciones }}</p>
+                    </div>
                 @endif
             </div>
+            @if ($vehiculo->foto)
+            <div class="admin-card-module mt-3">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge-module" style="background:#fef2f2;color:#dc2626;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;">
+                        <i class="bi bi-image"></i>
+                    </span>
+                    <h2 class="fw-bold mb-0" style="font-size:1rem;">Foto</h2>
+                </div>
+                <img src="{{ $vehiculo->foto }}" class="img-fluid rounded" style="max-height:200px;">
+            </div>
+            @endif
         </div>
     </div>
 @endsection
-

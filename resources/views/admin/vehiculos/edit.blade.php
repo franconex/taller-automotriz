@@ -21,15 +21,15 @@
         </x-slot:actions>
     </x-admin.page-header>
 
-    <div class="admin-table-wrap p-4">
+    <div class="admin-card-modern p-4">
         <form method="POST" action="{{ route('admin.vehiculos.update', $vehiculo) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             @include('admin.vehiculos._form', ['vehiculo' => $vehiculo])
 
-            <div class="d-flex justify-content-end gap-2 mt-3">
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                 <a href="{{ route('admin.vehiculos.index') }}" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary px-4">
                     <i class="bi bi-check2" aria-hidden="true"></i>
                     Guardar cambios
                 </button>

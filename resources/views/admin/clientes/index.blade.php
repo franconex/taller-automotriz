@@ -60,27 +60,37 @@
                 </thead>
                 <tbody>
                     @forelse ($clientes as $cliente)
-                        <tr>
+                        <tr class="row-accent-cliente" style="border-left:3px solid #8b5cf6;">
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="admin-avatar admin-avatar--sm admin-avatar--muted" aria-hidden="true">
+                                    <span class="admin-avatar admin-avatar--sm" aria-hidden="true" style="background:#f3e8ff;color:#8b5cf6;font-weight:700;">
                                         {{ mb_strtoupper(mb_substr($cliente->nombre_completo, 0, 1)) }}
                                     </span>
                                     <div>
                                         <div class="cell-strong">
                                             @if ($puedeEditarCliente)
-                                            <a href="{{ route('admin.clientes.show', $cliente) }}">{{ $cliente->nombre_completo }}</a>
+                                            <a href="{{ route('admin.clientes.show', $cliente) }}" class="text-decoration-none">{{ $cliente->nombre_completo }}</a>
                                             @else
                                             {{ $cliente->nombre_completo }}
                                             @endif
                                         </div>
-                                        <div class="cell-muted small">Cliente #{{ $cliente->id }}</div>
+                                        <div class="cell-secondary">Cliente #{{ $cliente->id }}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="d-none d-md-table-cell col-muted">{{ $cliente->ci ?? '—' }}</td>
-                            <td class="d-none d-lg-table-cell">{{ $cliente->telefono }}</td>
-                            <td class="d-none d-lg-table-cell cell-muted">{{ $cliente->email ?? '—' }}</td>
+                            <td class="d-none d-md-table-cell">
+                                <span class="cell-label">
+                                    <i class="bi bi-card-text"></i>
+                                    {{ $cliente->ci ?? '—' }}
+                                </span>
+                            </td>
+                            <td class="d-none d-lg-table-cell">
+                                <span class="cell-label">
+                                    <i class="bi bi-telephone"></i>
+                                    {{ $cliente->telefono }}
+                                </span>
+                            </td>
+                            <td class="d-none d-lg-table-cell cell-secondary">{{ $cliente->email ?? '—' }}</td>
                             <td>
                                 <x-admin.status-badge
                                     :tone="$cliente->estado ? 'success' : 'neutral'"

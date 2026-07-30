@@ -1,92 +1,271 @@
-<div class="admin-form-section">
-    <h3 class="admin-form-section__title">Propietario</h3>
-    <x-admin.form-field name="cliente_id" label="Cliente" type="select" required>
-        <option value="">— Selecciona un cliente —</option>
-        @foreach (($clientes ?? collect()) as $c)
-            <option value="{{ $c->id }}" @selected(old('cliente_id', $vehiculo->cliente_id ?? null) == $c->id)>{{ $c->nombre_completo }}</option>
-        @endforeach
-    </x-admin.form-field>
-</div>
+<div class="row g-4">
 
-<div class="admin-form-section">
-    <h3 class="admin-form-section__title">Datos del vehículo</h3>
-    <div class="row g-2">
-        <div class="col-md-6">
-            <x-admin.form-field name="marca" label="Marca" :value="$vehiculo->marca ?? null" required icon="bi-building" />
-        </div>
-        <div class="col-md-6">
-            <x-admin.form-field name="modelo" label="Modelo" :value="$vehiculo->modelo ?? null" required icon="bi-car-front" />
-        </div>
-        <div class="col-md-4">
-            <x-admin.form-field name="placa" label="Placa" :value="$vehiculo->placa ?? null" required icon="bi-upc" />
-            <div class="small text-success d-none" id="vehiculo-verificacion-ok"></div>
-        </div>
-        <div class="col-md-4">
-            <x-admin.form-field name="anio" type="number" label="Año" :value="$vehiculo->anio ?? null" />
-        </div>
-        <div class="col-md-4">
-            <x-admin.form-field name="color" label="Color" :value="$vehiculo->color ?? null" icon="bi-droplet" />
-        </div>
-        <div class="col-12">
-            <x-admin.form-field name="numero_chasis" label="Número de chasis" :value="$vehiculo->numero_chasis ?? null" icon="bi-upc-scan" />
-        </div>
-        <div class="col-md-6">
-            <x-admin.form-field name="kilometraje_actual" type="number" label="Kilometraje actual" :value="$vehiculo->kilometraje_actual ?? null" icon="bi-speedometer2" />
-        </div>
-        <div class="col-md-6">
-            <x-admin.form-field name="observaciones" label="Observaciones" :value="$vehiculo->observaciones ?? null" />
-        </div>
-    </div>
-</div>
-
-<div class="admin-form-section">
-    <h3 class="admin-form-section__title">Foto</h3>
-    <div class="row g-2 align-items-end">
-        <div class="col-md-8">
-            <label class="form-label" for="vehiculo_foto">Foto del vehículo</label>
-            <div class="d-flex gap-2">
-                <input type="file" name="vehiculo_foto" id="vehiculo_foto" class="form-control" accept="image/*" capture="environment">
-                <button type="button" class="btn btn-outline-secondary" id="btn-camara-vehiculo" title="Tomar foto con la cámara">
-                    <i class="bi bi-camera"></i>
-                </button>
+    <div class="col-12 col-lg-6">
+        <div class="admin-card-module">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge-module" style="background:#fef2f2;color:#dc2626;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+                    <i class="bi bi-person-badge" style="font-size:1rem;"></i>
+                </span>
+                <h3 class="fw-bold mb-0" style="font-size:1rem;">Propietario</h3>
             </div>
-            <div class="d-none mt-2" id="camara-vehiculo-container">
-                <video id="camara-vehiculo-video" autoplay playsinline style="width:100%;max-width:300px;border-radius:8px;"></video>
-                <div class="d-flex gap-2 mt-2">
-                    <button type="button" class="btn btn-sm btn-primary" id="btn-capturar-vehiculo">Capturar</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-cerrar-camara-vehiculo">Cancelar</button>
-                </div>
-            </div>
-            <input type="hidden" name="vehiculo_foto_base64" id="vehiculo_foto_base64" value="{{ old('vehiculo_foto_base64', $vehiculo->foto ?? '') }}">
-            @error('vehiculo_foto_base64') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-            <div class="invalid-feedback d-none" id="vehiculo-foto-error"></div>
-            <div class="small text-success d-none" id="vehiculo-foto-ok"></div>
-        </div>
-        <div class="col-md-4">
-            <div id="vehiculo-foto-preview" class="text-center text-muted small" style="max-width:150px;">
-                @if ($vehiculo->foto ?? null)
-                    <img src="{{ $vehiculo->foto }}" class="img-fluid rounded" style="max-height:100px;">
-                @else
-                    <i class="bi bi-image fs-1 d-block"></i>
-                    <span class="small">Sin foto</span>
+            <div class="mb-0">
+                <label for="field-cliente_id" class="form-label fw-medium">
+                    Cliente <span class="required" aria-hidden="true">*</span>
+                </label>
+                <select name="cliente_id" id="field-cliente_id" required
+                        class="form-select{{ $errors->has('cliente_id') ? ' is-invalid' : '' }}">
+                    <option value="">— Selecciona un cliente —</option>
+                    @foreach (($clientes ?? collect()) as $c)
+                        <option value="{{ $c->id }}" @selected(old('cliente_id', $vehiculo->cliente_id ?? null) == $c->id)>{{ $c->nombre_completo }}</option>
+                    @endforeach
+                </select>
+                @if ($errors->has('cliente_id'))
+                    <div class="invalid-feedback d-block">{{ $errors->first('cliente_id') }}</div>
                 @endif
             </div>
         </div>
     </div>
-</div>
 
-<div class="admin-form-section">
-    <h3 class="admin-form-section__title">Estado</h3>
-    <div class="form-check form-switch">
-        <input type="hidden" name="estado" value="0">
-        <input class="form-check-input" type="checkbox" id="vehiculoEstado" name="estado" value="1" @checked(old('estado', $vehiculo->estado ?? true))>
-        <label class="form-check-label" for="vehiculoEstado">Vehículo activo</label>
+    <div class="col-12 col-lg-6">
+        <div class="admin-card-module">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge-module" style="background:#fffbeb;color:#d97706;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+                    <i class="bi bi-car-front" style="font-size:1rem;"></i>
+                </span>
+                <h3 class="fw-bold mb-0" style="font-size:1rem;">Identificación</h3>
+            </div>
+
+            <div class="mb-3">
+                <label for="field-placa" class="form-label fw-medium">
+                    Placa <span class="required" aria-hidden="true">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light" style="border-right:0;">
+                        <i class="bi bi-upc" style="color:#64748b;"></i>
+                    </span>
+                    <input id="field-placa"
+                           type="text"
+                           name="placa"
+                           value="{{ old('placa', $vehiculo->placa ?? '') }}"
+                           required
+                           class="form-control{{ $errors->has('placa') ? ' is-invalid' : '' }}"
+                           placeholder="1234ABC"
+                           style="border-left:0;"
+                           oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();">
+                </div>
+                @if ($errors->has('placa'))
+                    <div class="invalid-feedback d-block">{{ $errors->first('placa') }}</div>
+                @else
+                    <div class="form-text">3-4 números seguidos de 3 letras (ej: 1234ABC).</div>
+                @endif
+                <div class="small text-success d-none" id="vehiculo-verificacion-ok"></div>
+            </div>
+
+            <div class="mb-0">
+                <label for="field-numero_chasis" class="form-label fw-medium">
+                    Número de chasis
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light" style="border-right:0;">
+                        <i class="bi bi-upc-scan" style="color:#64748b;"></i>
+                    </span>
+                    <input id="field-numero_chasis"
+                           type="text"
+                           name="numero_chasis"
+                           value="{{ old('numero_chasis', $vehiculo->numero_chasis ?? '') }}"
+                           class="form-control{{ $errors->has('numero_chasis') ? ' is-invalid' : '' }}"
+                           placeholder="Ej: 8AP11112222333344"
+                           style="border-left:0;">
+                </div>
+                @if ($errors->has('numero_chasis'))
+                    <div class="invalid-feedback d-block">{{ $errors->first('numero_chasis') }}</div>
+                @endif
+            </div>
+        </div>
     </div>
+
+    <div class="col-12">
+        <div class="admin-card-module">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge-module" style="background:#e8f4fd;color:#2563eb;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+                    <i class="bi bi-info-circle" style="font-size:1rem;"></i>
+                </span>
+                <h3 class="fw-bold mb-0" style="font-size:1rem;">Datos del vehículo</h3>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="field-marca" class="form-label fw-medium">
+                        Marca <span class="required" aria-hidden="true">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light" style="border-right:0;">
+                            <i class="bi bi-building" style="color:#64748b;"></i>
+                        </span>
+                        <input id="field-marca"
+                               type="text"
+                               name="marca"
+                               value="{{ old('marca', $vehiculo->marca ?? '') }}"
+                               required
+                               class="form-control{{ $errors->has('marca') ? ' is-invalid' : '' }}"
+                               placeholder="Ej: Toyota"
+                               style="border-left:0;"
+                               oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');">
+                    </div>
+                    @if ($errors->has('marca'))
+                        <div class="invalid-feedback d-block">{{ $errors->first('marca') }}</div>
+                    @else
+                        <div class="form-text">Solo letras, sin números.</div>
+                    @endif
+                </div>
+                <div class="col-md-4">
+                    <label for="field-modelo" class="form-label fw-medium">
+                        Modelo <span class="required" aria-hidden="true">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light" style="border-right:0;">
+                            <i class="bi bi-car-front" style="color:#64748b;"></i>
+                        </span>
+                        <input id="field-modelo"
+                               type="text"
+                               name="modelo"
+                               value="{{ old('modelo', $vehiculo->modelo ?? '') }}"
+                               required
+                               class="form-control{{ $errors->has('modelo') ? ' is-invalid' : '' }}"
+                               placeholder="Ej: Corolla"
+                               style="border-left:0;">
+                    </div>
+                    @if ($errors->has('modelo'))
+                        <div class="invalid-feedback d-block">{{ $errors->first('modelo') }}</div>
+                    @endif
+                </div>
+                <div class="col-md-2">
+                    <label for="field-anio" class="form-label fw-medium">Año</label>
+                    <input id="field-anio"
+                           type="number"
+                           name="anio"
+                           value="{{ old('anio', $vehiculo->anio ?? '') }}"
+                           class="form-control{{ $errors->has('anio') ? ' is-invalid' : '' }}"
+                           placeholder="2024">
+                    @if ($errors->has('anio'))
+                        <div class="invalid-feedback d-block">{{ $errors->first('anio') }}</div>
+                    @endif
+                </div>
+                <div class="col-md-2">
+                    <label for="field-color" class="form-label fw-medium">Color</label>
+                    <input id="field-color"
+                           type="text"
+                           name="color"
+                           value="{{ old('color', $vehiculo->color ?? '') }}"
+                           class="form-control{{ $errors->has('color') ? ' is-invalid' : '' }}"
+                           placeholder="Blanco"
+                           oninput="if(this.value.startsWith('#')) this.value = '';">
+                    @if ($errors->has('color'))
+                        <div class="invalid-feedback d-block">{{ $errors->first('color') }}</div>
+                    @else
+                        <div class="form-text">Nombre del color.</div>
+                    @endif
+                </div>
+                <div class="col-md-4">
+                    <label for="field-kilometraje_actual" class="form-label fw-medium">
+                        Kilometraje actual
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light" style="border-right:0;">
+                            <i class="bi bi-speedometer2" style="color:#64748b;"></i>
+                        </span>
+                        <input id="field-kilometraje_actual"
+                               type="number"
+                               name="kilometraje_actual"
+                               value="{{ old('kilometraje_actual', $vehiculo->kilometraje_actual ?? 0) }}"
+                               class="form-control{{ $errors->has('kilometraje_actual') ? ' is-invalid' : '' }}"
+                               placeholder="0"
+                               style="border-left:0;">
+                    </div>
+                    @if ($errors->has('kilometraje_actual'))
+                        <div class="invalid-feedback d-block">{{ $errors->first('kilometraje_actual') }}</div>
+                    @endif
+                </div>
+                <div class="col-12">
+                    <label for="field-observaciones" class="form-label fw-medium">Observaciones</label>
+                    <textarea id="field-observaciones"
+                              name="observaciones"
+                              rows="2"
+                              class="form-control{{ $errors->has('observaciones') ? ' is-invalid' : '' }}"
+                              placeholder="Notas adicionales...">{{ old('observaciones', $vehiculo->observaciones ?? '') }}</textarea>
+                    @if ($errors->has('observaciones'))
+                        <div class="invalid-feedback d-block">{{ $errors->first('observaciones') }}</div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="admin-card-module">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge-module" style="background:#f0fdf4;color:#16a34a;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+                    <i class="bi bi-camera" style="font-size:1rem;"></i>
+                </span>
+                <h3 class="fw-bold mb-0" style="font-size:1rem;">Foto</h3>
+            </div>
+            <div class="row g-2 align-items-end">
+                <div class="col-12">
+                    <label class="form-label fw-medium" for="vehiculo_foto">Foto del vehículo</label>
+                    <div class="d-flex gap-2">
+                        <input type="file" name="vehiculo_foto" id="vehiculo_foto" class="form-control" accept="image/*" capture="environment">
+                        <button type="button" class="btn btn-outline-secondary" id="btn-camara-vehiculo" title="Tomar foto con la cámara">
+                            <i class="bi bi-camera"></i>
+                        </button>
+                    </div>
+                    <div class="d-none mt-2" id="camara-vehiculo-container">
+                        <video id="camara-vehiculo-video" autoplay playsinline style="width:100%;max-width:300px;border-radius:8px;"></video>
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn btn-sm btn-primary" id="btn-capturar-vehiculo">Capturar</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-cerrar-camara-vehiculo">Cancelar</button>
+                        </div>
+                    </div>
+                    <input type="hidden" name="vehiculo_foto_base64" id="vehiculo_foto_base64" value="{{ old('vehiculo_foto_base64', $vehiculo->foto ?? '') }}">
+                    @error('vehiculo_foto_base64') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback d-none" id="vehiculo-foto-error"></div>
+                    <div class="small text-success d-none" id="vehiculo-foto-ok"></div>
+                </div>
+                <div class="col-12">
+                    <div id="vehiculo-foto-preview" class="text-center text-muted small p-3 rounded" style="background:#f8fafc;border:1px dashed #e2e8f0;max-width:200px;">
+                        @if ($vehiculo->foto ?? null)
+                            <img src="{{ $vehiculo->foto }}" class="img-fluid rounded" style="max-height:100px;">
+                        @else
+                            <i class="bi bi-image fs-1 d-block" style="color:#94a3b8;"></i>
+                            <span class="small">Sin foto</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="admin-card-module d-flex flex-column">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge-module" style="background:#f0fdf4;color:#16a34a;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+                    <i class="bi bi-toggle-on" style="font-size:1rem;"></i>
+                </span>
+                <h3 class="fw-bold mb-0" style="font-size:1rem;">Estado</h3>
+            </div>
+            <div class="mt-auto">
+                <div class="form-check form-switch">
+                    <input type="hidden" name="estado" value="0">
+                    <input class="form-check-input" type="checkbox" id="vehiculoEstado" name="estado" value="1" @checked(old('estado', $vehiculo->estado ?? true))>
+                    <label class="form-check-label fw-medium" for="vehiculoEstado">Vehículo activo</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @push('scripts')
 <script>
-document.getElementById('placa')?.addEventListener('blur', async function () {
+document.getElementById('field-placa')?.addEventListener('blur', async function () {
     const placa = this.value.trim();
     if (placa.length < 3) return;
 
@@ -105,11 +284,11 @@ document.getElementById('placa')?.addEventListener('blur', async function () {
         }
 
         if (data.vehiculo.marca) {
-            const marcaInput = document.getElementById('marca');
-            const modeloInput = document.getElementById('modelo');
-            const anioInput = document.getElementById('anio');
-            const colorInput = document.getElementById('color');
-            const chasisInput = document.getElementById('numero_chasis');
+            const marcaInput = document.getElementById('field-marca');
+            const modeloInput = document.getElementById('field-modelo');
+            const anioInput = document.getElementById('field-anio');
+            const colorInput = document.getElementById('field-color');
+            const chasisInput = document.getElementById('field-numero_chasis');
 
             if (marcaInput && !marcaInput.value) marcaInput.value = data.vehiculo.marca;
             if (modeloInput && !modeloInput.value) modeloInput.value = data.vehiculo.modelo;

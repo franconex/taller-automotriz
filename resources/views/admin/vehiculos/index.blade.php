@@ -49,8 +49,8 @@
                     <tr>
                         <th>Vehículo</th>
                         <th class="d-none d-md-table-cell">Cliente</th>
-                        <th class="d-none d-lg-table-cell">Año</th>
-                        <th class="d-none d-lg-table-cell">Color</th>
+                        <th class="d-none d-lg-table-cell">Chasis</th>
+                        <th class="d-none d-lg-table-cell">Año / Color</th>
                         <th>Estado</th>
                         @php $puedeEditarVehiculo = Auth::user()->tienePermiso('vehiculos.editar'); @endphp
                         @if ($puedeEditarVehiculo)
@@ -60,23 +60,37 @@
                 </thead>
                 <tbody>
                     @forelse ($vehiculos as $v)
-                        <tr>
+                        <tr style="border-left:3px solid #0ea5e9;">
                             <td>
-                                <div class="cell-strong">{{ $v->placa }}</div>
-                                <div class="cell-muted small">
-                                    {{ optional(optional($v->modelo)->marca)->nombre ?? '—' }}
-                                    {{ $v->modelo->nombre ?? '' }}
+                                <div class="cell-label">
+                                    <i class="bi bi-car-front"></i>
+                                    <div>
+                                        <div class="cell-strong">{{ $v->placa }}</div>
+                                        <div class="cell-secondary">
+                                            {{ $v->marca ?? '—' }} {{ $v->modelo ?? '' }}
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                             <td class="d-none d-md-table-cell">
                                 @if ($v->cliente)
-                                    <a href="{{ route('admin.clientes.show', $v->cliente) }}">{{ $v->cliente->nombre_completo }}</a>
+                                    <a href="{{ route('admin.clientes.show', $v->cliente) }}" class="text-decoration-none">
+                                        <span class="cell-label">
+                                            <i class="bi bi-person"></i>
+                                            {{ $v->cliente->nombre_completo }}
+                                        </span>
+                                    </a>
                                 @else
-                                    —
+                                    <span class="cell-secondary">—</span>
                                 @endif
                             </td>
-                            <td class="d-none d-lg-table-cell cell-muted">{{ $v->anio ?? '—' }}</td>
-                            <td class="d-none d-lg-table-cell cell-muted">{{ $v->color ?? '—' }}</td>
+                            <td class="d-none d-lg-table-cell cell-secondary">{{ $v->numero_chasis ?? '—' }}</td>
+                            <td class="d-none d-lg-table-cell">
+                                <span class="cell-secondary">{{ $v->anio ?? '—' }}</span>
+                                @if ($v->color)
+                                    <span class="badge rounded-pill" style="background:#e2e8f0;color:#475569;font-size:0.7rem;">{{ $v->color }}</span>
+                                @endif
+                            </td>
                             <td>
                                 <x-admin.status-badge
                                     :tone="$v->estado ? 'success' : 'neutral'"

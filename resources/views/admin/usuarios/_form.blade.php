@@ -1,54 +1,165 @@
-<div class="admin-form-section">
-    <h3 class="admin-form-section__title">Empleado</h3>
-    <p class="text-muted small mb-3">El usuario heredará automáticamente el nombre, email, rol y sucursal del empleado seleccionado.</p>
+<div class="row g-4">
 
-    <x-admin.form-field name="empleado_id" label="Empleado" type="select" required>
-        <option value="">— Selecciona un empleado —</option>
-        @foreach (($empleados ?? collect()) as $e)
-            <option value="{{ $e->id }}"
-                @selected(old('empleado_id', $usuario->empleado_id ?? null) == $e->id)>
-                {{ $e->nombre_completo }} — {{ $e->rol->nombre ?? 'Sin rol' }}
-                @if ($e->sucursal)
-                    ({{ $e->sucursal->nombre }})
+    <div class="col-12 col-lg-7">
+        <div class="admin-card-module">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge-module" style="background:#e8f4fd;color:#2563eb;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+                    <i class="bi bi-person-lines-fill" style="font-size:1rem;"></i>
+                </span>
+                <h3 class="fw-bold mb-0" style="font-size:1rem;">Empleado</h3>
+            </div>
+            <p class="cell-secondary small mb-3">El usuario heredará automáticamente el nombre, email, rol y sucursal del empleado seleccionado.</p>
+
+            <div class="mb-3">
+                <label for="field-empleado_id" class="form-label fw-medium">
+                    Empleado <span class="required" aria-hidden="true">*</span>
+                </label>
+                <select name="empleado_id" id="field-empleado_id" required
+                        class="form-select{{ $errors->has('empleado_id') ? ' is-invalid' : '' }}">
+                    <option value="">— Selecciona un empleado —</option>
+                    @foreach (($empleados ?? collect()) as $e)
+                        <option value="{{ $e->id }}"
+                            @selected(old('empleado_id', $usuario->empleado_id ?? null) == $e->id)>
+                            {{ $e->nombre_completo }} — {{ $e->rol->nombre ?? 'Sin rol' }}
+                            @if ($e->sucursal)
+                                ({{ $e->sucursal->nombre }})
+                            @endif
+                        </option>
+                    @endforeach
+                </select>
+                @if ($errors->has('empleado_id'))
+                    <div class="invalid-feedback d-block">{{ $errors->first('empleado_id') }}</div>
                 @endif
-            </option>
-        @endforeach
-    </x-admin.form-field>
+            </div>
 
-    <div id="usuario-resumen" class="p-3 rounded bg-light border d-none">
-        <h4 class="h6 fw-bold mb-2">Datos que se asignarán</h4>
-        <dl class="admin-meta small mb-0">
-            <dt>Nombre</dt><dd id="preview-nombre">—</dd>
-            <dt>Email</dt><dd id="preview-email">—</dd>
-            <dt>Rol</dt><dd id="preview-rol">—</dd>
-            <dt>Sucursal</dt><dd id="preview-sucursal">—</dd>
-        </dl>
+            <div id="usuario-resumen" class="rounded p-3 d-none" style="background:#f8fafc;border:1px solid #e2e8f0;">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-info-circle" style="color:#2563eb;"></i>
+                    <span class="fw-semibold" style="font-size:0.85rem;">Datos que se asignarán</span>
+                </div>
+                <div class="row g-2 small">
+                    <div class="col-6">
+                        <span class="cell-secondary">Nombre:</span>
+                        <span class="fw-medium d-block" id="preview-nombre">—</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="cell-secondary">Email:</span>
+                        <span class="fw-medium d-block" id="preview-email">—</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="cell-secondary">Rol:</span>
+                        <span class="fw-medium d-block" id="preview-rol">—</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="cell-secondary">Sucursal:</span>
+                        <span class="fw-medium d-block" id="preview-sucursal">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <div class="col-12 col-lg-5">
+        <div class="admin-card-module">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge-module" style="background:#fef2f2;color:#dc2626;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;">
+                    <i class="bi bi-key" style="font-size:1rem;"></i>
+                </span>
+                <h3 class="fw-bold mb-0" style="font-size:1rem;">Credenciales</h3>
+            </div>
+
+            <div class="mb-3">
+                <label for="field-username" class="form-label fw-medium">
+                    Nombre de usuario <span class="required" aria-hidden="true">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light" style="border-right:0;">
+                        <i class="bi bi-at" style="color:#64748b;"></i>
+                    </span>
+                    <input id="field-username"
+                           type="text"
+                           name="username"
+                           value="{{ old('username', $usuario->username ?? '') }}"
+                           required
+                           class="form-control{{ $errors->has('username') ? ' is-invalid' : '' }}"
+                           style="border-left:0;">
+                </div>
+                @if ($errors->has('username'))
+                    <div class="invalid-feedback d-block">{{ $errors->first('username') }}</div>
+                @endif
+            </div>
+
+            @if (! isset($usuario) || ! $usuario->exists)
+                <div class="mb-3">
+                    <label for="field-password" class="form-label fw-medium">
+                        Contraseña <span class="required" aria-hidden="true">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light" style="border-right:0;">
+                            <i class="bi bi-lock" style="color:#64748b;"></i>
+                        </span>
+                        <input id="field-password"
+                               type="password"
+                               name="password"
+                               required
+                               class="form-control{{ $errors->has('password') ? ' is-invalid' : '' }}"
+                               style="border-left:0;"
+                               autocomplete="new-password">
+                    </div>
+                    @if ($errors->has('password'))
+                        <div class="invalid-feedback d-block">{{ $errors->first('password') }}</div>
+                    @endif
+                </div>
+
+                <div class="mb-3">
+                    <label for="field-password_confirmation" class="form-label fw-medium">
+                        Confirmar contraseña <span class="required" aria-hidden="true">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light" style="border-right:0;">
+                            <i class="bi bi-lock-fill" style="color:#64748b;"></i>
+                        </span>
+                        <input id="field-password_confirmation"
+                               type="password"
+                               name="password_confirmation"
+                               required
+                               class="form-control{{ $errors->has('password_confirmation') ? ' is-invalid' : '' }}"
+                               style="border-left:0;"
+                               autocomplete="new-password">
+                    </div>
+                    @if ($errors->has('password_confirmation'))
+                        <div class="invalid-feedback d-block">{{ $errors->first('password_confirmation') }}</div>
+                    @endif
+                </div>
+            @else
+                <div class="rounded p-3 mb-3" style="background:#fffbeb;border:1px solid #fde68a;">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle" style="color:#d97706;"></i>
+                        <span class="small">La contraseña solo se modifica desde <strong>"Restablecer contraseña"</strong> en la lista de usuarios.</span>
+                    </div>
+                </div>
+            @endif
+
+            <div class="mb-0">
+                <label for="field-estado" class="form-label fw-medium">Estado</label>
+                <select name="estado" id="field-estado"
+                        class="form-select{{ $errors->has('estado') ? ' is-invalid' : '' }}">
+                    <option value="activo" @selected(old('estado', $usuario->estado ?? 'activo') === 'activo')>Activo</option>
+                    <option value="inactivo" @selected(old('estado', $usuario->estado ?? 'activo') === 'inactivo')>Inactivo</option>
+                </select>
+                @if ($errors->has('estado'))
+                    <div class="invalid-feedback d-block">{{ $errors->first('estado') }}</div>
+                @endif
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <input type="hidden" name="nombre" id="hidden-nombre" value="{{ old('nombre', $usuario->nombre ?? '') }}">
 <input type="hidden" name="email" id="hidden-email" value="{{ old('email', $usuario->email ?? '') }}">
 <input type="hidden" name="rol_id" id="hidden-rol_id" value="{{ old('rol_id', $usuario->rol_id ?? '') }}">
 <input type="hidden" name="sucursal_id" id="hidden-sucursal_id" value="{{ old('sucursal_id', $usuario->sucursal_id ?? '') }}">
-
-<div class="admin-form-section">
-    <h3 class="admin-form-section__title">Credenciales</h3>
-    <x-admin.form-field name="username" label="Nombre de usuario" :value="$usuario->username ?? null" required icon="bi-at" />
-    @if (! isset($usuario) || ! $usuario->exists)
-        <x-admin.form-field name="password" type="password" label="Contraseña" required icon="bi-lock" autocomplete="new-password" />
-        <x-admin.form-field name="password_confirmation" type="password" label="Confirmar contraseña" required icon="bi-lock-fill" autocomplete="new-password" />
-    @else
-        <p class="cell-muted small mb-2">La contraseña solo se modifica desde "Restablecer contraseña" en la lista.</p>
-    @endif
-</div>
-
-<div class="admin-form-section">
-    <h3 class="admin-form-section__title">Estado</h3>
-    <x-admin.form-field name="estado" label="Estado" type="select">
-        <option value="activo" @selected(old('estado', $usuario->estado ?? 'activo') === 'activo')>Activo</option>
-        <option value="inactivo" @selected(old('estado', $usuario->estado ?? 'activo') === 'inactivo')>Inactivo</option>
-    </x-admin.form-field>
-</div>
 
 @once
     @push('scripts')

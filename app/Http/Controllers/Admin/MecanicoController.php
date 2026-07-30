@@ -44,21 +44,10 @@ class MecanicoController extends AdminController implements HasMiddleware
         ]);
     }
 
-    public function create(): View
+    public function create(): RedirectResponse
     {
-        $empleados = Empleado::query()
-            ->whereDoesntHave('mecanico')
-            ->whereHas('rol', fn ($q) => $q->whereRaw('LOWER(nombre) = ?', ['mecánico']))
-            ->when($this->usuarioSucursalId(), fn ($q) => $q->where('sucursal_id', $this->usuarioSucursalId()))
-            ->orderBy('nombre_completo')
-            ->get();
-        $especialidades = Especialidad::orderBy('nombre')->get();
-
-        return view('admin.mecanicos.create', [
-            'empleados' => $empleados,
-            'especialidades' => $especialidades,
-            'mecanico' => new \App\Models\Mecanico(),
-        ]);
+        return redirect()->route('admin.empleados.index')
+            ->with('info', 'Los mecánicos se registran desde la sección Empleados, asignando el rol "Mecánico".');
     }
 
     public function store(MecanicoRequest $request): RedirectResponse

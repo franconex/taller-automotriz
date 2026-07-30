@@ -21,15 +21,15 @@
         </x-slot:actions>
     </x-admin.page-header>
 
-    <div class="admin-table-wrap p-4">
+    <div class="admin-card-modern p-4">
         <form method="POST" action="{{ route('admin.ordenes.update', $orden) }}">
             @csrf
             @method('PUT')
             @include('admin.ordenes._form', ['orden' => $orden])
 
-            <div class="d-flex justify-content-end gap-2 mt-3">
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                 <a href="{{ route('admin.ordenes.show', $orden) }}" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary px-4">
                     <i class="bi bi-check2" aria-hidden="true"></i>
                     Guardar cambios
                 </button>
@@ -37,9 +37,14 @@
         </form>
     </div>
 
-    <div class="admin-table-wrap mt-3">
-        <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h2 class="h6 fw-bold mb-0">Repuestos</h2>
+    <div class="admin-card-modern mt-3 p-0 overflow-hidden">
+        <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2" style="background:#f8fafc;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="d-inline-flex align-items-center justify-content-center" style="width:28px;height:28px;border-radius:6px;background:#e8f4fd;color:#2563eb;font-size:0.85rem;">
+                    <i class="bi bi-box-seam"></i>
+                </span>
+                <h2 class="fw-bold mb-0" style="font-size:0.95rem;">Repuestos</h2>
+            </div>
             <a href="{{ route('admin.ordenes.repuestos', $orden) }}" class="btn btn-primary btn-sm">
                 <i class="bi bi-gear" aria-hidden="true"></i>
                 Gestionar repuestos

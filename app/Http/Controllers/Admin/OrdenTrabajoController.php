@@ -20,12 +20,14 @@ use App\Models\TipoServicio;
 use App\Models\Vehiculo;
 use App\Notifications\OrdenAsignada;
 use App\Services\OrdenTrabajoService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
 
@@ -570,7 +572,7 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             ->unique();
 
         return Mecanico::with('empleado')
-            ->whereHas('empleado', fn ($q) => $q->where('sucursal_id', $sucursalId))
+            ->when($sucursalId, fn ($q) => $q->whereHas('empleado', fn ($sq) => $sq->where('sucursal_id', $sucursalId)))
             ->where(function ($q) use ($exceptoOrdenId, $idsOcupados) {
                 $q->where('disponibilidad', 'disponible')
                   ->whereNotIn('id', $idsOcupados);
@@ -581,6 +583,20 @@ class OrdenTrabajoController extends AdminController implements HasMiddleware
             ->get()
             ->sortBy('empleado.nombre_completo')
             ->values();
+    }
+
+    public function mecanicosPorSucursal(Request $request): JsonResponse
+    {
+        $sucursalId = $request->input('sucursal_id');
+        $exceptoOrdenId = $request->input('excepto_orden_id');
+
+        $mecanicos = $this->mecanicosDisponibles($sucursalId ? (int) $sucursalId : null, $exceptoOrdenId ? (int) $exceptoOrdenId : null);
+
+        return response()->json($mecanicos->map(fn ($m) => [
+            'id' => $m->id,
+            'nombre' => $m->empleado->nombre_completo ?? 'Mecánico #' . $m->id,
+            'disponibilidad' => $m->disponibilidad,
+        ]));
     }
 
     private function crearAsignacion(int $ordenId, int $mecanicoId, string $actividad): void

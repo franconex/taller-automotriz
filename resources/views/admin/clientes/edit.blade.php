@@ -21,15 +21,19 @@
         </x-slot:actions>
     </x-admin.page-header>
 
-    <div class="admin-table-wrap p-4">
+    <div class="admin-card-modern p-4">
         <form method="POST" action="{{ route('admin.clientes.update', $cliente) }}">
             @csrf
             @method('PUT')
-            @include('admin.clientes._form', ['cliente' => $cliente])
+            @include('admin.clientes._form', [
+                'cliente' => $cliente,
+                'codigo_pais' => $codigo_pais ?? '+591',
+                'telefono_numero' => $telefono_numero ?? '',
+            ])
 
-            <div class="d-flex justify-content-end gap-2 mt-3">
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                 <a href="{{ route('admin.clientes.index') }}" class="btn btn-outline-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary px-4">
                     <i class="bi bi-check2" aria-hidden="true"></i>
                     Guardar cambios
                 </button>

@@ -12,7 +12,7 @@
 @section('content')
     <x-admin.page-header
         :title="'Permisos de ' . $rol->nombre"
-        description="Marca los permisos que tendrá asignado este perfil.">
+        description="Selecciona un módulo y marca los permisos que tendrá asignado este perfil.">
         <x-slot:actions>
             <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i>
@@ -25,38 +25,71 @@
         @csrf
         @method('PUT')
 
+        <div class="admin-card-modern mb-3">
+            <div class="p-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-5">
+                        <label for="modulo-selector" class="form-label fw-medium">Módulo</label>
+                        <select id="modulo-selector" class="form-select">
+                            <option value="all">— Todos los módulos —</option>
+                            @foreach ($permisos as $modulo => $lista)
+                                <option value="mod-{{ Str::slug($modulo) }}">{{ ucfirst($modulo) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-7 d-flex gap-2 flex-wrap">
+                        <button type="button" id="btn-select-all-module" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-check-all"></i> Seleccionar todos (módulo actual)
+                        </button>
+                        <button type="button" id="btn-deselect-all-module" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-x"></i> Deseleccionar todos (módulo actual)
+                        </button>
+                        <button type="button" id="btn-select-all-global" class="btn btn-sm btn-primary">
+                            <i class="bi bi-check-all"></i> Seleccionar todos los permisos
+                        </button>
+                        <button type="button" id="btn-deselect-all-global" class="btn btn-sm btn-secondary">
+                            <i class="bi bi-x-circle"></i> Deseleccionar todos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         @forelse ($permisos as $modulo => $lista)
-            <div class="admin-card-modern mb-3 overflow-hidden">
-                <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center" style="background:#f8fafc;">
+            @php $modId = 'mod-' . Str::slug($modulo); @endphp
+            <div class="admin-card-modern mb-3 overflow-hidden modulo-card" id="{{ $modId }}" data-modulo="{{ $modId }}">
+                <div class="px-4 py-3 d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-bottom:1px solid #e2e8f0;">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge-module" style="background:#e8f4fd;color:#2563eb;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:0.85rem;">
+                        <span class="d-inline-flex align-items-center justify-content-center" style="width:30px;height:30px;border-radius:8px;background:#e8f4fd;color:#2563eb;font-size:0.9rem;">
                             <i class="bi bi-shield-check"></i>
                         </span>
-                        <h2 class="fw-bold mb-0" style="font-size:0.85rem;letter-spacing:.4px;">
+                        <h2 class="fw-bold mb-0" style="font-size:0.9rem;letter-spacing:.3px;text-transform:uppercase;">
                             {{ ucfirst($modulo) }}
                         </h2>
                     </div>
-                    <span class="badge" style="background:#e2e8f0;color:#475569;font-size:0.7rem;font-weight:600;">{{ $lista->count() }} permisos</span>
+                    <span class="d-inline-flex align-items-center gap-1" style="background:#e2e8f0;color:#475569;padding:2px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;">
+                        <i class="bi bi-check2-square"></i>
+                        {{ $lista->count() }}
+                    </span>
                 </div>
                 <div class="p-4">
                     <div class="row g-2">
                         @foreach ($lista as $permiso)
                             <div class="col-12 col-md-6 col-lg-4">
-                                <div class="form-check py-1 px-2 rounded" style="transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
-                                    <input
-                                        class="form-check-input"
-                                        type="checkbox"
-                                        name="permisos[]"
-                                        value="{{ $permiso->id }}"
-                                        id="permiso-{{ $permiso->id }}"
-                                        @checked(in_array($permiso->id, $asignados))>
-                                    <label class="form-check-label" for="permiso-{{ $permiso->id }}">
-                                        {{ $permiso->nombre }}
-                                        <span class="d-block cell-muted small" style="font-size:.75rem;">
-                                            {{ $permiso->codigo }}
-                                        </span>
-                                    </label>
-                                </div>
+                                <label class="d-flex align-items-start gap-2 p-2 rounded" style="transition:all 0.15s;cursor:pointer;" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
+                                    <input type="checkbox"
+                                           name="permisos[]"
+                                           value="{{ $permiso->id }}"
+                                           id="permiso-{{ $permiso->id }}"
+                                           class="form-check-input mt-0 permiso-checkbox"
+                                           style="cursor:pointer;"
+                                           data-modulo="{{ $modId }}"
+                                           @checked(in_array($permiso->id, $asignados))>
+                                    <div>
+                                        <div class="fw-medium" style="font-size:0.85rem;line-height:1.3;">{{ $permiso->nombre }}</div>
+                                        <div style="font-size:0.7rem;color:#94a3b8;">{{ $permiso->codigo }}</div>
+                                    </div>
+                                </label>
                             </div>
                         @endforeach
                     </div>
@@ -80,3 +113,53 @@
         @endif
     </form>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var selector = document.getElementById('modulo-selector');
+        var cards = document.querySelectorAll('.modulo-card');
+
+        // Filter by module
+        function filtrar() {
+            var selected = selector.value;
+            cards.forEach(function (card) {
+                if (selected === 'all' || card.id === selected) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        selector.addEventListener('change', filtrar);
+
+        // Select all / deselect all for current module
+        document.getElementById('btn-select-all-module').addEventListener('click', function () {
+            var selected = selector.value;
+            document.querySelectorAll('.permiso-checkbox').forEach(function (cb) {
+                if (selected === 'all' || cb.getAttribute('data-modulo') === selected) {
+                    cb.checked = true;
+                }
+            });
+        });
+
+        document.getElementById('btn-deselect-all-module').addEventListener('click', function () {
+            var selected = selector.value;
+            document.querySelectorAll('.permiso-checkbox').forEach(function (cb) {
+                if (selected === 'all' || cb.getAttribute('data-modulo') === selected) {
+                    cb.checked = false;
+                }
+            });
+        });
+
+        // Global select all / deselect all
+        document.getElementById('btn-select-all-global').addEventListener('click', function () {
+            document.querySelectorAll('.permiso-checkbox').forEach(function (cb) { cb.checked = true; });
+        });
+
+        document.getElementById('btn-deselect-all-global').addEventListener('click', function () {
+            document.querySelectorAll('.permiso-checkbox').forEach(function (cb) { cb.checked = false; });
+        });
+    });
+</script>
+@endpush
