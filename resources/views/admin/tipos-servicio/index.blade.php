@@ -43,8 +43,7 @@
             @if (Auth::user()->tienePermiso('tipos-servicio.crear'))
             :action-label="'Nuevo tipo'"
             :action-href="route('admin.tipos-servicio.create')"
-            @endif
-            />
+            @endif />
     @else
         <div class="admin-table-wrap">
             <table class="admin-table" aria-label="Listado de tipos de servicio">
@@ -59,10 +58,20 @@
                 </thead>
                 <tbody>
                     @forelse ($tipos as $t)
-                        <tr>
-                            <td class="cell-strong">{{ $t->nombre }}</td>
-                            <td class="d-none d-md-table-cell cell-muted">{{ $t->descripcion ?? '—' }}</td>
-                            <td class="d-none d-md-table-cell">{{ $t->servicios_count }}</td>
+                        <tr style="border-left:3px solid #8b5cf6;">
+                            <td>
+                                <div class="cell-label">
+                                    <i class="bi bi-tags"></i>
+                                    <div>
+                                        <div class="cell-strong">{{ $t->nombre }}</div>
+                                        <div class="cell-secondary">Tipo #{{ $t->id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="d-none d-md-table-cell cell-secondary">{{ $t->descripcion ?? '—' }}</td>
+                            <td class="d-none d-md-table-cell">
+                                <span class="badge" style="background:#e2e8f0;color:#475569;">{{ $t->servicios_count }}</span>
+                            </td>
                             <td>
                                 <x-admin.status-badge
                                     :tone="$t->estado ? 'success' : 'neutral'"
@@ -79,27 +88,18 @@
                                         <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                     </a>
                                     <form method="POST"
-                                          action="{{ route('admin.tipos-servicio.toggle', $t) }}"
-                                          class="d-inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit"
-                                                class="btn-icon"
-                                                title="{{ $t->estado ? 'Desactivar' : 'Activar' }}"
-                                                aria-label="{{ $t->estado ? 'Desactivar' : 'Activar' }} {{ $t->nombre }}">
-                                            <i class="bi {{ $t->estado ? 'bi-pause-circle' : 'bi-play-circle' }}" aria-hidden="true"></i>
+                                          action="{{ route('admin.tipos-servicio.toggle', $t) }}" class="d-inline">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="btn-icon"
+                                                title="{{ $t->estado ? 'Desactivar' : 'Activar' }}">
+                                            <i class="bi {{ $t->estado ? 'bi-pause-circle' : 'bi-play-circle' }}"></i>
                                         </button>
                                     </form>
                                     <form method="POST"
-                                          action="{{ route('admin.tipos-servicio.destroy', $t) }}"
-                                          class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="btn-icon btn-icon--danger"
-                                                title="Eliminar"
-                                                aria-label="Eliminar {{ $t->nombre }}">
-                                            <i class="bi bi-trash3" aria-hidden="true"></i>
+                                          action="{{ route('admin.tipos-servicio.destroy', $t) }}" class="d-inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn-icon btn-icon--danger" title="Eliminar">
+                                            <i class="bi bi-trash3"></i>
                                         </button>
                                     </form>
                                     @endif
@@ -115,7 +115,6 @@
                     @endforelse
                 </tbody>
             </table>
-
             <x-admin.table-pagination :paginator="$tipos" />
         </div>
     @endif

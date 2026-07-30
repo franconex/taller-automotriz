@@ -11,18 +11,7 @@
 @section('content')
     <x-admin.page-header
         title="Inventario"
-        description="Repuestos del taller. Stock global sin sucursales.">
-        <x-slot:actions>
-            <button type="button" class="btn btn-primary" onclick="abrirAgregarRepuesto()">
-                <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                Agregar repuesto
-            </button>
-            <button type="button" class="btn btn-outline-primary" onclick="abrirBuscarCodigo()">
-                <i class="bi bi-search"></i>
-                Buscar por código
-            </button>
-        </x-slot:actions>
-    </x-admin.page-header>
+        description="Repuestos del taller. Stock global sin sucursales." />
 
     {{-- Campo permanente: Barcode to PC / lector USB / manual --}}
     <div class="admin-table-wrap mb-3">
@@ -108,13 +97,18 @@
                             $sinStock = $stockTotal === 0;
                             $alerta = !$sinStock && $disponible < 5;
                         @endphp
-                        <tr class="{{ $sinStock ? 'table-secondary' : ($alerta ? 'table-danger' : '') }}">
+                        <tr class="{{ $sinStock ? 'table-secondary' : ($alerta ? '' : '') }}" style="border-left:3px solid {{ $sinStock ? '#94a3b8' : ($alerta ? '#dc2626' : '#16a34a') }};">
                             <td>
-                                <div class="cell-strong">{{ $p->nombre }}</div>
-                                <div class="cell-muted small">{{ $p->marca ? $p->marca . ' · ' : '' }}{{ $p->categoria ?? '' }}</div>
+                                <div class="cell-label">
+                                    <i class="bi {{ $p->tipo === 'herramienta' ? 'bi-gear' : 'bi-box-seam' }}" style="color:{{ $sinStock ? '#94a3b8' : ($alerta ? '#dc2626' : '#16a34a') }};"></i>
+                                    <div>
+                                        <div class="cell-strong">{{ $p->nombre }}</div>
+                                        <div class="cell-secondary">{{ $p->marca ? $p->marca . ' · ' : '' }}{{ $p->categoria ?? '' }}</div>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="d-none d-md-table-cell cell-muted">{{ $p->codigo }}</td>
-                            <td class="cell-muted">{{ $p->categoria?->nombre ?? '—' }}</td>
+                            <td class="d-none d-md-table-cell"><span class="cell-label"><i class="bi bi-upc-scan"></i> {{ $p->codigo }}</span></td>
+                            <td class="cell-secondary">{{ $p->categoria?->nombre ?? '—' }}</td>
                             <td>
                                 <x-admin.status-badge
                                     :tone="$p->tipo === 'herramienta' ? 'warning' : 'primary'"
@@ -135,28 +129,27 @@
                                     <button type="button" class="btn-icon btn-icon--success"
                                             title="Entrada rápida"
                                             onclick="abrirEntradaRapida('{{ $p->codigo_barras ?? $p->codigo }}', '{{ $p->nombre }}')">
-                                        <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                                        <i class="bi bi-plus-circle"></i>
                                     </button>
                                     @if ($alerta || $sinStock)
                                         <a href="{{ route('admin.solicitudes-compra.create', ['repuesto_id' => $p->id]) }}"
                                            class="btn-icon btn-icon--warning" title="Solicitar compra">
-                                            <i class="bi bi-cart-plus" aria-hidden="true"></i>
+                                            <i class="bi bi-cart-plus"></i>
                                         </a>
                                     @endif
                                     @php $invId = $p->inventarios->first()?->id; @endphp
                                     <a href="{{ $invId ? route('admin.inventario.show', $invId) : '#' }}"
-                                       class="btn-icon {{ !$invId ? 'disabled' : '' }}"
-                                       title="Ver movimientos">
-                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                       class="btn-icon {{ !$invId ? 'disabled' : '' }}" title="Ver movimientos">
+                                        <i class="bi bi-eye"></i>
                                     </a>
                                     <button type="button" class="btn-icon btn-icon--danger"
                                             title="Vender"
                                             onclick="abrirVenta('{{ $p->id }}', '{{ $p->nombre }}', '{{ $p->precio_venta }}', {{ $p->inventarios->first()?->cantidad_actual ?? 0 }})">
-                                        <i class="bi bi-cart-check" aria-hidden="true"></i>
+                                        <i class="bi bi-cart-check"></i>
                                     </button>
                                     <a href="{{ route('admin.repuestos.edit', $p) }}"
                                        class="btn-icon btn-icon--primary" title="Editar">
-                                        <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                        <i class="bi bi-pencil-square"></i>
                                     </a>
                                 </div>
                             </td>

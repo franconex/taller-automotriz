@@ -112,49 +112,28 @@
                         @php
                             $tipoInfo = $tiposLabels[$m->tipo] ?? ['label' => $m->tipo, 'tone' => 'neutral', 'icon' => 'bi-circle'];
                         @endphp
-                        <tr>
-                            <td class="cell-muted">{{ $m->fecha_movimiento?->format('d/m/Y H:i') ?? '—' }}</td>
+                        <tr style="border-left:3px solid {{ match($m->tipo) { 'entrada','entrada_inicial','entrada_compra','devolucion','liberacion_reserva','ajuste_positivo' => '#16a34a', 'salida','salida_orden','consumo','devolucion_proveedor','ajuste_negativo' => '#d97706', 'dañado','vencido','perdida' => '#dc2626', default => '#2563eb' } }};">
+                            <td><span class="cell-label"><i class="bi bi-calendar2" style="font-size:0.75rem;"></i> {{ $m->fecha_movimiento?->format('d/m/Y H:i') ?? '—' }}</span></td>
                             <td>
-                                <div class="cell-strong">{{ optional($m->inventario->repuesto)->nombre ?? '—' }}</div>
-                                <div class="cell-muted small">{{ optional($m->inventario->repuesto)->codigo ?? '' }}</div>
+                                <div class="cell-label">
+                                    <i class="bi bi-box-seam"></i>
+                                    <div>
+                                        <div class="cell-strong">{{ optional($m->inventario->repuesto)->nombre ?? '—' }}</div>
+                                        <div class="cell-secondary small">{{ optional($m->inventario->repuesto)->codigo ?? '' }}</div>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="d-none d-md-table-cell cell-muted">{{ optional($m->inventario->sucursal)->nombre ?? '—' }}</td>
+                            <td class="d-none d-md-table-cell cell-secondary">{{ optional($m->inventario->sucursal)->nombre ?? '—' }}</td>
                             <td>
-                                <x-admin.status-badge
-                                    :tone="$tipoInfo['tone']"
-                                    :icon="$tipoInfo['icon']"
-                                    :label="$tipoInfo['label']" />
+                                <x-admin.status-badge :tone="$tipoInfo['tone']" :icon="$tipoInfo['icon']" :label="$tipoInfo['label']" />
                             </td>
                             <td class="d-none d-lg-table-cell text-end cell-strong">{{ $m->cantidad }}</td>
-                            <td class="d-none d-lg-table-cell text-end cell-muted">
-                                {{ $m->existencia_anterior }} → {{ $m->existencia_nueva }}
-                            </td>
+                            <td class="d-none d-lg-table-cell text-end cell-secondary">{{ $m->existencia_anterior }} → {{ $m->existencia_nueva }}</td>
                             <td>
                                 <div class="row-actions">
-                                    <a href="{{ route('admin.movimientos-inventario.show', $m) }}"
-                                       class="btn-icon"
-                                       title="Ver detalle"
-                                       aria-label="Ver detalle">
-                                        <i class="bi bi-eye" aria-hidden="true"></i>
-                                    </a>
-                                    <a href="{{ route('admin.movimientos-inventario.route', $m) }}"
-                                       class="btn-icon"
-                                       title="Ver ruta"
-                                       aria-label="Ver ruta">
-                                        <i class="bi bi-map" aria-hidden="true"></i>
-                                    </a>
-                                    <form method="POST"
-                                          action="{{ route('admin.movimientos-inventario.destroy', $m) }}"
-                                          class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="btn-icon btn-icon--danger"
-                                                title="Eliminar"
-                                                aria-label="Eliminar movimiento">
-                                            <i class="bi bi-trash3" aria-hidden="true"></i>
-                                        </button>
-                                    </form>
+                                    <a href="{{ route('admin.movimientos-inventario.show', $m) }}" class="btn-icon" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                                    <a href="{{ route('admin.movimientos-inventario.route', $m) }}" class="btn-icon" title="Ver ruta"><i class="bi bi-map"></i></a>
+                                    <form method="POST" action="{{ route('admin.movimientos-inventario.destroy', $m) }}" class="d-inline">@csrf @method('DELETE')<button type="submit" class="btn-icon btn-icon--danger" title="Eliminar"><i class="bi bi-trash3"></i></button></form>
                                 </div>
                             </td>
                         </tr>

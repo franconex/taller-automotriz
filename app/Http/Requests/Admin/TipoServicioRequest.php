@@ -12,7 +12,7 @@ class TipoServicioRequest extends AdminFormRequest
 
         return [
             'nombre' => [
-                'required', 'string', 'max:80',
+                'required', 'string', 'max:80', 'regex:/^[\pL\s]+$/u',
                 Rule::unique('tipos_servicio', 'nombre')->ignore($id),
             ],
             'descripcion' => ['nullable', 'string', 'max:255'],
@@ -26,6 +26,13 @@ class TipoServicioRequest extends AdminFormRequest
             'nombre' => 'nombre',
             'descripcion' => 'descripción',
             'estado' => 'estado',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'nombre.regex' => 'El nombre solo puede contener letras y espacios, sin números ni caracteres especiales.',
         ];
     }
 }
