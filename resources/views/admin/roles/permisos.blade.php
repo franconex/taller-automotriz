@@ -38,17 +38,11 @@
                         </select>
                     </div>
                     <div class="col-12 col-md-7 d-flex gap-2 flex-wrap">
-                        <button type="button" id="btn-select-all-module" class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-check-all"></i> Seleccionar todos (módulo actual)
+                        <button type="button" id="btn-toggle-module" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-check-all"></i> <span id="btn-toggle-module-text">Seleccionar todos</span> (módulo actual)
                         </button>
-                        <button type="button" id="btn-deselect-all-module" class="btn btn-sm btn-outline-danger">
-                            <i class="bi bi-x"></i> Deseleccionar todos (módulo actual)
-                        </button>
-                        <button type="button" id="btn-select-all-global" class="btn btn-sm btn-primary">
-                            <i class="bi bi-check-all"></i> Seleccionar todos los permisos
-                        </button>
-                        <button type="button" id="btn-deselect-all-global" class="btn btn-sm btn-secondary">
-                            <i class="bi bi-x-circle"></i> Deseleccionar todos
+                        <button type="button" id="btn-toggle-global" class="btn btn-sm btn-primary">
+                            <i class="bi bi-check-all"></i> <span id="btn-toggle-global-text">Seleccionar todos</span> (global)
                         </button>
                     </div>
                 </div>
@@ -133,32 +127,30 @@
         }
         selector.addEventListener('change', filtrar);
 
-        // Select all / deselect all for current module
-        document.getElementById('btn-select-all-module').addEventListener('click', function () {
+        // Toggle select all / deselect all for current module
+        document.getElementById('btn-toggle-module').addEventListener('click', function () {
             var selected = selector.value;
-            document.querySelectorAll('.permiso-checkbox').forEach(function (cb) {
+            var checkboxes = document.querySelectorAll('.permiso-checkbox');
+            var visible = [];
+            checkboxes.forEach(function (cb) {
                 if (selected === 'all' || cb.getAttribute('data-modulo') === selected) {
-                    cb.checked = true;
+                    visible.push(cb);
                 }
             });
+            var allChecked = visible.every(function (cb) { return cb.checked; });
+            var newState = !allChecked;
+            visible.forEach(function (cb) { cb.checked = newState; });
+            document.getElementById('btn-toggle-module-text').textContent = newState ? 'Deseleccionar todos' : 'Seleccionar todos';
         });
 
-        document.getElementById('btn-deselect-all-module').addEventListener('click', function () {
-            var selected = selector.value;
-            document.querySelectorAll('.permiso-checkbox').forEach(function (cb) {
-                if (selected === 'all' || cb.getAttribute('data-modulo') === selected) {
-                    cb.checked = false;
-                }
-            });
-        });
-
-        // Global select all / deselect all
-        document.getElementById('btn-select-all-global').addEventListener('click', function () {
-            document.querySelectorAll('.permiso-checkbox').forEach(function (cb) { cb.checked = true; });
-        });
-
-        document.getElementById('btn-deselect-all-global').addEventListener('click', function () {
-            document.querySelectorAll('.permiso-checkbox').forEach(function (cb) { cb.checked = false; });
+        // Toggle global
+        document.getElementById('btn-toggle-global').addEventListener('click', function () {
+            var checkboxes = document.querySelectorAll('.permiso-checkbox');
+            var allChecked = true;
+            checkboxes.forEach(function (cb) { if (!cb.checked) allChecked = false; });
+            var newState = !allChecked;
+            checkboxes.forEach(function (cb) { cb.checked = newState; });
+            document.getElementById('btn-toggle-global-text').textContent = newState ? 'Deseleccionar todos' : 'Seleccionar todos';
         });
     });
 </script>
